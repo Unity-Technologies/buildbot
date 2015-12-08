@@ -43,7 +43,7 @@ class Test(unittest.TestCase):
     def setUp(self):
         self.botmaster = mock.Mock(name='botmaster')
         self.botmaster.builders = {}
-        def prioritizeBuilders(master, builders):
+        def prioritizeBuilders(master, builders, queue):
             # simple sort-by-name by default
             return sorted(builders, lambda b1,b2 : cmp(b1.name, b2.name))
         self.master = self.botmaster.master = mock.Mock(name='master')
@@ -132,7 +132,7 @@ class Test(unittest.TestCase):
         # #1979.
         builders = ['bldr%02d' % i for i in xrange(15) ]
 
-        def slow_sorter(master, bldrs):
+        def slow_sorter(master, bldrs, queue):
             bldrs.sort(lambda b1, b2 : cmp(b1.name, b2.name))
             d = defer.Deferred()
             reactor.callLater(0, d.callback, bldrs)
@@ -208,16 +208,14 @@ class Test(unittest.TestCase):
         self.addBuilders(oldestRequestTimes.keys())
         self.master.config.prioritizeBuilders = prioritizeBuilders
 
-        def mklambda(t): # work around variable-binding issues
+        def mklambda(br): # work around variable-binding issues
             if returnDeferred:
-                return lambda : defer.succeed(t)
+                return lambda queue: defer.succeed(br)
             else:
-                return lambda : t
+                return lambda queue: br
 
-        for n, t in oldestRequestTimes.iteritems():
-            if t is not None:
-                t = epoch2datetime(t)
-            self.builders[n].getOldestRequestTime = mklambda(t)
+        for n, br in oldestRequestTimes.iteritems():
+            self.builders[n].getPrioritizedBuildRequest = mklambda(br)
 
         d = self.brd._sortBuilders(oldestRequestTimes.keys())
         def check(result):
@@ -228,22 +226,28 @@ class Test(unittest.TestCase):
 
     def test_sortBuilders_default_sync(self):
         return self.do_test_sortBuilders(None, # use the default sort
-                dict(bldr1=777, bldr2=999, bldr3=888),
-                ['bldr1', 'bldr3', 'bldr2'])
+                                         dict(bldr2=dict(priority=20,submitted_at=1448540542),
+                                              bldr1=dict(priority=20,submitted_at=1448542334),
+                                              bldr3=dict(priority=30,submitted_at=1448541047)),
+                                         ['bldr3', 'bldr2', 'bldr1'])
 
     def test_sortBuilders_default_asyn(self):
-        return self.do_test_sortBuilders(None, # use the default sort
-                dict(bldr1=777, bldr2=999, bldr3=888),
-                ['bldr1', 'bldr3', 'bldr2'],
-                returnDeferred=True)
+        return self.do_test_sortBuilders(None,
+                                         dict(bldr1=dict(priority=20,submitted_at=1448540542),
+                                              bldr2=dict(priority=20,submitted_at=1448542334),
+                                              bldr3=dict(priority=30,submitted_at=1448541047)),
+                                         ['bldr3','bldr1', 'bldr2'],
+                                         returnDeferred=True)
 
     def test_sortBuilders_default_None(self):
         return self.do_test_sortBuilders(None, # use the default sort
-                dict(bldr1=777, bldr2=None, bldr3=888),
-                ['bldr1', 'bldr3', 'bldr2'])
+                dict(bldr1=dict(priority=20,submitted_at=1448540542),
+                     bldr2=None,
+                     bldr3=dict(priority=30,submitted_at=1448541047)),
+                ['bldr3', 'bldr1'])
 
     def test_sortBuilders_custom(self):
-        def prioritizeBuilders(master, builders):
+        def prioritizeBuilders(master, builders, queue):
             self.assertIdentical(master, self.master)
             return sorted(builders, key=lambda b : b.name)
 
@@ -252,7 +256,7 @@ class Test(unittest.TestCase):
                 ['bldr1', 'bldr2', 'bldr3'])
 
     def test_sortBuilders_custom_async(self):
-        def prioritizeBuilders(master, builders):
+        def prioritizeBuilders(master, builders, queue):
             self.assertIdentical(master, self.master)
             return defer.succeed(sorted(builders, key=lambda b : b.name))
 
@@ -264,7 +268,7 @@ class Test(unittest.TestCase):
     def test_sortBuilders_custom_exception(self):
         self.useMock_maybeStartBuildsOnBuilder()
         self.addBuilders(['x', 'y'])
-        def fail(m, b):
+        def fail(m, b, queue):
             raise RuntimeError("oh noes")
         self.master.config.prioritizeBuilders = fail
 
@@ -519,7 +523,7 @@ class TestMaybeStartBuilds(unittest.TestCase):
                 submitted_at=140000),
         ]
         yield self.do_test_maybeStartBuildsOnBuilder(rows=rows,
-                exp_claims=[10, 11], exp_builds=[('test-slave1', [10]), ('test-slave3', [11])])
+                exp_claims=[10], exp_builds=[('test-slave1', [10])])
                 
         self.assertEqual(slaves_attempted, ['test-slave3', 'test-slave2', 'test-slave1'])
 
@@ -528,9 +532,7 @@ class TestMaybeStartBuilds(unittest.TestCase):
         self.assertEqual(pairs_tested, [
             ('test-slave3', 10),
             ('test-slave2', 10),
-            ('test-slave1', 10),
-            ('test-slave3', 11),
-            ('test-slave2', 12)])
+            ('test-slave1', 10)])
 
     @mock.patch('random.choice', nth_slave(-1))
     @mock.patch('buildbot.process.buildrequestdistributor.BuildRequestDistributor.BuildChooser',
@@ -582,9 +584,7 @@ class TestMaybeStartBuilds(unittest.TestCase):
         # with slave3 skipped, and slave2 unable to pair
         self.assertEqual(pairs_tested, [
             ('test-slave2', 10),
-            ('test-slave1', 10),
-            ('test-slave2', 11),
-            ('test-slave2', 12)])
+            ('test-slave1', 10)])
 
     @mock.patch('random.choice', nth_slave(-1))
     @defer.inlineCallbacks
@@ -604,9 +604,9 @@ class TestMaybeStartBuilds(unittest.TestCase):
                 submitted_at=135000),
         ]
         yield self.do_test_maybeStartBuildsOnBuilder(rows=rows,
-                exp_claims=[10, 11], exp_builds=[('test-slave3', [10]), ('test-slave2', [11])])
+                exp_claims=[10], exp_builds=[('test-slave3', [10])])
         
-        self.assertEqual(slaves_attempted, ['test-slave3', 'test-slave2'])
+        self.assertEqual(slaves_attempted, ['test-slave3'])
 
     @mock.patch('random.choice', nth_slave(-1))
     @defer.inlineCallbacks
@@ -620,8 +620,8 @@ class TestMaybeStartBuilds(unittest.TestCase):
                 submitted_at=135000),
         ]
         yield self.do_test_maybeStartBuildsOnBuilder(rows=rows,
-                exp_claims=[10, 11],
-                exp_builds=[('test-slave2', [10]), ('test-slave1', [11])])
+                exp_claims=[10],
+                exp_builds=[('test-slave2', [10])])
 
     @mock.patch('random.choice', nth_slave(-1))
     @defer.inlineCallbacks
@@ -643,7 +643,7 @@ class TestMaybeStartBuilds(unittest.TestCase):
         ]
         yield self.do_test_maybeStartBuildsOnBuilder(rows=rows,
                 exp_claims=[],  # reclaimed so none taken!
-                exp_builds=[('test-slave2', [10]), ('test-slave2', [11])])
+                exp_builds=[('test-slave2', [10])])
 
     @mock.patch('random.choice', nth_slave(-1))
     @defer.inlineCallbacks
@@ -670,13 +670,13 @@ class TestMaybeStartBuilds(unittest.TestCase):
     
         # first time around, only #11 stays claimed
         yield self.brd._maybeStartBuildsOnBuilder(self.bldr)
-        self.master.db.buildrequests.assertMyClaims([11])  # reclaimed so none taken!
-        self.assertBuildsStarted([('test-slave2', [10]), ('test-slave2', [11])])
+        self.master.db.buildrequests.assertMyClaims([])  # reclaimed so none taken!
+        self.assertBuildsStarted([('test-slave2', [10])])
 
         # second time around the #10 will pass, adding another request and it is claimed
         yield self.brd._maybeStartBuildsOnBuilder(self.bldr)
-        self.master.db.buildrequests.assertMyClaims([10, 11])
-        self.assertBuildsStarted([('test-slave2', [10]), ('test-slave2', [11]), ('test-slave2', [10])])
+        self.master.db.buildrequests.assertMyClaims([10])
+        self.assertBuildsStarted([('test-slave2', [10]), ('test-slave2', [10])])
 
 
     @mock.patch('random.choice', nth_slave(1))
@@ -783,7 +783,7 @@ class TestMaybeStartBuilds(unittest.TestCase):
                 submitted_at=135000),
         ]
         yield self.do_test_maybeStartBuildsOnBuilder(rows=rows,
-                exp_claims=[11], exp_builds=[('test-slave1', [11])])
+                exp_claims=[], exp_builds=[])
 
 
     # nextSlave
@@ -862,19 +862,19 @@ class TestMaybeStartBuilds(unittest.TestCase):
 
     def test_nextBuild_default(self):
         "default chooses the first in the list, which should be the earliest"
-        return self.do_test_nextBuild(None, exp_choice=[10, 11, 12, 13])
+        return self.do_test_nextBuild(None, exp_choice=[10])
 
     def test_nextBuild_simple(self):
         def nextBuild(bldr, lst):
             self.assertIdentical(bldr, self.bldr)
             return lst[-1]
-        return self.do_test_nextBuild(nextBuild, exp_choice=[13, 12, 11, 10])
+        return self.do_test_nextBuild(nextBuild, exp_choice=[13])
 
     def test_nextBuild_deferred(self):
         def nextBuild(bldr, lst):
             self.assertIdentical(bldr, self.bldr)
             return defer.succeed(lst[-1])
-        return self.do_test_nextBuild(nextBuild, exp_choice=[13, 12, 11, 10])
+        return self.do_test_nextBuild(nextBuild, exp_choice=[13])
 
     def test_nextBuild_exception(self):
         def nextBuild(bldr, lst):
@@ -942,10 +942,9 @@ class TestMaybeStartBuilds(unittest.TestCase):
         self.bldr.getMergeRequestsFn = lambda : mergeRequests_fn
         
         yield self.do_test_maybeStartBuildsOnBuilder(rows=rows,
-                exp_claims=[19, 20, 21],
+                exp_claims=[19, 21],
                 exp_builds=[
                     ('test-slave1', [19, 21]),
-                    ('test-slave2', [20])
                 ])
 
 
@@ -1015,10 +1014,9 @@ class TestMaybeStartBuilds(unittest.TestCase):
 
         # check if all are merged
         yield self.do_test_maybeStartBuildsOnBuilder(rows=rows,
-                exp_claims=[19, 20],
+                exp_claims=[19],
                 exp_builds=[
                     ('test-slave1', [19]),
-                    ('test-slave2', [20]),
                 ])
 
     @defer.inlineCallbacks

@@ -132,7 +132,7 @@ class Builder(config.ReconfigurableServiceMixin,
 
         @returns: datetime instance or None, via Deferred
         """
-        unclaimed = yield self.master.db.buildrequests.getOldestBuildRequestInQueue(buildername=self.name)
+        unclaimed = yield self.master.db.buildrequests.getPrioritizedBuildRequestsInQueue(buildername=self.name)
 
         if unclaimed:
             unclaimed = [ brd['submitted_at'] for brd in unclaimed ]
@@ -140,6 +140,69 @@ class Builder(config.ReconfigurableServiceMixin,
             defer.returnValue(unclaimed[0])
         else:
             defer.returnValue(None)
+
+    def getSlaveBuilder(self, slavename):
+        for sb in self.bldr.slaves:
+            if sb.slave.slave_status.getName() == slavename:
+                return sb
+
+    @defer.inlineCallbacks
+    def getPrioritizedBuildRequest(self, queue=None):
+
+        """
+        Finds the next build request that should run on the builder
+        selecting the one with the higher priority and oldest submitted time.
+
+        it will return None right away if there are no slaves available for the task.
+
+        @param queue: None will select the higher priority overall pending buids,
+        if queue is 'unclaimed' will select only the pending builds and if queue='resume'
+        it will select only builds pending to be resume
+        @returns: a build request dictionary or None via Deferred
+        """
+
+        getSlavesFunc = self.getAvailableSlaves if queue == 'unclaimed' \
+            else self.getAvailableSlavesToResume if queue == 'resume' \
+            else self.getAllSlaves
+
+        availableSlavesToProcessBuildRequests = [slavebuilder.slave.slavename
+                                  for slavebuilder in getSlavesFunc()
+                                  if slavebuilder.isAvailable()]
+
+        if len(availableSlavesToProcessBuildRequests) < 1:
+            defer.returnValue(None)
+            return
+
+        # TODO: check performance when there are many things in queue, maybe it will be faster to limit the search
+        # we may need to do the same for KatanaBuildChooser
+        buildrequestQueue = yield self.master.db.buildrequests \
+            .getPrioritizedBuildRequestsInQueue(buildername=self.name,
+                                                queue=queue)
+
+        if buildrequestQueue:
+            sortedRequests = sorted(buildrequestQueue, key=lambda br: (-br["priority"], br["submitted_at"]))
+
+            def slaveIsAvailable(slavename):
+                slave_builder = self.getSlaveBuilder(slavename=slavename)
+                return slave_builder.isAvailable()
+
+            for br in sortedRequests:
+                if br["selected_slave"] is None:
+                    defer.returnValue(br)
+                    return
+
+                buildRequestShouldUseSelectedSlave = br["selected_slave"] \
+                                            and br['results'] == BEGINNING and self.shouldUseSelectedSlave()
+
+                resumingBuildRequestShouldUseSelectedSlave = br["selected_slave"] \
+                                            and br['results'] == RESUME and br['slavepool'] != 'startSlavenames'
+
+                if (buildRequestShouldUseSelectedSlave or resumingBuildRequestShouldUseSelectedSlave) \
+                        and slaveIsAvailable(slavename=br["selected_slave"]):
+                    defer.returnValue(br)
+                    return
+
+        defer.returnValue(None)
 
     def reclaimAllBuilds(self):
         brids = set()
