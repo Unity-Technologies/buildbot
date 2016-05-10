@@ -59,5 +59,5 @@ class LogoutKatanaResource(LogoutResource):
         s = authz.session(request)
         if s is not None:
             s.expire()
-            request.addCookie(COOKIE_KEY, None, expires=s.getExpiration(), path="/")
+            request.addCookie(COOKIE_KEY, "", expires=s.getExpiration(), path="/")
         return LogoutResource.performAction(self, request)
