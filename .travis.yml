@@ -18,8 +18,8 @@ before_script:
   - if [ "$TEST_TARGET" = "javascript" ]; then export TZ=Europe/Copenhagen; fi
 
 install:
-  - if [ "$TEST_TARGET" = "master" ]; then pip install -e . --process-dependency-links; fi
-  - if [ "$TEST_TARGET" = "slave" ]; then pip install -e slave; fi
+  - if [ "$TEST_TARGET" = "master" ]; then pip install . --process-dependency-links; fi
+  - if [ "$TEST_TARGET" = "slave" ]; then pip install slave; fi
   - if [ "$TEST_TARGET" != "javascript" ]; then pip install -v mock; fi
   - if [ "$TEST_TARGET" != "javascript" ]; then pip install -v pyflakes; fi
   - if [ "$TEST_TARGET" != "javascript" ]; then pip install -v coveralls; fi
