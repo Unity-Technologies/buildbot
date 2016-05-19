@@ -24,7 +24,7 @@ import os
 import glob
 
 from distutils.core import setup
-from buildbot import version
+from master.buildbot import version
 
 from distutils.command.install_data import install_data
 from distutils.command.sdist import sdist
@@ -89,7 +89,7 @@ be tracked over time, are more visible, and are therefore easier to
 improve.
 """
 
-scripts = ["bin/buildbot"]
+scripts = ["master/bin/buildbot"]
 # sdist is usually run on a non-Windows platform, but the buildslave.bat file
 # still needs to get packaged.
 if 'sdist' in sys.argv or sys.platform == 'win32':
@@ -116,10 +116,10 @@ setup_args = {
         'Topic :: Software Development :: Build Tools',
         'Topic :: Software Development :: Testing',
     ],
-    'package_dir': {'www': '../www'},
+    'package_dir': {'buildbot': 'master/buildbot'},
     'packages': ["buildbot",
                  "buildbot.status", "buildbot.status.web", "buildbot.status.web.hooks",
-                 "buildbot.changes",
+                 "buildbot.changes", "buildbot.changes.custom",
                  "buildbot.buildslave",
                  "buildbot.steps",
                  "buildbot.steps.package",
@@ -143,28 +143,28 @@ setup_args = {
                  ],
     'data_files': [
         ("buildbot", [
-            "buildbot/buildbot.png",
+            "master/buildbot/buildbot.png",
         ]),
         ("buildbot/db/migrate", [
-            "buildbot/db/migrate/migrate.cfg",
+            "master/buildbot/db/migrate/migrate.cfg",
         ]),
         include("buildbot/db/migrate/versions", "*.py"),
         ("buildbot/clients", [
-            "buildbot/clients/debug.glade",
+            "master/buildbot/clients/debug.glade",
         ]),
-        include("buildbot/status/web/files/", '*.png'),
-        include("www/fonts/katana_icons", '*', package_path="../www/fonts/katana_icons"),
-        include("www/fonts/leckerlione", '*', package_path="../www/fonts/leckerlione"),
-        include("www/fonts/pacifico", '*', package_path="../www/fonts/pacifico"),
-        include("www/images", '*', package_path="../www/images"),
-        include("www/prod/css", '*', package_path="../www/prod/css"),
-        include("www/prod/script", '*', package_path="../www/prod/script"),
-        ("www", ["../www/favicon.ico", "../www/robots.txt", "../www/templates_readme.txt"]),
-        include("www/templates", '*.html', package_path="../www/templates"),
-        include("www/templates", '*.xml', package_path="../www/templates"),
+        include("buildbot/status/web/files/", '*.png', package_path="master/buildbot/status/web/files"),
+        include("www/fonts/katana_icons", '*', package_path="www/fonts/katana_icons"),
+        include("www/fonts/leckerlione", '*', package_path="www/fonts/leckerlione"),
+        include("www/fonts/pacifico", '*', package_path="www/fonts/pacifico"),
+        include("www/images", '*', package_path="www/images"),
+        include("www/prod/css", '*', package_path="www/prod/css"),
+        include("www/prod/script", '*', package_path="www/prod/script"),
+        ("www", ["www/favicon.ico", "www/robots.txt", "www/templates_readme.txt"]),
+        include("www/templates", '*.html', package_path="www/templates"),
+        include("www/templates", '*.xml', package_path="www/templates"),
         ("buildbot/scripts", [
-            "buildbot/scripts/sample.cfg",
-            "buildbot/scripts/buildbot_tac.tmpl",
+            "master/buildbot/scripts/sample.cfg",
+            "master/buildbot/scripts/buildbot_tac.tmpl",
         ]),
     ],
     'scripts': scripts,
