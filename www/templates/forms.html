@@ -154,7 +154,7 @@
  </form>
 {% endmacro %}
 
-{% macro force_build_one_scheduler(force_url, authz, request, on_all, on_selected, builders, sch, default_props, slaves=[], is_admin=0) %}
+{% macro force_build_one_scheduler(force_url, authz, request, on_all, on_selected, builders, sch, default_props, slaves=[], is_admin=0, defaultPriority=50) %}
  <form method="post" name="force_build" action="{{ force_url }}" class="command_forcebuild">
 
   <!--
@@ -184,6 +184,11 @@
 
         
   {% endif %}
+  {% macro isSelectedPriority(priority) %}
+  {% if defaultPriority == priority %}
+  selected
+  {% endif %}
+  {% endmacro %}
   <input type='hidden' name='forcescheduler' value='{{sch.name}}' />
 <div class="content-blocks">
   <div class="general">
@@ -216,9 +221,9 @@
             <option value="100">Emergency</option>
             <option value="80">Very high</option>
             {% endif %}
-            <option value="75">High</option>
-            <option selected="selected" value="50">Medium (Default)</option>
-            <option value="25">Low</option>
+            <option value="75" {{ isSelectedPriority("75") }} >High</option>
+            <option value="50" {{ isSelectedPriority("50") }} >Medium</option>
+            <option value="25" {{ isSelectedPriority("25") }} >Low</option>
         </select>
         </div>
 
@@ -234,9 +239,9 @@
 
  </form>
 {% endmacro %}
-{% macro force_build(force_url, authz, request, on_all=False, on_selected=False, builders=[], force_schedulers={},default_props={}, slaves=[], is_admin=0) %}
+{% macro force_build(force_url, authz, request, on_all=False, on_selected=False, builders=[], force_schedulers={},default_props={}, slaves=[], is_admin=0, defaultPriority=50) %}
   {% for name, sch in force_schedulers.items() %}
-    {{ force_build_one_scheduler(force_url, authz, request, on_all, on_selected, builders, sch, default_props=default_props, slaves=slaves, is_admin=is_admin) }}
+  {{ force_build_one_scheduler(force_url, authz, request, on_all, on_selected, builders, sch, default_props=default_props, slaves=slaves, is_admin=is_admin, defaultPriority=defaultPriority) }}
   {% endfor %}
 
 {% endmacro %}

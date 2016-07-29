@@ -11,6 +11,12 @@ checked
 {% endif %}
 {% endmacro %}
 
+{% macro isSelectedPriority(priority) %}
+{% if user_settings["defaultPriority"] == priority %}
+selected
+{% endif %}
+{% endmacro %}
+
 {% block submenu %}
 {{submenu.buildsubmenu_usersettings(active_page="usersettings", pathNum=2)}}
 {% endblock %}
@@ -38,6 +44,17 @@ checked
                            value="{{ user_settings.oldBuildDays}}"/>
 			<span class="question-icon tooltip"
                   title="The number of days before builds are greyed out on build and builder tables">
+          	</span>
+                </div>
+                <div class="col-md-12">
+                    <label class="col-md-3" for="defaultPriority">Default priority</label>
+                    <select name="defaultPriority_setting">
+                        <option value="75" {{ isSelectedPriority("75") }} >High</option>
+                        <option value="50" {{ isSelectedPriority("50") }} >Medium (Default)</option>
+                        <option value="25" {{ isSelectedPriority("25") }} >Low</option>
+                    </select>
+			<span class="question-icon tooltip"
+                  title="Default priority for new builds.">
           	</span>
                 </div>
 
