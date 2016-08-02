@@ -177,8 +177,8 @@ class Subscriptions(dirs.DirsMixin, unittest.TestCase):
     def test_addChange_createUserObject_args(self):
         # who should come through as author
         return self.do_test_createUserObjects_args(
-                kwargs=dict(who='me', src='git'),
-                exp_args=(self.master, 'me', 'git'))
+                kwargs=dict(who='me', src='git', mail='john@doe.com'),
+                exp_args=(self.master, 'me', 'git', 'john@doe.com'))
                
     def test_buildset_subscription(self):
         self.master.db = mock.Mock()

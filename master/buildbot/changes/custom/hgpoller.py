@@ -101,11 +101,12 @@ class HgPoller(base.PollingChangeSource, StateMixin):
         return os.path.join(self.master.basedir, workdir)
 
     def _getRevDetails(self, rev):
-        """Return a deferred for (date, author, comments) of given rev.
+        """Return a deferred for (date, author, comments, mail) of given rev.
 
         Deferred will be in error if rev is unknown.
         """
-        args = ['log', '-r', rev, r'--template={date|hgdate}\n{author}\n{desc|strip}']
+        args = ['log', '-r', rev,
+                r'--template={date|hgdate}\n{author}\n{desc|strip}\n{author|email}']
         # Mercurial fails with status 255 if rev is unknown
         d = utils.getProcessOutput(self.hgbin, args, path=self._absWorkdir(),
                                    env=os.environ, errortoo=False )
@@ -115,8 +116,8 @@ class HgPoller(base.PollingChangeSource, StateMixin):
                 linesep = os.linesep
             else:
                 linesep = '\n'
-            date, author, comments = output.decode(self.encoding, "replace").split(
-                linesep, 2)
+            date, author, comments, mail = output.decode(self.encoding, "replace").split(
+                linesep, 3)
 
             if not self.usetimestamps:
                 stamp = None
@@ -127,7 +128,7 @@ class HgPoller(base.PollingChangeSource, StateMixin):
                     log.msg('hgpoller: caught exception converting output %r '
                             'to timestamp' % date)
                     raise
-            return stamp, author.strip(), comments.strip()
+            return stamp, author.strip(), comments.strip(), mail.strip()
 
         d.addCallback(process)
         return d
@@ -265,10 +266,11 @@ class HgPoller(base.PollingChangeSource, StateMixin):
         log.msg('hgpoller: processing %d changes: %r in %r'
                 % (len(revNodeList), revNodeList, self._absWorkdir()))
         for rev, node in revNodeList:
-            timestamp, author, comments = yield self._getRevDetails(
+            timestamp, author, comments, mail = yield self._getRevDetails(
                 node)
             yield self.master.addChange(
                 author=author,
+                mail=mail,
                 revision=node,
                 files=None,
                 comments=comments,

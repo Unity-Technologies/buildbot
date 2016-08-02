@@ -258,6 +258,17 @@ class GitPoller(base.PollingChangeSource, StateMixin):
         d.addCallback(process)
         return d
 
+    def _get_commit_mail(self, rev):
+        args = ['--no-walk', r'--format=%aE', rev, '--']
+        d = self._dovccmd('log', args, path=self.workdir)
+        def process(git_output):
+            git_output = git_output.decode(self.encoding)
+            if len(git_output) == 0:
+                raise EnvironmentError('could not get commit mail for rev')
+            return git_output
+        d.addCallback(process)
+        return d
+
     @defer.inlineCallbacks
     def _process_changes(self,branchname, lastRev, newRev):
         # get the change list
@@ -280,10 +291,11 @@ class GitPoller(base.PollingChangeSource, StateMixin):
 
         for rev in revList:
             dl = defer.DeferredList([
-                                        self._get_commit_timestamp(rev),
-                                        self._get_commit_author(rev),
-                                        self._get_commit_comments(rev),
-                                        ], consumeErrors=True)
+                self._get_commit_timestamp(rev),
+                self._get_commit_author(rev),
+                self._get_commit_comments(rev),
+                self._get_commit_mail(rev)
+            ], consumeErrors=True)
 
             results = yield dl
 
@@ -293,9 +305,10 @@ class GitPoller(base.PollingChangeSource, StateMixin):
                 # just fail on the first error; they're probably all related!
                 raise failures[0]
 
-            timestamp, author, comments = [ r[1] for r in results ]
+            timestamp, author, comments, mail = [ r[1] for r in results ]
             yield self.master.addChange(
                 author=author,
+                mail=mail,
                 revision=rev,
                 files=None,
                 comments=comments,

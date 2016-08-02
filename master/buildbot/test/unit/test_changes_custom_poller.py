@@ -32,7 +32,7 @@ class TestCustomPoller(unittest.TestCase):
         poller.master = Mock()
         self.changes_added = []
 
-        def addChange(files=None, comments=None, author=None, revision=None,
+        def addChange(files=None, comments=None, author=None, revision=None, mail=None,
                       when_timestamp=None, branch=None, repository='', codebase=None,
                       category='', project='', src=None):
             self.changes_added.append(Change(revision=revision, files=files,
@@ -95,9 +95,9 @@ class TestCustomPoller(unittest.TestCase):
                                        'stdout': defer.succeed('194446:70fc4de2ff3828a587d80f7528c1b5314c51550e7')})
 
         self.expected_commands.append({'command': ['log', '-r', '70fc4de2ff3828a587d80f7528c1b5314c51550e7',
-                                                   '--template={date|hgdate}\\n{author}\\n{desc|strip}'],
+                                                   '--template={date|hgdate}\\n{author}\\n{desc|strip}\\n{author|email}'],
                                        'stdout':
-                                           defer.succeed('1422983233 -3600\ndev4 <dev4@mail.com>\nlist of changes4')})
+                                           defer.succeed('1422983233 -3600\ndev4 <dev4@mail.com>\nlist of changes4\ndev4@mail.com')})
 
         self.expected_commands.append({'command':  ['log', '-b', '1.0/dev', '-r',
                                                     '2:117b9a27b5bf65d7e7b5edb48f7fd59dc4170486',
@@ -107,19 +107,19 @@ class TestCustomPoller(unittest.TestCase):
                                                                '4:117b9a27b5bf65d7e7b5edb48f7fd59dc4170486\n')})
 
         self.expected_commands.append({'command': ['log', '-r', '5553a6194a6393dfbec82f96654d52a76ddf844d',
-                                                   '--template={date|hgdate}\\n{author}\\n{desc|strip}'],
+                                                   '--template={date|hgdate}\\n{author}\\n{desc|strip}\\n{author|email}'],
                                        'stdout':
-                                           defer.succeed('1421583649 -3600\ndev3 <dev3@mail.com>\nlist of changes3')})
+                                           defer.succeed('1421583649 -3600\ndev3 <dev3@mail.com>\nlist of changes3\ndev3@mail.com')})
 
         self.expected_commands.append({'command': ['log', '-r', 'b2e48cbab3f0753f99db833acff6ca18096854bd',
-                                                   '--template={date|hgdate}\\n{author}\\n{desc|strip}'],
+                                                   '--template={date|hgdate}\\n{author}\\n{desc|strip}\\n{author|email}'],
                                        'stdout':
-                                           defer.succeed('1421667112 -3600\ndev2 <dev2@mail.com>\nlist of changes2')})
+                                           defer.succeed('1421667112 -3600\ndev2 <dev2@mail.com>\nlist of changes2\ndev2@mail.com')})
 
         self.expected_commands.append({'command': ['log', '-r', '117b9a27b5bf65d7e7b5edb48f7fd59dc4170486',
-                                                   '--template={date|hgdate}\\n{author}\\n{desc|strip}'],
+                                                   '--template={date|hgdate}\\n{author}\\n{desc|strip}\\n{author|email}'],
                                        'stdout':
-                                           defer.succeed('1421667230 -3600\ndev1 <dev1@mail.com>\nlist of changes1')})
+                                           defer.succeed('1421667230 -3600\ndev1 <dev1@mail.com>\nlist of changes1\ndev1@mail.com')})
 
         yield poller._processChangesAllBranches(None)
 
@@ -163,18 +163,22 @@ class TestCustomPoller(unittest.TestCase):
                                                    '-1', '--'],
                                        'stdout': defer.succeed('70fc4de2ff3828a587d80f7528c1b5314c51550e7')})
 
-        def getExpectedCmd(revision, when, developer, comments):
+        def getExpectedCmd(revision, when, developer, comments, mail):
             return [{'command': ['log', '--no-walk', '--format=%ct', revision, '--'],
                      'stdout': defer.succeed(when)},
                     {'command': ['log', '--no-walk', '--format=%aN <%aE>', revision, '--'],
                      'stdout': defer.succeed(developer)},
                     {'command': ['log', '--no-walk', '--format=%s%n%b', revision, '--'],
-                     'stdout': defer.succeed(comments)}]
+                     'stdout': defer.succeed(comments)},
+                    {'command': ['log', '--no-walk', '--format=%aE', revision, '--'],
+                     'stdout': defer.succeed(mail)},
+                    ]
 
         self.expected_commands += getExpectedCmd('70fc4de2ff3828a587d80f7528c1b5314c51550e7',
                                                  1422983233,
                                                  'dev4 <dev4@mail.com>',
-                                                 'list of changes4')
+                                                 'list of changes4',
+                                                 'dev4@mail.com')
 
         self.expected_commands\
             .append(
@@ -188,17 +192,20 @@ class TestCustomPoller(unittest.TestCase):
         self.expected_commands += getExpectedCmd('117b9a27b5bf65d7e7b5edb48f7fd59dc4170486',
                                                  1421667230,
                                                  'dev1 <dev1@mail.com>',
-                                                 'list of changes1')
+                                                 'list of changes1',
+                                                 'dev1@mail.com')
 
         self.expected_commands += getExpectedCmd('b2e48cbab3f0753f99db833acff6ca18096854bd',
                                                  1421667112,
                                                  'dev2 <dev2@mail.com>',
-                                                 'list of changes2')
+                                                 'list of changes2',
+                                                 'dev2@mail.com')
 
         self.expected_commands += getExpectedCmd('5553a6194a6393dfbec82f96654d52a76ddf844d',
                                                  1421583649,
                                                  'dev3 <dev3@mail.com>',
-                                                 'list of changes3')
+                                                 'list of changes3',
+                                                 'dev3@mail.com')
 
         yield poller._processChangesAllBranches(None)
 
