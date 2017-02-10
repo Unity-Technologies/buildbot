@@ -41,6 +41,7 @@ class SlaveStatus:
         self.master = None
         self.health = 0
         self.fqdn = None
+        self.tags = None
         self.eid = -1
 
     def getName(self):
@@ -189,6 +190,7 @@ class SlaveStatus:
         result['lastMessage'] = self.lastMessageReceived()
         result['health'] = self.health
         result['fqdn'] = self.fqdn
+        result['tags'] = self.tags
         result['slaveManagerUrl'] = self.master.config.slaveManagerUrl
         result['eid'] = self.eid
         result['graceful_shutdown'] = self.graceful_shutdown

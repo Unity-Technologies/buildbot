@@ -8,6 +8,9 @@
         <li><strong>Yumi URL: </strong> <a href="{{ slaveManagerUrl }}/{{ eid }}">{{ slaveManagerUrl }}/{{ eid }}</a>
         </li>
     {{/if}}
+    {{#if tags}}
+    <li><strong>Tags:</strong> {{ tags }}</li>
+    {{/if}}
 
     {{#if shutdownURL}}
         <form method="post" action="{{ shutdownURL}}" class="command">
