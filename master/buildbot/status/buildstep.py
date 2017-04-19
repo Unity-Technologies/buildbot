@@ -267,6 +267,8 @@ class BuildStepStatus(styles.Versioned):
         if results is not None:
             self.urls[name] = {'url': url, 'results': results}
 
+    def clearURLs(self):
+        self.urls.clear()
 
     def setText(self, text):
         self.text = text

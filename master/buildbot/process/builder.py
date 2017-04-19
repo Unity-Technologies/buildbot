@@ -26,7 +26,7 @@ from buildbot.status.progress import Expectations
 from buildbot.status.results import RETRY, RESUME, BEGINNING
 from buildbot.status.buildrequest import BuildRequestStatus
 from buildbot.process.properties import Properties
-from buildbot.process import buildrequest, slavebuilder
+from buildbot.process import buildrequest, slavebuilder, buildstatusupdater
 from buildbot.process.build import Build
 from buildbot.process.slavebuilder import BUILDING
 
@@ -498,6 +498,9 @@ class Builder(config.ReconfigurableServiceMixin,
                 main_br = build.requests[0]
                 bid = yield self.master.db.builds.addBuild(main_br.id, bs.number, slavebuilder.slave.slavename)
                 bids.append(bid)
+                # Add this build's URL to the description of any build steps that triggered it
+                url = yield self.master.status.getURLForBuildRequest(main_br.id, main_br.buildername, bs.number, self.config.friendly_name)
+                buildstatusupdater.set_statuses(main_br.buildChainID, main_br.buildername, url)
                 # add build information to merged br
                 for req in build.requests[1:]:
                     bid = yield self.master.db.builds.addBuild(req.id, bs.number)

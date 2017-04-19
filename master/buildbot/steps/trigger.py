@@ -19,6 +19,7 @@ from buildbot.process.properties import Properties, Property
 from twisted.python import log
 from twisted.internet import defer
 from buildbot import config
+from buildbot.process import buildstatusupdater
 from buildbot.status.results import DEPENDENCY_FAILURE, RETRY, WARNINGS, SKIPPED, CANCELED
 from twisted.python.failure import Failure
 from buildbot.schedulers.triggerable import TriggerableSchedulerStopped
@@ -178,6 +179,11 @@ class Trigger(ResumeBuild):
         for sch in triggered_schedulers:
             dl.append(sch.trigger(ss_for_trigger, set_props=props_to_set, triggeredbybrid=triggeredbybrid, reason=self.build.build_status.getReason()))
             triggered_names.append("'%s'" % sch.name)
+
+            # Add the build step's status object to buildstatusupdater so it's dependency can update it's description
+            for builderName in sch.builderNames:
+                buildstatusupdater.add_new_status(triggeredbybrid, builderName, self.step_status)
+
         self.step_status.setText(['Triggered:'] + triggered_names)
 
         if self.waitForFinish:
@@ -228,6 +234,7 @@ class Trigger(ResumeBuild):
             def add_links_multimaster(res):
                 # reverse the dictionary lookup for brid to builder name
                 brid_to_bn = dict((_brid,_bn) for _bn,_brid in brids.iteritems())
+                self.step_status.clearURLs()
                 for was_cb, builddicts in res:
                     if was_cb:
                         for build in builddicts:
@@ -245,6 +252,7 @@ class Trigger(ResumeBuild):
             def add_links(res):
                 # reverse the dictionary lookup for brid to builder name
                 brid_to_bn = dict((_brid,_bn) for _bn,_brid in brids.iteritems())
+                self.step_status.clearURLs()
                 for was_cb, builddicts in res:
                     if was_cb:
                         for build in builddicts:
@@ -264,6 +272,7 @@ class Trigger(ResumeBuild):
                 yield add_links_multimaster(res_builds)
             else:
                 add_links(res_builds)
+            buildstatusupdater.remove_all_matching_statusobj(self.step_status)
 
         log.msg("Trigger scheduler result %d " % result)
         self.finishIfRunning(result)
