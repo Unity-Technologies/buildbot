@@ -11,6 +11,7 @@ define(function (require) {
         timeElements = require('timeElements'),
         rtTable = require('rtGenericTable'),
         popup = require('ui.popup'),
+        rtBuilders = require('rtBuilders'),
         latestRevDict;
 
     require('libs/jquery.form');
@@ -84,10 +85,12 @@ define(function (require) {
             };
 
             options.aoColumns = [
-                {"mData": null, "sTitle": "#", "sWidth": "10%"},
-                {"mData": null, "sTitle": "Current build", "sWidth": "30%"},
-                {"mData": null, "sTitle": "Revision", "sWidth": "35%"},
-                {"mData": null, "sTitle": "Author", "sWidth": "25%", "sClass": "txt-align-right"}
+                {"mData": null, "sTitle": "#", "sWidth": "8%"},
+                {"mData": null, "sTitle": "Current build", "sWidth": "27%"},
+                {"mData": null, "sTitle": "Revision", "sWidth": "30%"},
+                {"mData": null, "sTitle": "Author", "sWidth": "19%", "sClass": "txt-align-right"}
+                ,
+                {"mData": null, "sTitle": "Tags", "sWidth": "16%"}
             ];
 
             options.aoColumnDefs = [
@@ -98,6 +101,7 @@ define(function (require) {
                     "aTargets": [3],
                     "sClass": "txt-align-left",
                     "mRender": function (data, type, full) {
+
                         var author = 'N/A';
                         if (full.properties !== undefined) {
                             $.each(full.properties, function (i, prop) {
@@ -107,6 +111,13 @@ define(function (require) {
                             });
                         }
                         return author;
+                    }
+                },
+                {
+                    "aTargets": [4],
+                    "sClass": "txt-align-left",
+                    "mRender": function (data, type, full) {
+                        return rtBuilderDetail.renderTags(full);
                     }
                 }
             ];
@@ -200,6 +211,18 @@ define(function (require) {
             ];
 
             return dt.initTable($tableElem, options);
+        },
+        renderTags: function(full) {
+            var tags = full.builder_tags ? rtBuilders.filterTags(full.builder_tags) : [];
+            tags = $.map(tags, function(tag) {
+                var css_class = "label-info";
+                if (tag.toLowerCase() === "unstable" || tag.toLowerCase() == "WIP") {
+                    css_class = "label-warning";
+                }
+
+                return {tag: tag, class: css_class}
+            });
+            return hb.partials.cells["cells:builderTags"]({tags: tags});
         }
     };
 
