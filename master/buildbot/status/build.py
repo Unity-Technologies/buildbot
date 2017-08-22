@@ -629,6 +629,14 @@ class BuildStatus(styles.Versioned, properties.PropertiesMixin):
                 self.artifacts = artifacts
             return self.artifacts
 
+    def get_trigger_steps_time(self):
+        trigger = 0
+        trigger_steps = [step.finished - step.started for step in self.steps if step.finished and str(TriggerType) == step.step_type ]
+        if len(trigger_steps) > 0:
+            trigger = reduce(lambda x, y: x + y, trigger_steps)
+
+        return trigger
+
     def asBaseDict(self, request=None, include_current_step=False, include_artifacts=False, include_failure_url=False):
         from buildbot.status.web.base import getCodebasesArg
 
@@ -643,6 +651,9 @@ class BuildStatus(styles.Versioned, properties.PropertiesMixin):
         result['number'] = self.getNumber()
         result['reason'] = self.getReason()
         result['submittedTime'] = self.submitted
+        trigger_time = self.get_trigger_steps_time()
+        if trigger_time:
+            result['triggerTime'] = trigger_time
         result['owners'] = self.owners
         result['brids'] = self.brids
         result['buildChainID'] = self.buildChainID

@@ -301,26 +301,28 @@ define(function (require) {
                 }
             };
         },
-        buildLength: function (index, timesProperty) {
+        buildLength: function (index, timesProperty, triggerTimeProperty) {
             return {
                 "aTargets": [index],
                 "sClass": "txt-align-left",
                 "mRender": function (data, type, full) {
                     var times = privFunc.getPropertyOnData(full, timesProperty);
+                    var triggerTime = triggerTimeProperty ? privFunc.getPropertyOnData(full, triggerTimeProperty) : 0;
+
                     if (times !== undefined) {
                         if (type === 'sort') {
                             if (times.length === 3) {
-                                return times[2] - times[0];
+                                return times[2] - times[0] - triggerTime;
                             }
                             if (times[1] > 0) {
-                                return times[1] - times[0];
+                                return times[1] - times[0] - triggerTime;
                             }
                             return "N/A";
                         }
                         if (times[1] > 0) {
-                            var d = moment.duration((times[1] - times[0]) * 1000);
+                            var d = moment.duration((times[1] - times[0] - triggerTime) * 1000);
                             if (times.length === 3) {
-                                d = moment.duration((times[2] - times[0]) * 1000);
+                                d = moment.duration((times[2] - times[0]- triggerTime) * 1000);
                             }
                             if (d.hours() > 0) {
                                 return "{0}h {1}m {2}s".format(d.hours(), d.minutes(), d.seconds());
@@ -408,7 +410,7 @@ define(function (require) {
                 }),
                 cellFunc.revision(2, "sourceStamps", hideBranches,latestRevDictFunc),
                 cellFunc.buildStatus(3),
-                cellFunc.buildLength(4, "times"),
+                cellFunc.buildLength(4, "times", "triggerTime"),
                 cellFunc.buildShortcuts(5),
                 cellFunc.slaveName(6, function (data) {
                     if (data.slave_friendly_name !== undefined) {

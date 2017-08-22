@@ -328,6 +328,8 @@ define(function (require) {
                         return data.latestBuild.times;
                     }
                     return undefined;
+                }, function(data) {
+                    return data.latestBuild && data.latestBuild.triggerTime ? data.latestBuild.triggerTime : 0
                 }),
                 {
                     "aTargets": [8],

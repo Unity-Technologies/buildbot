@@ -652,6 +652,24 @@ define(["jquery", "rtGenericTable", "project/handlebars-extend"], function ($, g
             setup(customBuildData);
             expect($tr.text()).toEqual("5m 0s");
         });
+
+        it("returns correctly with 2 times and trigger time property", function () {
+            var data = $.extend({}, buildData, { times: [1402648683.694, 1502648983.858], triggerTime: 14442 });
+            var $buildLengthDict = gt.cell.buildLength(0, "times", "triggerTime");
+            $tr = rawHTMLToJQuery($buildLengthDict.mRender(undefined, undefined, data), "<tr/>");
+
+            expect($tr.text()).toEqual("5h 50m 58s");
+        });
+
+        it("returns correctly with 2 times and trigger time func", function () {
+            var data = $.extend({}, buildData, { times: [1402648683.694, 1502648983.858] });
+            var $buildLengthDict = gt.cell.buildLength(0, "times", function(d) {
+                return 13900;
+            });
+            $tr = rawHTMLToJQuery($buildLengthDict.mRender(undefined, undefined, data), "<tr/>");
+
+            expect($tr.text()).toEqual("6h 0m 0s");
+        });
     });
 
     describe("A slave health cell", function () {

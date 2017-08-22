@@ -15,11 +15,15 @@
 
 from zope.interface import implements
 import mock
+import time
 from twisted.trial import unittest
 from buildbot.status import build
 from buildbot import interfaces
 from buildbot.test.fake import fakemaster
 from buildbot import util
+
+
+TriggerType = "<class 'buildbot.steps.trigger.Trigger'>"
 
 class FakeBuilderStatus:
     implements(interfaces.IBuilderStatus)
@@ -152,3 +156,37 @@ class TestBuildGetSourcestamps(unittest.TestCase):
                                  FakeSource('lib2', 'aaaaaaa'),
                                  FakeSource('lib3', '0000000')]
         self.assertEqual(sourcestamps, expected_sourcestamps)
+
+
+class TestBuildTriggerTime(unittest.TestCase):
+
+    def setUp(self):
+        self.builder_status = FakeBuilderStatus()
+        self.master = fakemaster.make_master()
+        self.build_status = build.BuildStatus(self.builder_status, self.master,1)
+        step1 = self.build_status.addStepWithName("Step1", None)
+        step1.stepStarted()
+        time.sleep(1.5)
+        step1.stepFinished(None)
+
+        step2 = self.build_status.addStepWithName("Step3", None)
+        step2.stepStarted()
+        time.sleep(0.5)
+        step2.stepFinished(None)
+        
+        self.build_status.properties = mock.Mock()
+
+
+    def test_trigger_time(self):
+        step3 = self.build_status.addStepWithName("Trigger", TriggerType)
+        step3.stepStarted()
+        time.sleep(2.4)
+        step3.stepFinished(None)
+
+        trigger_time =self.build_status.get_trigger_steps_time()
+        self.assertEquals(round(trigger_time, 1), 2.4)
+
+    def test_trigger_time_is_zero(self):
+        self.build_status.finished = True
+        trigger_time =self.build_status.get_trigger_steps_time()
+        self.assertEquals(trigger_time, 0)
