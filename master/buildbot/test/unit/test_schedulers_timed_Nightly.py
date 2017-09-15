@@ -222,15 +222,20 @@ class Nightly(scheduler.SchedulerMixin, unittest.TestCase):
         builder.name = 'test'
         self.master.botmaster.getBuilders = lambda: [builder]
 
-        def makeFakeSlave(name):
+        def makeFakeSlave(name, paused=False):
             builder_slave = Mock()
             slave = Mock()
             slave.slavename = name
             slave.isConnected = lambda: True
+            slave.isPaused = lambda: paused
             builder_slave.slave = slave
             return builder_slave
 
-        builder.slaves = [makeFakeSlave('slave-00'), makeFakeSlave('slave-01'), makeFakeSlave('slave-02')]
+        builder.slaves = [
+            makeFakeSlave('slave-00'),
+            makeFakeSlave('slave-01'),
+            makeFakeSlave('slave-02'),
+            makeFakeSlave('slave-03', paused=True)]
 
         self.clock.advance(0)
         while self.clock.seconds() < self.localtime_offset + 10*60:

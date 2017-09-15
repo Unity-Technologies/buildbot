@@ -79,7 +79,7 @@ class ScheduleOnMultipleSlavesMixin(object):
 
         output = []
         for s in slaves:
-            if s.slave.slavename is not None and s.slave.isConnected():
+            if s.slave.slavename is not None and s.slave.isConnected() and not s.slave.isPaused():
                 copy_properties = copy.deepcopy(properties)
                 copy_properties.setProperty("selected_slave", s.slave.slavename, "Scheduler")
                 kwargs['properties'] = copy_properties
