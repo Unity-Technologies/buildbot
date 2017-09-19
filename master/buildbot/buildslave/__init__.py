@@ -32,6 +32,8 @@ from buildbot.process.properties import Properties
 from buildbot.util import subscription
 from buildbot.util.eventual import eventually
 from buildbot import config
+from buildbot.status.results import RETRY, INTERRUPTED
+from buildbot import interfaces
 
 class AbstractBuildSlave(config.ReconfigurableServiceMixin, pb.Avatar,
                         service.MultiService):
@@ -241,6 +243,7 @@ class AbstractBuildSlave(config.ReconfigurableServiceMixin, pb.Avatar,
         # update the attached slave's notion of which builders are attached.
         # This assumes that the relevant builders have already been configured,
         # which is why the reconfig_priority is set low in this class.
+        yield self.updateRemovedBuilders()
         yield self.updateSlave()
 
         yield config.ReconfigurableServiceMixin.reconfigService(self,
@@ -341,12 +344,35 @@ class AbstractBuildSlave(config.ReconfigurableServiceMixin, pb.Avatar,
         subject = "Katana: buildslave %s was lost" % self.slavename
         return self._mail_missing_message(subject, text)
 
+    @defer.inlineCallbacks
+    def updateRemovedBuilders(self):
+        if not self._old_builder_list:
+            return
+
+        current_builders = [b.name for b in self.botmaster.getBuildersForSlave(self.slavename)]
+        previous_builers = [name for name, slavebuilddir in self._old_builder_list]
+
+        if current_builders == previous_builers:
+            return
+
+        removedBuilderList = set(previous_builers) - set(current_builders)
+
+        if removedBuilderList and self.slave_status.runningBuilds:
+            for build_status in self.slave_status.runningBuilds:
+                buildername = build_status.getBuilder().getName()
+                if buildername in removedBuilderList:
+                    selected_slave = build_status.getProperty('selected_slave')
+                    result = INTERRUPTED if selected_slave and selected_slave == self.slavename else RETRY
+                    reason = "Slave %s reconfigured, it has been removed from this builder." % self.slavename
+                    text = ["Katana has been reconfigured, it will automatically retry this build"]
+                    yield build_status.stopBuild(reason=reason, result=result, text=text)
 
     def updateSlave(self):
         """Called to add or remove builders after the slave has connected.
 
         @return: a Deferred that indicates when an attached slave has
         accepted the new builders and/or released the old ones."""
+
         if self.slave:
             return self.sendBuilderList()
         else:

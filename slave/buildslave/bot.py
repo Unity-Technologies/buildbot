@@ -170,9 +170,10 @@ class SlaveBuilder(pb.Referenceable, service.Service):
             log.msg(" .. but none was running")
             # Tell the master that the previous step is
             # completed as well.
-            d = self.prevStep.callRemote("complete", None)
-            d.addCallback(self.ackComplete)
-            d.addErrback(self._ackFailed, "sendComplete")
+            if self.prevStep:
+                d = self.prevStep.callRemote("complete", None)
+                d.addCallback(self.ackComplete)
+                d.addErrback(self._ackFailed, "sendComplete")
             return
         self.command.doInterrupt()
 
@@ -237,12 +238,16 @@ class SlaveBuilder(pb.Referenceable, service.Service):
         self.command = None
         if not self.running:
             log.msg(" but we weren't running, quitting silently")
-            return
+
         if self.remoteStep:
             self.remoteStep.dontNotifyOnDisconnect(self.lostRemoteStep)
             d = self.remoteStep.callRemote("complete", failure)
             d.addCallback(self.ackComplete)
-            d.addErrback(self._ackFailed, "sendComplete")
+            # Check ack if builder still attach to slave
+            if self.name in self.bot.builders.keys():
+                d.addErrback(self._ackFailed, "sendComplete")
+            else:
+                log.msg("Builder % has been detached %s" % self.name)
             self.prevStep = self.remoteStep
             self.remoteStep = None
 

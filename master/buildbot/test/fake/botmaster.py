@@ -44,3 +44,6 @@ class FakeBotMaster(service.MultiService):
 
     def maybeStartBuildsForSlave(self, slavename):
         self.buildsStartedForSlaves.append(slavename)
+
+    def maybeStartBuildsForBuilder(self, buildername):
+        pass

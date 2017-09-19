@@ -314,10 +314,9 @@ class Status(config.ReconfigurableServiceMixin, service.MultiService):
         """
         @rtype: L{BuilderStatus}
         """
-        if name in self.botmaster.builders:
-            return self.botmaster.builders[name].builder_status
+        builder = self.botmaster.builders.get(name)
 
-        return None
+        return builder.builder_status if builder else None
 
     def getSlaveNames(self):
         return self.botmaster.slaves.keys()
@@ -371,10 +370,11 @@ class Status(config.ReconfigurableServiceMixin, service.MultiService):
 
         all_builds = []
         for bn in builder_names:
-            b = self.getBuilder(bn)
-            finished_builds = yield b.getFinishedBuildsByNumbers(buildnumbers=lastBuilds[bn],
-                                                                 results=results)
-            all_builds.extend(finished_builds)
+            builder = self.getBuilder(bn)
+            if builder:
+                finished_builds = yield builder.getFinishedBuildsByNumbers(buildnumbers=lastBuilds[bn],
+                                                                     results=results)
+                all_builds.extend(finished_builds)
 
         sorted_builds = sorted(all_builds, key=lambda build: build.finished, reverse=True)
         defer.returnValue(sorted_builds)

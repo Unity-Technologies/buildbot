@@ -378,7 +378,7 @@ class TestBuildRequest(unittest.TestCase):
         d = master.db.buildrequests.getBuildRequest(1)
 
         def checkCanceled(br):
-            self.assertEquals((br['complete'], br['results']), (False, BEGINNING))
+            self.assertEquals((br['complete'], br['results']), (True, CANCELED))
 
         d.addCallback(lambda brdict: buildrequest.BuildRequest.fromBrdict(master, brdict))
         d.addCallback(lambda breq: buildrequest.BuildRequestControl(None, breq))

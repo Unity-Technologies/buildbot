@@ -25,6 +25,7 @@ from buildbot import interfaces, locks, config, util
 from buildbot.process import metrics
 from buildbot.process.buildrequest import BuildRequest, BuildRequestControl
 from buildbot.process.buildrequestdistributor import KatanaBuildRequestDistributor
+from buildbot.status.results import INTERRUPTED
 
 class BotMaster(config.ReconfigurableServiceMixin, service.MultiService):
 
@@ -218,6 +219,7 @@ class BotMaster(config.ReconfigurableServiceMixin, service.MultiService):
             for n in removed_names:
                 slave = old_by_name[n]
 
+                yield slave.disconnect()
                 del self.slaves[n]
                 slave.master = None
                 slave.botmaster = None
@@ -245,6 +247,15 @@ class BotMaster(config.ReconfigurableServiceMixin, service.MultiService):
                 yield brc.cancel()
 
     @defer.inlineCallbacks
+    def stopAllBuilds(self, builder):
+        if not builder.builder_status:
+            return
+
+        reason = "Builder %s has been removed" % builder.name
+        for build_status in builder.builder_status.currentBuilds:
+            yield build_status.stopBuild(reason=reason, result=INTERRUPTED, text=[reason])
+
+    @defer.inlineCallbacks
     def reconfigServiceBuilders(self, new_config):
 
         timer = metrics.Timer("BotMaster.reconfigServiceBuilders")
@@ -269,9 +280,9 @@ class BotMaster(config.ReconfigurableServiceMixin, service.MultiService):
             for n in removed_names:
                 builder = old_by_name[n]
 
+                yield self.stopAllBuilds(builder)
+
                 del self.builders[n]
-                builder.master = None
-                builder.botmaster = None
 
                 yield defer.maybeDeferred(lambda :
                         builder.disownServiceParent())

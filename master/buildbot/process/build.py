@@ -547,11 +547,10 @@ class Build(properties.PropertiesMixin):
         log.msg("%s.lostRemote" % self)
         self.remote = None
         self.result = RETRY
-        self.text = ["lost", "remote"]
+        self.text = ["Katana will automatically retry this build"]
         if self.currentStep:
             # this should cause the step to finish.
             log.msg(" stopping currentStep", self.currentStep)
-            self.text += ["slave"]
             self.currentStep.addErrorResult(Failure(error.ConnectionLost()))
             self.currentStep.interrupt(Failure(error.ConnectionLost()))
         else:
@@ -561,7 +560,7 @@ class Build(properties.PropertiesMixin):
                 lock.stopWaitingUntilAvailable(self, access, d)
                 d.callback(None)
 
-    def stopBuild(self, reason="<no reason given>"):
+    def stopBuild(self, reason="<no reason given>", result=None, text=None):
         # the idea here is to let the user cancel a build because, e.g.,
         # they realized they committed a bug and they don't want to waste
         # the time building something that they know will fail. Another
@@ -575,15 +574,21 @@ class Build(properties.PropertiesMixin):
         # TODO: include 'reason' in this point event
         self.builder.builder_status.addPointEvent(['interrupt'])
         self.stopped = True
-        if self.currentStep:
-            self.currentStep.interrupt(reason)
+        interruptDeferred = defer.Deferred()
 
-        self.result = INTERRUPTED
+        if self.currentStep:
+            interruptDeferred = self.currentStep.interrupt(reason)
+
+        # TODO: validate result is valid katana result
+        self.result = INTERRUPTED if result is None else result
+        self.text = text or self.text
 
         if self._acquiringLock:
             lock, access, d = self._acquiringLock
             lock.stopWaitingUntilAvailable(self, access, d)
             d.callback(None)
+
+        return interruptDeferred
 
     def allStepsDone(self):
         if self.result == FAILURE or self.result == DEPENDENCY_FAILURE:
@@ -593,7 +598,7 @@ class Build(properties.PropertiesMixin):
         elif self.result == EXCEPTION:
             text = ["Build Caught Exception"]
         elif self.result == RETRY:
-            text = ["Build Caught Exception, Will Retry"]
+            text = self.text or ["Katana will automatically retry this build"]
         elif self.result == INTERRUPTED:
             text = ["Build Interrupted"]
         else:

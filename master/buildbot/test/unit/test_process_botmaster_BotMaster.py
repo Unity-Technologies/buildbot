@@ -120,6 +120,9 @@ class FakeBuildSlave(config.ReconfigurableServiceMixin, service.Service):
         self.reconfig_count += 1
         return defer.succeed(None)
 
+    def disconnect(self):
+        pass
+
 
 class FakeBuildSlave2(FakeBuildSlave):
     pass
@@ -207,21 +210,21 @@ class TestBotMaster(unittest.TestCase):
     def test_reconfigServiceBuilders_add_remove(self):
         bc = config.BuilderConfig(name='bldr', factory=factory.BuildFactory(),
                             slavename='f', project="project")
-        self.new_config.builders = [ bc ]
+        self.new_config.builders = [bc]
 
         yield self.botmaster.reconfigServiceBuilders(self.new_config)
 
         bldr = self.botmaster.builders['bldr']
         self.assertIdentical(bldr.parent, self.botmaster)
         self.assertIdentical(bldr.master, self.master)
-        self.assertEqual(self.botmaster.builderNames, [ 'bldr' ])
+        self.assertEqual(self.botmaster.builderNames, ['bldr'])
 
-        self.new_config.builders = [ ]
+        self.new_config.builders = []
 
         yield self.botmaster.reconfigServiceBuilders(self.new_config)
 
         self.assertIdentical(bldr.parent, None)
-        self.assertIdentical(bldr.master, None)
+        self.assertTrue(bldr.master is not None)
         self.assertEqual(self.botmaster.builders, {})
         self.assertEqual(self.botmaster.builderNames, [])
 

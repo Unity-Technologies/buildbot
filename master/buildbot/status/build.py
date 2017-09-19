@@ -520,6 +520,19 @@ class BuildStatus(styles.Versioned, properties.PropertiesMixin):
         for s in self.steps:
             s.checkLogfiles()
 
+    @defer.inlineCallbacks
+    def stopBuild(self, reason, result=None, text=None):
+        if self.isFinished():
+            return
+
+        c = interfaces.IControl(self.master)
+        buildername = self.getBuilder().getName()
+        bldrc = c.getBuilder(buildername)
+        if bldrc:
+            bldc = bldrc.getBuild(self.getNumber())
+            if bldc:
+                yield bldc.stopBuild(reason=reason, result=result, text=text)
+
     def cancelYourself(self):
         self.results = CANCELED
         self.started = util.now() if self.started is None else self.started

@@ -153,12 +153,7 @@ class StopBuildActionResource(ActionResource):
         reason = ("The web-page 'Stop Build' button was pressed by "
                   "'%s': %s\n" % (html.escape(name), html.escape(comments)))
 
-        c = interfaces.IControl(self.getBuildmaster(req))
-        bldrc = c.getBuilder(self.build_status.getBuilder().getName())
-        if bldrc:
-            bldc = bldrc.getBuild(self.build_status.getNumber())
-            if bldc:
-                bldc.stopBuild(reason)
+        yield self.build_status.stopBuild(reason=reason)
 
         defer.returnValue(path_to_build(req, self.build_status))
 

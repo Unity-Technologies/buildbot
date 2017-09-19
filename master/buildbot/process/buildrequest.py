@@ -291,14 +291,25 @@ class BuildRequestControl:
 
     @defer.inlineCallbacks
     def cancel(self):
-        if self.original_builder:
-            d = self.original_request.cancelBuildRequest()
+        d = self.original_request.cancelBuildRequest()
 
-            if self.original_request.results== RESUME:
-                brs = BuildRequestStatus(self.original_builder.name, self.brid, self.original_builder.master.status)
-                brsdict = yield brs.asDict_async()
-                if 'lastBuildNumber' in brsdict and brsdict['lastBuildNumber']:
-                    d.addCallback(lambda _:
-                                  self.original_builder.builder_status.cancelBuildOnResume(brsdict['lastBuildNumber']))
+        if self.original_request.results == RESUME:
+            buildrequest_status = BuildRequestStatus(
+                self.original_request.buildername,
+                self.brid,
+                self.original_request.master.status
+            )
 
-            d.addErrback(log.err, 'while cancelling build request')
+            buildrequest_status_dict = yield buildrequest_status.asDict_async()
+
+            def updateCanceledBuildStatus(buildrequest_status_dict, d):
+                if self.original_builder and 'lastBuildNumber' in buildrequest_status_dict and buildrequest_status_dict['lastBuildNumber']:
+                    d.addCallback(
+                        lambda _: self.original_builder.builder_status.cancelBuildOnResume(
+                            buildrequest_status_dict['lastBuildNumber']
+                        )
+                    )
+
+            updateCanceledBuildStatus(buildrequest_status_dict, d)
+
+        d.addErrback(log.err, 'while cancelling build request')

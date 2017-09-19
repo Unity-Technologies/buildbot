@@ -143,11 +143,22 @@ class Trigger(ResumeBuild):
         if self.running:
             self.finished(result)
 
-    def checkDisconection(self, result, results):
-        if (isinstance(results, Failure) and results.check(TriggerableSchedulerStopped)) or results == RETRY:
+    def setResult(self, results):
+        was_reconfigured = (isinstance(results, Failure) and results.check(TriggerableSchedulerStopped))
+        if was_reconfigured or results == RETRY:
+            if was_reconfigured:
+                self.setStatusText("Katana has been reconfigured")
+
             result = RETRY
             self.addErrorResult(results)
-        return result
+            return result
+
+        self.setStatusText("Dependency failed to build")
+        return DEPENDENCY_FAILURE
+
+    def setStatusText(self, text):
+        self.step_status.setText([text])
+        self.step_status.setText2(["(%s)" % text])
 
     @defer.inlineCallbacks
     def start(self):
@@ -208,11 +219,7 @@ class Trigger(ResumeBuild):
                 was_failure = True
 
         if was_exception or was_failure:
-            result = DEPENDENCY_FAILURE
-            self.step_status.setText(["Dependency failed to build."])
-            self.step_status.setText2(["(dependency failed to build)"])
-            result = self.checkDisconection(result, results)
-
+            result = self.setResult(results)
         else:
             result = results if results in (SUCCESS, WARNINGS, FAILURE, SKIPPED, EXCEPTION, RETRY, CANCELED) else SUCCESS
 
