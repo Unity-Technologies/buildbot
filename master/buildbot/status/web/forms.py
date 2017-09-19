@@ -94,6 +94,7 @@ class ForceBuildDialogPage(HtmlResource):
 
             authz = self.getAuthz(request)
             cxt['is_admin'] = yield authz.getUserAttr(request, 'is_admin', 0)
+            cxt['defaultPriority'] = yield authz.getUserAttr(request, 'defaultPriority', 50)
             cxt['rt_update'] = args
             request.args = args
 
