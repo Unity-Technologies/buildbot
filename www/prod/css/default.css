@@ -677,14 +677,14 @@ td.visible-print,th.visible-print{display:table-cell!important}}
 .state-text.ignored:before{content:"Ignored"}
 .table-katana .ignored{border-top:1px solid #fff}
 .log-list-ignored>a:before{background-color:#CBDCE6}
-.dependency-failure{background-color:#FCF2F2}
+.dependency-failure{background-color:#E8E8E8}
 .color-blind-mode .dependency-failure{background-color:#c20a0a!important;color:#fff}
 .color-blind-mode .dependency-failure a{color:#fff!important}
 .color-blind-mode .dependency-list .dependency-failure:before{content:"Dependency failure"}
 .color-blind-mode .log-list-dependency-failure>a:before{background-color:#c20a0a}
 .state-text.dependency-failure:before{content:"Dependency failure"}
 .table-katana .dependency-failure{border-top:1px solid #fff}
-.log-list-dependency-failure>a:before{background-color:#FCF2F2}
+.log-list-dependency-failure>a:before{background-color:#E8E8E8}
 .not-rebuilt{background-color:#F8FCF2}
 .color-blind-mode .not-rebuilt{background-color:#78c20a!important;color:#fff}
 .color-blind-mode .not-rebuilt a{color:#fff!important}
