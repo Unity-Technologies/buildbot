@@ -26,6 +26,7 @@ from twisted.python.failure import Failure
 
 import buildbot
 import buildbot.pbmanager
+from buildbot.process.buildrequestmerger import BuildRequestMerger
 from buildbot.util import subscription, epoch2datetime
 from buildbot.status.master import Status
 from buildbot.changes import changes
@@ -150,6 +151,9 @@ class BuildMaster(config.ReconfigurableServiceMixin, service.MultiService):
 
         self.status = Status(self)
         self.status.setServiceParent(self)
+
+        self.buildrequest_merger = BuildRequestMerger(self)
+        self.buildrequest_merger.setServiceParent(self)
 
     # setup and reconfig handling
 
@@ -580,7 +584,7 @@ class BuildMaster(config.ReconfigurableServiceMixin, service.MultiService):
         including returning a Deferred, but also potentially triggers the
         resulting builds.
         """
-        d = self.db.buildsets.addBuildset(**kwargs)
+        d = self.buildrequest_merger.addBuildset(**kwargs)
         def notify((bsid,brids)):
             log.msg("added buildset %d to database" % bsid)
             # note that buildset additions are only reported on this master

@@ -31,7 +31,10 @@ class BuildsetsConnectorComponent(base.DBConnectorComponent):
     # Documentation is in developer/database.rst
 
     def addBuildset(self, sourcestampsetid, reason, properties, triggeredbybrid=None,
-                    builderNames=None, external_idstring=None,  _reactor=reactor):
+                    builderNames=None, external_idstring=None, _reactor=reactor, breqsToMerge=None):
+        if breqsToMerge is None:
+            breqsToMerge = {}
+
         def thd(conn):
             priority = Priority.Default
             buildsets_tbl = self.db.model.buildsets
@@ -89,11 +92,12 @@ class BuildsetsConnectorComponent(base.DBConnectorComponent):
             for buildername in builderNames:
                 self.check_length(br_tbl.c.buildername, buildername)
                 res = conn.execute(ins,
-                    dict(buildsetid=bsid, buildername=buildername, priority=priority,
-                        claimed_at=0, claimed_by_name=None,
-                        claimed_by_incarnation=None, complete=0, results=-1,
-                        submitted_at=submitted_at, complete_at=None,
-                        triggeredbybrid=triggeredbybrid, startbrid=startbrid))
+                                   dict(buildsetid=bsid, buildername=buildername, priority=priority,
+                                        claimed_at=0, claimed_by_name=None,
+                                        claimed_by_incarnation=None, complete=0, results=-1,
+                                        submitted_at=submitted_at, complete_at=None,
+                                        triggeredbybrid=triggeredbybrid, startbrid=startbrid,
+                                        mergeBrid=breqsToMerge.get(buildername, None)))
 
                 brids[buildername] = res.inserted_primary_key[0]
 

@@ -716,7 +716,8 @@ class BuilderConfig:
             builddir=None, slavebuilddir=None, factory=None, category=None,
             nextSlave=None, nextBuild=None, locks=None, env=None,
             properties=None, mergeRequests=None, project=None, friendly_name=None, tags=[], description=None,
-            canStartBuild=None, excludeGlobalFactory=False, customBuildUrls=None, build_tags=None):
+            canStartBuild=None, excludeGlobalFactory=False, customBuildUrls=None, build_tags=None,
+            mergeProperties=None):
 
         # name is required, and can't start with '_'
         if not name or not isinstance(name, basestring):
@@ -817,6 +818,10 @@ class BuilderConfig:
         self.project = project
         self.tags = tags
         self.build_tags = build_tags
+
+        # Additional properties that must match to allow buildrequests of
+        # this config to be merged
+        self.mergeProperties = mergeProperties or []
 
         self.description = description
 

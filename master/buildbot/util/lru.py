@@ -50,6 +50,12 @@ class LRUCache(object):
         elif key in self.weakrefs:
             self.weakrefs[key] = value
 
+    def put_new(self, key, value):
+        self.cache[key] = value
+        self.weakrefs[key] = value
+        self._ref_key(key)
+        self._purge()
+
     def get(self, key, **miss_fn_kwargs):
         try:
             return self._get_hit(key)
@@ -60,10 +66,7 @@ class LRUCache(object):
 
         result = self.miss_fn(key, **miss_fn_kwargs)
         if result is not None:
-            self.cache[key] = result
-            self.weakrefs[key] = result
-            self._ref_key(key)
-            self._purge()
+            self.put_new(key, result)
 
         return result
 
@@ -206,14 +209,7 @@ class AsyncLRUCache(LRUCache):
 
         def handle_result(result):
             if result is not None:
-                self.cache[key] = result
-                self.weakrefs[key] = result
-
-                # reference the key once, possibly standing in for multiple
-                # concurrent accesses
-                self._ref_key(key)
-
-                self._purge()
+                self.put_new(key, result)
 
             # and fire all of the waiting Deferreds
             dlist = concurrent.pop(key)

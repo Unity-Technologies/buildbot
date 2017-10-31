@@ -148,10 +148,15 @@ class BuildChooserBase(object):
         if breq is None:
             return None
 
+        return self._getBrdictForBuildRequestId(breq.id)
+
+    def _getBrdictForBuildRequestId(self, brid, pendingBrdicts=None):
+        # Turn a BuildRequest id back into a brdict. This operates from the
+        # cache, which must be set up once via _fetchUnclaimedBrdicts
+
         if pendingBrdicts is None:
             pendingBrdicts = self.unclaimedBrdicts
-        
-        brid = breq.id
+
         for brdict in pendingBrdicts:
             if brid == brdict['brid']:
                 return brdict

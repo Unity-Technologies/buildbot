@@ -183,7 +183,8 @@ class Subscriptions(dirs.DirsMixin, unittest.TestCase):
                
     def test_buildset_subscription(self):
         self.master.db = mock.Mock()
-        self.master.db.buildsets.addBuildset.return_value = \
+        self.master.buildrequest_merger = mock.Mock()
+        self.master.buildrequest_merger.addBuildset.return_value = \
             defer.succeed((938593, dict(a=19,b=20)))
 
         cb = mock.Mock()
@@ -191,9 +192,12 @@ class Subscriptions(dirs.DirsMixin, unittest.TestCase):
         self.assertIsInstance(sub, subscription.Subscription)
 
         d = self.master.addBuildset(ssid=999)
+
         def check((bsid,brids)):
             # master called the right thing in the db component
-            self.master.db.buildsets.addBuildset.assert_called_with(ssid=999)
+            self.master.buildrequest_merger.addBuildset.assert_called_with(
+                ssid=999
+            )
             # addBuildset returned the right value
             self.assertEqual((bsid,brids), (938593, dict(a=19,b=20)))
             # and the notification sub was called correctly
