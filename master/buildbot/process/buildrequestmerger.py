@@ -106,7 +106,7 @@ class BuildRequestMerger(config.ReconfigurableServiceMixin, service.Service):
         """
         # Get sourcestamp information for this. It is safe to this multiple times
         # because `sourcestamps.getSourceStamps` is cached.
-        sourcestamps = self.master.db.sourcestamps.getSourceStamps(
+        sourcestamps = yield self.master.db.sourcestamps.getSourceStamps(
             sourcestampsetid)
 
         # Get an initial list of all breqs of the same name, in the same chain
