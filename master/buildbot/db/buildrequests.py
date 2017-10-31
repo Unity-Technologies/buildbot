@@ -1302,59 +1302,6 @@ class BuildRequestsConnectorComponent(base.DBConnectorComponent):
 
         return self.db.pool.do(thd)
 
-    def getTopLevelChainBrid(self, brid):
-        """
-        Given a build request id `brid`, find the top level build that started
-        the chain containing it.
-
-        :param str brid:
-        :return str:
-            Build request id
-        """
-        def thd(conn):
-            breq_tbl = self.db.model.buildrequests
-
-            q = sa.select(breq_tbl.c.startbrid) \
-                .where(breq_tbl.c.id == brid)
-
-            startbrid = conn.execute(q).fetchone().startbrid
-
-            # If startbrid is None, then `brid` IS the chain's top level build
-            return startbrid or brid
-
-        return self.db.pool.do(thd)
-
-    def getMergeTargetsInChain(self, startbrid, builderName):
-        """
-        :param str startbrid:
-            brid of top level build in a chain
-        :param str builderName:
-        :return tuple(str,str):
-            (buildsetid, brid) for all potential merge target buildrequests in
-            the same chain with the same `builderName`
-        """
-        def thd(conn):
-            # Select buildrequests `buildsetit` and `brid`
-            # q = sa.select(breq_tbl.c.buildsetid, breq_tbl.c.id) \
-
-            # For builders in the same chain
-            #     .where(breq_tbl.c.startbrid == startbrid) \
-
-            # With the same name
-            #     .where(breq_tbl.c.buildername == builderName) \
-
-            # That were not merged themselves (only merge against one / main target)
-            #     .where(breq_tbl.c.mergebrid == None) \
-            breq_tbl = self.db.model.buildrequests
-            q = sa.select(breq_tbl.c.buildsetid, breq_tbl.c.id) \
-                .where(breq_tbl.c.startbrid == startbrid) \
-                .where(breq_tbl.c.buildername == builderName) \
-                .where(breq_tbl.c.mergebrid == None)
-            res = conn.execute(q)
-            return res.fetchall() or []
-
-        return self.db.pool.do(thd)
-
     def _brdictFromRow(self, row, master_objectid):
         claimed = mine = False
         claimed_at = None

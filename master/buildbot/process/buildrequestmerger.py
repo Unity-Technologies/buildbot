@@ -6,7 +6,7 @@ from twisted.internet import reactor, defer
 from twisted.python import log
 
 from buildbot import config
-from buildbot.util.lru import LRUCache, AsyncLRUCache
+from buildbot.util.lru import AsyncLRUCache
 
 
 class BuildRequestMerger(config.ReconfigurableServiceMixin, service.Service):
@@ -24,9 +24,6 @@ class BuildRequestMerger(config.ReconfigurableServiceMixin, service.Service):
 
     def __init__(self, master):
         self.master = master
-        self.startbrid_cache = AsyncLRUCache(
-            miss_fn=self.master.db.buildrequests.getTopLevelChainBrid,
-            max_size=20000)
         self.properties_cache = AsyncLRUCache(
             miss_fn=None,  # Cache contents are handled manually
             max_size=20000)
@@ -54,28 +51,28 @@ class BuildRequestMerger(config.ReconfigurableServiceMixin, service.Service):
             'sourcestampsetid': sourcestampsetid,
             'builderNames': builderNames,
         }
-
         # For every builderName in this buildset, check which ones can be merged
         breqsToMerge = {}
+
         for builderName in builderNames:
             builderMergeStart = time.time()
 
-            if triggeredbybrid is None:
-                # This is a top level build, so it cannot be merged
+            if 'selected_slave' in properties:
+                # Never merge if a build request has a selected_slave
+                # This might happen when a user wants to test the same build in different
+                # slaves to look for instabilities
                 mergeBrid = None
             else:
-                # If we are not the top level build, find this chain's top level build
-                startbrid = yield self.startbrid_cache.get(triggeredbybrid)
-
-                # And look for a builder that matches the configured properties
+                # Look for a builder that matches the configured properties/sourcestamps
                 mergeProperties = self.master.botmaster.builders[
                     builderName].config.mergeProperties
-                mergeBrid = yield self._getMergeBrid(
-                    startbrid, builderName, properties, mergeProperties)
 
-                # If we found one, add it to our merge map
-                if mergeBrid:
-                    breqsToMerge[builderName] = mergeBrid
+                mergeBrid = yield self._getMergeBrid(
+                    builderName, sourcestampsetid, properties, mergeProperties)
+
+            # If we found one, add it to our merge map
+            if mergeBrid:
+                breqsToMerge[builderName] = mergeBrid
 
             buildsetLog[builderName] = {
                 'elapsed': time.time() - builderMergeStart,
@@ -98,43 +95,36 @@ class BuildRequestMerger(config.ReconfigurableServiceMixin, service.Service):
         defer.returnValue(result)
 
     @defer.inlineCallbacks
-    def _getMergeBrid(self, startbrid, builderName, properties,
+    def _getMergeBrid(self, builderName, sourcestampsetid, properties,
                       mergeProperties):
         """
-        :param str startbrid:
-        :param str builderName:
-        :param dict(str,str) properties:
-        :param list(str) mergeProperties:
-
         :return str or None:
             Build request id for a request that can be merged into (matches
             buiderName, properties and sourcestamp information).
 
             `None` if no match was found.
         """
-        # Never merge if a build request has a selected_slave
-        # This might happen when a user wants to test the same build in different
-        # slaves to look for instabilities
-        if 'selected_slave' in properties:
-            defer.returnValue(None)
-            return
+        # Get sourcestamp information for this. It is safe to this multiple times
+        # because `sourcestamps.getSourceStamps` is cached.
+        sourcestamps = self.master.db.sourcestamps.getSourceStamps(
+            sourcestampsetid)
 
         # Get an initial list of all breqs of the same name, in the same chain
-        matchingBreqs = yield self.master.db.buildrequests.getMergeTargetsInChain(
-            startbrid, builderName)
+        matchingBrdicts = yield self.master.db.buildrequests.getBuildRequests(
+            buildername=builderName, complete=False, sourcestamps=sourcestamps)
 
-        # Get properties for matching breqs (done in a single queyr for optimization)
+        # Get properties for matching breqs (done in a single query for optimization)
         otherProperties = yield self._getBuildsetsProperties(
-            [bsid for bsid, _brid in matchingBreqs])
+            [brdict.brid for brdict in matchingBrdicts])
 
         # Check if relevant properties match
-        for otherBuildsetid, otherBrid in matchingBreqs:
+        for brdict in matchingBrdicts:
             if self._propertiesMatch(properties,
-                                     otherProperties[otherBuildsetid],
+                                     otherProperties[brdict.buildsetid],
                                      mergeProperties):
 
                 # If they match, merge against this buildrequest
-                defer.returnValue(otherBrid)
+                defer.returnValue(brdict.brid)
                 return
 
         # If we can't find any match, return None
