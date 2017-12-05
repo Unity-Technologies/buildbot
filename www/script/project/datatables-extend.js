@@ -134,6 +134,7 @@ define(function (require) {
             var oTable = $tableElem.dataTable(options);
 
             // Set the marquee in the input field on load
+            $('.dataTables_filter').addClass('col-md-2 col-sm-2 col-xs-6');
             $('.dataTables_filter input').attr('placeholder', 'Filter results');
 
             return oTable;

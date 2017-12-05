@@ -484,17 +484,15 @@ pre.code {
   }
 }
 
-#tags-content {
-    margin-right: 20px;
-    margin-bottom: 5px;
+#tags-content{
 	padding: 0;
     .select2-container {
-      width: 270px;
+      width: 100%;
     }
     > label {
-        top: 7px;
         position: relative;
         font-weight: bold;
+		width: 100%;
         @include text-shadow(0 1px 0 white);
         .select2-choices {
             @include box-shadow(1px 1px 0 white, 2px 2px 4px #DEDEDE inset, 0 0 4px whitesmoke inset);
@@ -515,21 +513,25 @@ pre.code {
             line-height: 12px;
         }
 	}
+	.more-info-box & {
+		height: 32px;
+    }
+    form {
+      display: inline;
+    }
+}
+
+.tags-buttons {
 	button {
 		vertical-align: top;
-		margin-top: 8px;
+		margin-top: 0;
 		font-family: katana_icons;
 		min-width: 36px;
 		font-size: 19px;
 		padding: 1px;
+		width: 100%;
 	}
-	.more-info-box & {
-		height: 32px;
-    }
-    > form {
-      display: inline;
-
-    }
+	padding-right: 0;
 }
 
 .builder-filters {

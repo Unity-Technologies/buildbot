@@ -1,21 +1,18 @@
-<div class="row">
-    <div class="border-table-holder col-md-10">
-        <div id="overScrollJS" class="inner-table-holder">
-
-            <table class="codebase-branch-table">
-                <tr class="codebase">
-                    <th>Codebase</th>
-                    {{#each codebases}}
-                        <td>{{codebase}}</td>
-                    {{/each}}
-                </tr>
-                <tr class="branch">
-                    <th>Branch</th>
-                    {{#each codebases}}
-                        <td>{{branch}}</td>
-                    {{/each}}
-                </tr>
-            </table>
-        </div>
+<div class="border-table-holder col-md-2 col-sm-2 col-xs-6">
+    <div id="overScrollJS" class="inner-table-holder">
+        <table class="codebase-branch-table">
+            <tr class="codebase">
+                <th>Codebase</th>
+                {{#each codebases}}
+                    <td>{{codebase}}</td>
+                {{/each}}
+            </tr>
+            <tr class="branch">
+                <th>Branch</th>
+                {{#each codebases}}
+                    <td>{{branch}}</td>
+                {{/each}}
+            </tr>
+        </table>
     </div>
 </div>

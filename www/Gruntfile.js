@@ -220,6 +220,7 @@ module.exports = function (grunt) {
         }
         grunt.task.run(["sass", "cssmin", "handlebars:compile", "requirejs:" + target]);
     });
+    grunt.registerTask("styles", ["sass", "cssmin"]);
     grunt.registerTask("test", ["handlebars:compile", "karma:unit"]);
     grunt.registerTask("coverage", ["karma:coverage", "open:coverage"]);
     grunt.registerTask("default", ["build", "watch"]);

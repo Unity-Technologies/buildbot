@@ -1,14 +1,18 @@
 {{#if tags}}
-    <div class="row">
-        <div class="col-md-12" id="tags-content">
-            <label><input class="col-md-2" type="hidden" id="tags-select" placeholder="Filter tags"/></label>
-
-            <button id="btn-unstable" class="tooltip btn btn-danger" type="SUBMIT" data-title="Toggle visibility of Unstable/WIP builds, while the button is red you will see Unstable/WIP builds."></button>
+    <div class="col-lg-2 col-md-3 col-sm-4" id="tags-content">
+        <label><input type="hidden" id="tags-select" placeholder="Filter tags"/></label>
+    </div>
+    <div class="col-md-1 col-sm-2 tags-buttons">
+        <div class="row">
+            <div class="col-xs-6">
+                <button id  ="btn-unstable" class="tooltip btn btn-danger" type="SUBMIT" data-title="Toggle visibility of Unstable/WIP builds, while the button is red you will see Unstable/WIP builds."></button>
+            </div>
             {{#if ../compareURL}}
-                <form method="POST" action="{{../compareURL}}">
-                    <button id="compareBranchesBtn" class="btn btn-katana" data-title="Compare builder results across branches" type="SUBMIT"></button>
-                </form>
+                <div class="col-xs-6">
+                    <form method="POST" action="{{../compareURL}}">
+                        <button id="compareBranchesBtn" class="btn btn-katana" data-title="Compare builder results across branches" type="SUBMIT"></button>
+                    </form>
+                </div>
             {{/if}}
         </div>
-    </div>
 {{/if}}
