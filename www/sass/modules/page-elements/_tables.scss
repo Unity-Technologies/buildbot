@@ -328,10 +328,10 @@ ul.building {
 
 .border-table-holder {
     @include box-shadow(1px 0 0px #FFFFFF inset);
-    margin-top: 20px;
+    //margin-top: 20px;
     padding-left: 5px;
     @media (min-width: $screen-md-min) {
-        margin-top: 8px;
+        margin-top: 0;
         border-left: 2px solid lighten($brand-katana, 20%);
         padding: 0 0 0 12px;
     }
@@ -479,17 +479,12 @@ table.codebase-branch-table {
 }
 
 .dataTables_filter {
-    width: 120px;
-    margin-right: 20px;
-    clear: both;
-    float: none;
     @media (min-width: $screen-md-min) {
         width: 140px;
         clear: none;
         float: left;
     }
     > label {
-        top: 7px;
         position: relative;
         font-weight: bold;
         @include text-shadow(0 1px 0 white);
@@ -506,7 +501,6 @@ table.codebase-branch-table {
             &:focus {
                 outline: none;
                 @include box-shadow($focusShadow, 1px 1px 0 white, 2px 2px 4px #DEDEDE inset, 0 0 4px whitesmoke inset);
-
             }
         }
         &:after {
