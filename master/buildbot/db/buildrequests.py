@@ -1302,6 +1302,49 @@ class BuildRequestsConnectorComponent(base.DBConnectorComponent):
 
         return self.db.pool.do(thd)
 
+    def getTopBuildData(self, build_chain_id):
+        def thd(conn):
+            build_request_tbl = self.db.model.buildrequests
+            builds_tbl = self.db.model.builds
+
+            query = sa.select(
+                columns=[build_request_tbl.c.buildername, builds_tbl.c.number],
+                from_obj=[
+                    build_request_tbl.join(
+                        builds_tbl,
+                        build_request_tbl.c.id == builds_tbl.c.brid,
+                    ),
+                ],
+                whereclause=(build_request_tbl.c.id == build_chain_id),
+                order_by=sa.desc(builds_tbl.c.number),
+                limit=1,
+                use_labels=True,
+            )
+
+            result = conn.execute(query)
+            row = result.first()
+
+            if row:
+                return {'buildername': row['buildrequests_buildername'], 'build_number': row['builds_number']}
+
+            return {}
+
+        return self.db.pool.do(thd)
+
+    def haveMergedBuildRequests(self, brids):
+        def thd(conn):
+            build_request_tbl = self.db.model.buildrequests
+
+            query = sa.select(
+                columns=[sa.exists().where(build_request_tbl.c.mergebrid.in_(brids))],
+            )
+
+            result, = conn.execute(query).first()
+
+            return bool(result)
+
+        return self.db.pool.do(thd)
+
     def _brdictFromRow(self, row, master_objectid):
         claimed = mine = False
         claimed_at = None

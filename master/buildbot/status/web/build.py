@@ -13,16 +13,17 @@
 #
 # Copyright Buildbot Team Members
 import json
+import time
+import urllib
 
 from twisted.web import html
 from twisted.internet import defer, reactor
 from twisted.web.util import Redirect, DeferredResource
-
-import urllib, time
 from twisted.python import log
+
 from buildbot.status.web.base import HtmlResource, \
      css_classes, path_to_build, path_to_builder, path_to_slave, \
-    path_to_codebases, path_to_builders, path_to_step, getCodebasesArg, \
+     path_to_codebases, path_to_builders, path_to_step, getCodebasesArg, \
      getAndCheckProperties, ActionResource, path_to_authzfail, \
      getRequestCharset, path_to_json_build
 from buildbot.schedulers.forcesched import ForceScheduler, TextParameter
@@ -30,7 +31,8 @@ from buildbot.status.web.status_json import BuildJsonResource
 from buildbot.status.web.step import StepsResource
 from buildbot.status.web.tests import TestsResource
 from buildbot import util, interfaces
-from buildbot.status.results import RESUME, EXCEPTION
+from buildbot.status.results import RESUME
+
 
 class ForceBuildActionResource(ActionResource):
 
@@ -291,6 +293,8 @@ class StatusResourceBuild(HtmlResource):
         cxt['slave_debug_url'] = self.getBuildmaster(req).config.slave_debug_url
         cxt['customBuildUrls'] = b.getCustomUrls()
         codebases_arg = cxt['codebases_arg'] = getCodebasesArg(request=req)
+        cxt['build_chain_top_build_url'] = yield b.getTopBuildUrl(codebases_arg)
+        cxt['has_merged_builds'] = yield b.hasMergedBuilds()
 
         if not b.isFinished():
             cxt['stop_build_chain'] = False

@@ -15,8 +15,13 @@
 
 from __future__ import with_statement
 
-import os, shutil, re
+import os
+import re
+import shutil
+import time
+from urlparse import urljoin
 from cPickle import dump
+
 from zope.interface import implements
 from twisted.python import log, runtime, components
 from twisted.persisted import styles
@@ -26,7 +31,6 @@ from buildbot.process import properties
 from buildbot.process.buildtag import BuildTag
 from buildbot.status.buildstep import BuildStepStatus
 from buildbot.status.results import SUCCESS, NOT_REBUILT, SKIPPED, RESUME, CANCELED, RETRY, MERGED
-import time
 
 # Avoid doing an import since it creates circular reference
 
@@ -266,6 +270,31 @@ class BuildStatus(styles.Versioned, properties.PropertiesMixin):
     def getBuildUrl(self):
         return self.master.status.getURLForThing(self)['path'] if 'path' in self.master.status.getURLForThing(
             self) else ''
+
+    def getTopBuildUrl(self, codebases_arg):
+        d = self.master.db.buildrequests.getTopBuildData(self.buildChainID)
+
+        def createTopBuildUrl(build_chain):
+            buildername = build_chain['buildername']
+            build_number = build_chain['build_number']
+
+            if self.builder.name == buildername and self.number == build_number:
+                return None
+
+            build_path = self.master.status.getBuildersPath(buildername, build_number)
+
+            return '{}{}'.format(urljoin('/', build_path), codebases_arg)
+
+        def handleKeyError(failure):
+            failure.trap(KeyError)
+
+        d.addCallback(createTopBuildUrl)
+        d.addErrback(handleKeyError)
+
+        return d
+
+    def hasMergedBuilds(self):
+        return self.master.db.buildrequests.haveMergedBuildRequests(self.brids)
 
     # subscription interface
 

@@ -15,6 +15,7 @@
 
 from zope.interface import implements
 import mock
+from twisted.internet import defer
 from twisted.trial import unittest
 from buildbot.status import build
 from buildbot import interfaces
@@ -152,3 +153,52 @@ class TestBuildGetSourcestamps(unittest.TestCase):
                                  FakeSource('lib2', 'aaaaaaa'),
                                  FakeSource('lib3', '0000000')]
         self.assertEqual(sourcestamps, expected_sourcestamps)
+
+
+class TestBuildGetTopBuildUrl(unittest.TestCase):
+    BUILD_NUMBER = 20
+
+    def setUp(self):
+        self.builder_status = FakeBuilderStatus()
+        self.master = fakemaster.make_master(wantDb=True, testcase='Tests for getTopBuildUrl method')
+        self.build_status = build.BuildStatus(self.builder_status, self.master, self.BUILD_NUMBER)
+
+        def generate_build_url(buildername, build_number):
+            return 'http://katana/projects/test-project/builders/{}/builds/{}'.format(buildername, build_number)
+
+        self.master.status.getBuildersPath = mock.Mock(side_effect=generate_build_url)
+
+    @defer.inlineCallbacks
+    def test_getTopBuildUrl_codebases_arg(self):
+        self.builder_status.name = 'child-builder'
+
+        query_result = {'buildername': 'parent-builder', 'build_number': 12}
+        self.master.db.buildrequests.getTopBuildData = mock.Mock(return_value=defer.succeed(query_result))
+        
+        top_build_url = yield self.build_status.getTopBuildUrl('?test-repository_branch=master')
+
+        assert top_build_url == (
+            'http://katana/projects/test-project/builders/parent-builder/builds/12?test-repository_branch=master'
+        )
+
+    @defer.inlineCallbacks
+    def test_getTopBuildUrl_check_if_build_is_top_build(self):
+        self.builder_status.name = 'parent-builder'
+        self.build_status.number = 12
+
+        query_result = {'buildername': 'parent-builder', 'build_number': 12}
+        self.master.db.buildrequests.getTopBuildData = mock.Mock(return_value=defer.succeed(query_result))
+
+        top_build_url = yield self.build_status.getTopBuildUrl('?test-repository_branch=master')
+
+        assert top_build_url is None
+        assert self.master.status.getBuildersPath.called is False
+
+    @defer.inlineCallbacks
+    def test_getTopBuildUrl_buildChainID_is_none(self):
+        self.master.db.buildrequests.getTopBuildData = mock.Mock(return_value=defer.succeed({}))
+
+        top_build_url = yield self.build_status.getTopBuildUrl('?test-repository_branch=master')
+
+        assert top_build_url is None
+        assert self.master.status.getBuildersPath.called is False

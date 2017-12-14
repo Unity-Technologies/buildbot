@@ -550,3 +550,12 @@ div.label-div {
         text-overflow: ellipsis;
     }
 }
+
+.no-padding {
+   padding: 0;
+}
+
+.row-vertical-align {
+	display: flex;
+	align-items: center;
+}

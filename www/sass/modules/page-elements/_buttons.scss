@@ -42,8 +42,16 @@ a.grey-btn,
   
     text-transform: uppercase;
     display: inline-block;
+
     &:hover {
-		color: #A4A4A4;    	
+		color: #A4A4A4;
+    }
+
+    &.disabled {
+        cursor: not-allowed;
+        pointer-events: none;
+        opacity: .65;
+        @include box-shadow(none);
     }
 }
 

@@ -21,6 +21,28 @@
 
             </div>
 
+            <div class="divider"></div>
+
+            <div class="row row-vertical-align">
+                <div class="col-md-4 col-sm-4 col-xs-4 no-padding">
+                    {% if build_chain_top_build_url %}
+                        <a class="grey-btn text-center" href="{{ build_chain_top_build_url }}">Go to top build in chain</a>
+                    {% else %}
+                        <a class="grey-btn text-center disabled" href="">Go to top build in chain</a>
+                    {% endif %}
+                </div>
+
+                <div class="col-md-8 col-sm-8 col-xs-8">
+                    {% if has_merged_builds and build_chain_top_build_url %}
+                        Other builds were merged into this build. Stopping it may affect those builds.
+                    {% elif has_merged_builds and not build_chain_top_build_url %}
+                        Build doesn't belong to any chains, but other builds were merged into this build. Stopping it may affect those builds.
+                    {% elif not build_chain_top_build_url %}
+                        Build does not belong to any chain.
+                    {% endif %}
+                </div>
+            </div>
+
             {% if b.isResuming() %}
                 <div class="divider"></div>
                 <h2 class="head-2">
