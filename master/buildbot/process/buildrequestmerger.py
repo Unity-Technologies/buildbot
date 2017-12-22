@@ -111,7 +111,7 @@ class BuildRequestMerger(config.ReconfigurableServiceMixin, service.Service):
         # marked as merged, and will not run.
         _master_objectid = yield self.master.getObjectId()
 
-        # Create a lock on every build being merged into
+        # Create a lock on every build we can merge into.
         acquiring_locks_start = time.time()
         build_merging_locks = {
             builderName : self.getMergingLocks([brDict['brid']])[0]
@@ -123,6 +123,14 @@ class BuildRequestMerger(config.ReconfigurableServiceMixin, service.Service):
                 time.time() - acquiring_locks_start
         buildsetLog['elapsed_acquiring_locks'] = time.time() - acquiring_locks_start
         using_locks_start = time.time()
+
+        # Some builds might have finished before we locked into them, so release those.
+        finishedBrDicts = yield self.master.db.buildrequests.getBuildRequests(
+            brids=[brDict['brid'] for brDict in brDictsToMerge.values()],
+            complete=True)
+        for brDict in finishedBrDicts:
+            brDictsToMerge.pop(brDict['buildername'])
+            build_merging_locks.pop(brDict['buildername']).release()
 
         # Add buildset
         try:
