@@ -40,7 +40,8 @@ class BaseParameter(object, ComparableMixin):
     required = False
     multiple = False
     regex = None
-    debug=True
+    debug = True
+    readonly = False
     hide = False
 
     compare_attrs = ('name', 'label', 'type', 'default', 'required', 'multiple', 'regex', 'debug', 'hide')
@@ -175,7 +176,8 @@ class BooleanParameter(BaseParameter):
     type = ["bool"]
 
     def getFromKwargs(self, kwargs):
-        return kwargs.get(self.fullName, None) == [True]
+        value = kwargs.get(self.fullName)
+        return value == [True] or value == ['True']
 
 
 class UserNameParameter(StringParameter):

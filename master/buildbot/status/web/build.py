@@ -32,73 +32,6 @@ from buildbot.status.web.tests import TestsResource
 from buildbot import util, interfaces
 from buildbot.status.results import RESUME, EXCEPTION
 
-class ForceBuildActionResource(ActionResource):
-
-    def __init__(self, build_status, builder):
-        self.build_status = build_status
-        self.builder = builder
-        self.action = "forceBuild"
-
-    @defer.inlineCallbacks
-    def performAction(self, req):
-        url = None
-        authz = self.getAuthz(req)
-        res = yield authz.actionAllowed(self.action, req, self.builder)
-
-        if not res:
-            url = path_to_authzfail(req)
-        else:
-            # get a control object
-            c = interfaces.IControl(self.getBuildmaster(req))
-            bc = c.getBuilder(self.builder.getName())
-
-            b = self.build_status
-            builder_name = urllib.quote(self.builder.getName(), safe='')
-            builder_name_link = urllib.quote(self.builder.getName(), safe='')
-            log.msg("web rebuild of build %s:%s" % (builder_name, b.getNumber()))
-            name =authz.getUsernameFull(req)
-            comments = req.args.get("comments", ["<no reason specified>"])[0]
-            comments.decode(getRequestCharset(req))
-            reason = ("The web-page 'rebuild' button was pressed "
-                      "'%s': %s\n" % (name, comments))
-
-            useSourcestamp = req.args.get("useSourcestamp", None)
-            if useSourcestamp and useSourcestamp==['updated']:
-                absolute=False
-            else:
-                absolute=True
-
-            msg = ""
-            extraProperties = getAndCheckProperties(req)
-            if not bc or not b.isFinished() or extraProperties is None:
-                msg = "could not rebuild: "
-                if b.isFinished():
-                    msg += "build still not finished "
-                if bc:
-                    msg += "could not get builder control"
-            else:
-                tup = yield bc.rebuildBuild(b,
-                    reason=reason, 
-                    extraProperties=extraProperties,
-                    absolute=absolute,
-                    newOwner=authz.getUsernameFull(req))
-                # rebuildBuild returns None on error (?!)
-                if not tup:
-                    msg = "rebuilding a build failed "+ str(tup)
-            # we're at
-            # http://localhost:8080/builders/NAME/builds/5/rebuild?[args]
-            # Where should we send them?
-            #
-            # Ideally it would be to the per-build page that they just started,
-            # but we don't know the build number for it yet (besides, it might
-            # have to wait for a current build to finish). The next-most
-            # preferred place is somewhere that the user can see tangible
-            # evidence of their build starting (or to see the reason that it
-            # didn't start). This should be the Builder page.
-
-            url = path_to_builder(req, self.builder), msg
-        defer.returnValue(url)
-
 class CancelBuildActionResource(ActionResource):
     def __init__(self, build_status):
         self.build_status = build_status
@@ -414,7 +347,6 @@ class StatusResourceBuild(HtmlResource):
                 p['label'] = param.label
             ps.append(p)
 
-
         (start, end) = b.getTimes()
         cxt['start'] = time.ctime(start)
         cxt['elapsed'] = None
@@ -424,7 +356,7 @@ class StatusResourceBuild(HtmlResource):
         elif start:
             now = util.now()
             cxt['elapsed'] = util.formatInterval(now - start)
-            
+
         has_changes = False
         for ss in sourcestamps:
             has_changes = has_changes or ss.changes
@@ -483,10 +415,6 @@ class StatusResourceBuild(HtmlResource):
     def stopchain(self, req):
         return StopBuildChainActionResource(self.build_status)
 
-    def rebuild(self, req):
-        return ForceBuildActionResource(self.build_status,
-                                        self.build_status.getBuilder())
-
     def cancelBuild(self, req):
         return CancelBuildActionResource(self.build_status)
 
@@ -497,8 +425,6 @@ class StatusResourceBuild(HtmlResource):
             return self.cancelBuild(req)
         if path == "stopchain":
             return self.stopchain(req)
-        if path == "rebuild":
-            return self.rebuild(req)
         if path == "steps":
             return StepsResource(self.build_status)
         if path == "tests":

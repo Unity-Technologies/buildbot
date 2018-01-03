@@ -198,7 +198,8 @@ a.no-artifacts {
 	}
 }
 
-div.force-text {
+div.force-text,
+div.force-int {
 	clear: both;
     margin-bottom: 11px;
     @include pie-clearfix;

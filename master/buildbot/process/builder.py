@@ -784,6 +784,7 @@ class BuilderControl:
 
         properties_dict = dict((k,(v,s)) for (k,v,s) in properties.asList())
         # set buildLatestRev to False when rebuilding
+        owners = None
         if 'buildLatestRev' in properties_dict.keys():
             (v,s) = properties_dict['buildLatestRev']
             properties_dict['buildLatestRev'] = (False, s)

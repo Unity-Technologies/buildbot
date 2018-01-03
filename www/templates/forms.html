@@ -77,71 +77,96 @@
 {% endmacro %}
 
 {% macro force_build_scheduler_parameter(f, authz, request, sch, default_props) %}
-    {% if f and not f.hide and (f.fullName != "username" or not authz.authenticated(request)) %}
-
+  {% if f and (f.fullName != "username" or not authz.authenticated(request)) %}
     <div class="{% for subtype in f.type %} force-{{subtype}}{%endfor%}"{% if f.name %} id="force-{{sch.name}}-{{f.fullName}}"{% endif %}>
-    {% if f.fullName and 'username' in f.fullName %}
+
+    {% if f.readonly and (
+        not default_props[sch.name+"."+f.fullName]
+        and default_props[sch.name+"."+f.fullName] != 0
+      ) %}
+      <!-- {{f.fullName}} has no value and is readonly -->
+
+    {% elif f.hide %}
+      <input type="hidden" name="{{f.fullName}}" value='{{default_props[sch.name+"."+f.fullName]}}' />
+
+    {% elif f.fullName and 'username' in f.fullName %}
       <span class="label">{{f.label}}</span>
-       <input type='text' size='{{f.size}}' name="usernamedisabled" id="usernameDisabled" disabled />
-       <input type="hidden" name="{{f.fullName}}" id="usernameHidden" />
+      <input type='text' size='{{f.size}}' name="usernamedisabled" id="usernameDisabled" disabled />
+      <input type="hidden" name="{{f.fullName}}" id="usernameHidden" />
+
     {% elif f.fullName and '_branch' in f.fullName %}
-        <span class="label">{{f.label}}</span>
-        {% if request.args|length > 0 and f.fullName in request.args.keys() %}
-            <span class="label">{{ ' '.join(request.args[f.fullName])}}</span>
-            <input type="hidden" name='{{f.fullName}}' value='{{ ' '.join(request.args[f.fullName])}}' />
-         {% else %}
-            <span class="label">{{default_props[sch.name+"."+f.fullName]}}</span>
-            <input type="hidden" name='{{f.fullName}}' value='{{default_props[sch.name+"."+f.fullName]}}' />
-          {% endif %}
+      <span class="label">{{f.label}}</span>
+      {% if request.args|length > 0 and f.fullName in request.args.keys() %}
+        <span class="label">{{ ' '.join(request.args[f.fullName])}}</span>
+        <input type="hidden" name='{{f.fullName}}' value='{{ ' '.join(request.args[f.fullName])}}' />
+      {% else %}
+        <span class="label">{{default_props[sch.name+"."+f.fullName]}}</span>
+        <input type="hidden" name='{{f.fullName}}' value='{{default_props[sch.name+"."+f.fullName]}}' />
+      {% endif %}
+
     {% elif 'text' in f.type or 'int' in f.type %}
-      
+      <span class="label">{{f.label}}</span>
       {% if 'Reason' in f.label %}
-       
+        <span title="This will be filled out automatically if a build is triggered as a dependency. Otherwise, you can write a reason here for why you are requesting the build (this information will show up on the build details page)." class="question-icon tooltip">
+        </span>
       {% endif %}
-       <span class="label">{{f.label}}</span>
-      {% if 'Reason' in f.label %}
-          <span title="This will be filled out automatically if a build is triggered as a dependency. Otherwise, you can write a reason here for why you are requesting the build (this information will show up on the build details page)." class="question-icon tooltip">
-          </span>
+      <input type='text' size='{{f.size}}'  name='{{f.fullName}}' value='{{default_props[sch.name+"."+f.fullName]}}' {{ f.readonly and "disabled" or ""}} />
+      {% if f.readonly %}
+        <input type="hidden" name="{{f.fullName}}" value='{{default_props[sch.name+"."+f.fullName]}}' />
       {% endif %}
-       <input type='text' size='{{f.size}}'  name='{{f.fullName}}' value='{{default_props[sch.name+"."+f.fullName]}}' />
-     
+
     {% elif 'Force Rebuild' in f.label%}
-       <label class="display-flex">
-          <input type='checkbox' name='checkbox' value='{{f.fullName}}' {{default_props[sch.name+"."+f.fullName]}} />
-          <span class="label">{{f.label}}</span>
-          <span title="Checking this box will force the build to be rebuilt, regardless of whether or not there is a previous successful build at the same revision. Dependencies will not be rebuilt if a suitable build is available.  Should be selected in most cases." class="tooltip question-icon">
-          </span>
-       </label>
-    {% elif 'Force Chain Rebuild' in f.label%}
-       <label class="display-flex">
-         <input type='checkbox' name='checkbox' value='{{f.fullName}}' {{default_props[sch.name+"."+f.fullName]}} />
-         <span class="label">{{f.label}}</span>
-         <span title="Checking this box will force the build to be rebuilt, regardless of whether or not there is a previous successful build at the same revision. If the build triggers dependencies, those will also be rebuilt." class="tooltip question-icon">
-         </span>
+      <label class="display-flex">
+        <input type='checkbox' name='checkbox' value='{{f.fullName}}' {{ default_props[sch.name+"."+f.fullName] and "checked" or ""}} />
+        <span class="label">{{f.label}}</span>
+        <span title="Checking this box will force the build to be rebuilt, regardless of whether or not there is a previous successful build at the same revision. Dependencies will not be rebuilt if a suitable build is available.  Should be selected in most cases." class="tooltip question-icon">
+        </span>
       </label>
+
+    {% elif 'Force Chain Rebuild' in f.label%}
+      <label class="display-flex">
+        <input type='checkbox' name='checkbox' value='{{f.fullName}}' {{ default_props[sch.name+"."+f.fullName] and "checked" or ""}} />
+        <span class="label">{{f.label}}</span>
+        <span title="Checking this box will force the build to be rebuilt, regardless of whether or not there is a previous successful build at the same revision. If the build triggers dependencies, those will also be rebuilt." class="tooltip question-icon">
+        </span>
+      </label>
+
     {% elif 'bool' in f.type %}
       <label class="display-flex">
-        <input type='checkbox' name='checkbox' value='{{f.fullName}}' {{default_props[sch.name+"."+f.fullName]}} />
+        <input type='checkbox' name='checkbox' value='{{f.fullName}}' {{ default_props[sch.name+"."+f.fullName] and "checked" or ""}} {{ f.readonly and "disabled readonly" or ""}} />
         <span class="label">{{f.label}}</span>
-          {% if f.tooltip %}<span title='{{f.tooltip}}' class="tooltip question-icon"></span>{% endif %}
+        {% if f.tooltip %}<span title='{{f.tooltip}}' class="tooltip question-icon"></span>{% endif %}
+        {% if f.readonly %}
+          <input type="hidden" name="{{f.fullName}}" value='{{default_props[sch.name+"."+f.fullName]}}' />
+        {% endif %}
       </label>
+
     {% elif 'textarea' in f.type %}
-       <span class="label">{{f.label}}</span>
-       <textarea name='{{f.fullName}}' rows={{f.rows}} cols={{f.cols}}>{{default_props[sch.name+"."+f.fullName]}}</textarea>
+      <span class="label">{{f.label}}</span>
+      <textarea name='{{f.fullName}}' rows={{f.rows}} cols={{f.cols}} {{ f.readonly and "disabled" or ""}}>{{default_props[sch.name+"."+f.fullName]}}</textarea>
+      {% if f.readonly %}
+        <input type="hidden" name="{{f.fullName}}" value='{{default_props[sch.name+"."+f.fullName]}}' />
+      {% endif %}
+
     {% elif 'list' in f.type %}
-       <span class="label">{{f.label}}</span>
-            <span class="select">
-            <select name='{{f.fullName}}' {{ f.multiple and "multiple" or ""}}>
-             {% for c in f.choices %}
-                <option {{(c in default_props[sch.name+"."+f.fullName]) and "selected" or ""}}>{{c}}</option>
-            {% endfor %}
-       </select>
-       </span>
+      <span class="label">{{f.label}}</span>
+      <span class="select">
+        <select name='{{f.fullName}}' {{ f.multiple and "multiple" or ""}} {{ f.readonly and "disabled" or ""}}>
+          {% for c in f.choices %}
+            <option {{(c in default_props[sch.name+"."+f.fullName]) and "selected" or ""}}>{{c}}</option>
+          {% endfor %}
+        </select>
+        {% if f.readonly %}
+          <input type="hidden" name="{{f.fullName}}" value='{{default_props[sch.name+"."+f.fullName]}}' />
+        {% endif %}
+      </span>
+
     {% elif 'nested' in f.type %}
       {% if f.label %}<span class="label">{{f.label}}</span>{% endif %}
       {% for subfield in f.fields %}
         {{ force_build_scheduler_parameter(subfield, authz, request, sch, default_props) }}
       {% endfor %}
+
     {% endif %}
     </div>
   {% endif %}      
@@ -157,11 +182,11 @@
       push the 'Pause Slave' button</p>
   {% endif %}
   {% if paused %}
-      <input class="grey-btn" type="submit" value="Unpause Slave" />
+    <input class="grey-btn" type="submit" value="Unpause Slave" />
   {% else %}
-      <input class="grey-btn" type="submit" value="Pause Slave" />
+    <input class="grey-btn" type="submit" value="Pause Slave" />
   {% endif %}
- </form>
+  </form>
 {% endmacro %}
 
 {% macro force_build_one_scheduler(force_url, authz, request, on_all, on_selected, builders, sch, default_props, slaves=[], is_admin=0) %}
@@ -199,8 +224,8 @@
   <div class="general">
     <p class="form-message">Fill out revision information for all codebases (or leave all revision information blank to use the latest revision on the selected branches) and click the 'Run' button.</p>
 
-    <div class="force-text" id="force-{{ sch.name }}-slave">
     {% if slaves %}
+      <div class="force-text" id="force-{{ sch.name }}-slave">
         <div class="display-flex">
          <span class="label">Specify Slave</span>
             <span title="You can specify a build to run on a particular slave, or to run on all slaves. Leave set to 'Any Compatible' for most cases." class="tooltip question-icon">
@@ -217,9 +242,9 @@
                 {% endif %}
             {% endfor %}
         </select>
-        </div>
+      </div>
     {% endif %}
-        <div class="force-text">
+      <div class="force-text">
         <div class="display-flex">
             <span class="label">Priority</span>
             <span title="You can specify a the priority at which your build(s) should be ran."
@@ -234,7 +259,7 @@
             <option selected="selected" value="50">Medium (Default)</option>
             <option value="25">Low</option>
         </select>
-        </div>
+      </div>
 
     {% for f in sch.all_fields %}
       {{ force_build_scheduler_parameter(f, authz, request, sch, default_props) }}
@@ -242,17 +267,13 @@
      <input class="grey-btn" type="submit" value="Run" />
   </div>
 </div>
-  
-
-  
-
  </form>
 {% endmacro %}
+
 {% macro force_build(force_url, authz, request, on_all=False, on_selected=False, builders=[], force_schedulers={},default_props={}, slaves=[], is_admin=0) %}
   {% for name, sch in force_schedulers.items() %}
     {{ force_build_one_scheduler(force_url, authz, request, on_all, on_selected, builders, sch, default_props=default_props, slaves=slaves, is_admin=is_admin) }}
   {% endfor %}
-
 {% endmacro %}
 
 {% macro clean_shutdown(shutdown_url, authz) %}
@@ -280,27 +301,22 @@
   </form>
 {% endmacro %}
 
-{% macro rebuild_build(rebuild_url, authz, ss, builderName, url) %}
+{% macro rebuild_build(authz, ss, builderName, buildNumber, url) %}
 <div class="forms-inline">
- <form id="buildForm" method="post" action="{{ rebuild_url }}&property1name=force_rebuild&property1value=True" class="command rebuild">
-
   {% if on_all %}
-     <p>To force a build on <strong>all Builders</strong>, fill out the following fields
-          and click the 'Force Build' button</p>
+    <p>To force a build on <strong>all Builders</strong>, fill out the following fields
+      and click the 'Force Build' button</p>
   {% else %}
-     <p>To force a rebuild with the same source revisions and parameters used in this build,
-        click the 'Rebuild' button.</p>
+    <p>To force a rebuild with the same source revisions and parameters used in this build,
+      click the 'Rebuild' button.</p>
   {% endif %}
-     
-     <input class="full-name-js" type='hidden' name='comments' />
-     <input class="grey-btn" type="submit" value="Rebuild" />
-   
- </form>
 
- <form method="post" action="#" class="rebuild">
-     <input type="button" class="instant-build grey-btn" value="Build Latest" title="Run build at latest changes">
-     <input type="button" class="custom-build grey-btn" value="Custom Build" title="Run custom build" data-popup-title="Run custom build" data-builder-name="{{builderName}}" data-builder-url="{{url}}" data-return-page="builders_json">
- </form>
+  <form method="post" action="#" class="rebuild">
+    <input type="button" class="custom-rebuild grey-btn" value="Rebuild" title="Rebuild" data-popup-title="Rerun Build" data-build-number="{{buildNumber}}" data-builder-name="{{builderName}}" data-builder-url="{{url}}" data-return-page="builders_json">
+
+    <input type="button" class="instant-build grey-btn" value="Build Latest" title="Run build at latest changes">
+    <input type="button" class="custom-build grey-btn" value="Custom Build" title="Run custom build" data-popup-title="Run custom build" data-builder-name="{{builderName}}" data-builder-url="{{url}}" data-return-page="builders_json">
+  </form>
 </div>
 {% endmacro %}
 

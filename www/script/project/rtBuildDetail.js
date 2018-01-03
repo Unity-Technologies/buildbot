@@ -51,7 +51,8 @@ define(function (require) {
             });
 
             // Setup build buttons
-            popups.initRunBuild($(".custom-build"), $(".instant-build"), true);
+            popups.initRunBuildPopup($(".custom-build"), $(".instant-build"), true);
+            popups.initRebuildPopup($(".custom-rebuild"), true);
         },
         processBuildDetailPage: function (data) {
             //We get slighlty different data objects from autobahn

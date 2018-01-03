@@ -338,7 +338,7 @@ define(function (require) {
                     "fnCreatedCell": function (nTd) {
                         var $nTd = $(nTd);
                         var $instantBuildBtn = $nTd.find(".instant-build");
-                        popup.initRunBuild($nTd.find(".custom-build"), $instantBuildBtn);
+                        popup.initRunBuildPopup($nTd.find(".custom-build"), $instantBuildBtn);
                     }
                 }
 

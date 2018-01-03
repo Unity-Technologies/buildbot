@@ -46,7 +46,7 @@ define(function (require) {
                 'cancelselected=', rtTable.table.rtfGenericTableProcess);
 
             //Setup run build
-            popup.initRunBuild($(".custom-build"));
+            popup.initRunBuildPopup($(".custom-build"));
 
             // insert codebase and branch
             helpers.tableHeader($('#brancOverViewCont'));

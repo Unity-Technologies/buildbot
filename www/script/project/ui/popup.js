@@ -199,6 +199,7 @@ define(function (require) {
             // Display the codebases form in a popup
             popup.initCodebaseBranchesPopup($("#codebasesBtn"));
         },
+
         initJSONPopup: function (jsonPopupElem, data) {
             var $jsonPopupElem = $(jsonPopupElem);
 
@@ -217,6 +218,7 @@ define(function (require) {
                 }));
             });
         },
+
         initCodebaseBranchesPopup: function (codebaseElem) {
             var $codebaseElem = $(codebaseElem),
                 codebasesURL = $codebaseElem.attr("data-codebases-url");
@@ -254,6 +256,7 @@ define(function (require) {
                     });
             });
         },
+
         initSlaveBuildersPopup: function initSlaveBuildersPopup(jsonPopupElem, slaveName) {
             var $jsonPopupElem = $(jsonPopupElem),
                 url = "/json/slaves/{0}/builders".format(slaveName);
@@ -290,6 +293,7 @@ define(function (require) {
                 openPopup();
             });
         },
+
         initPendingPopup: function initPendingPopup(pendingElem) {
             var $pendingElem = $(pendingElem),
                 builder_name = encodeURIComponent($pendingElem.attr('data-builderName')),
@@ -363,7 +367,8 @@ define(function (require) {
                 openPopup();
             });
         },
-        initRunBuild: function (customBuildElem, instantBuildElem, redirectToBuilder) {
+
+        initRunBuildPopup: function (customBuildElem, instantBuildElem, redirectToBuilder) {
             var $customBuild = $(customBuildElem),
                 $instantBuild = $(instantBuildElem);
 
@@ -372,14 +377,40 @@ define(function (require) {
                 return;
             }
 
-            function openPopup(instantBuild) {
-                var builderURL = $customBuild.attr('data-builder-url'),
-                    dataReturnPage = $customBuild.attr('data-return-page'),
-                    builderName = $customBuild.attr('data-builder-name'),
-                    title = $customBuild.attr('data-popup-title'),
-                    url = location.protocol + "//" + location.host + "/forms/forceBuild",
-                    urlParams = helpers.codebasesFromURL({builder_url: builderURL, builder_name: builderName, return_page: dataReturnPage});
+            var builderURL = $customBuild.attr('data-builder-url'),
+                dataReturnPage = $customBuild.attr('data-return-page'),
+                builderName = $customBuild.attr('data-builder-name'),
+                title = $customBuild.attr('data-popup-title'),
+                url = location.protocol + "//" + location.host + "/forms/forceBuild",
+                urlParams = helpers.codebasesFromURL({builder_url: builderURL, builder_name: builderName, return_page: dataReturnPage});
 
+            popup.initBuildForm($customBuild, false, builderURL, dataReturnPage, title, url, urlParams, redirectToBuilder);
+            popup.initBuildForm($instantBuild, true, builderURL, dataReturnPage, title, url, urlParams, redirectToBuilder);
+        },
+
+        initRebuildPopup: function (rebuildElem, redirectToBuilder) {
+            var $rebuildElem = $(rebuildElem);
+
+            if ($rebuildElem.length === 0) {
+                //Bailing early as we didn't find our elements
+                return;
+            }
+
+            var builderURL = $rebuildElem.attr('data-builder-url'),
+                dataReturnPage = $rebuildElem.attr('data-return-page'),
+                builderName = $rebuildElem.attr('data-builder-name'),
+                buildNumber = $rebuildElem.attr('data-build-number'),
+                title = $rebuildElem.attr('data-popup-title'),
+                url = location.protocol + "//" + location.host + "/forms/rebuild",
+                urlParams = helpers.codebasesFromURL({builder_url: builderURL, builder_name: builderName, build_number: buildNumber, return_page: dataReturnPage});
+
+            popup.initBuildForm($rebuildElem, false, builderURL, dataReturnPage, title, url, urlParams, redirectToBuilder);
+        },
+
+        initBuildForm: function (buildButton, automaticSubmit, builderURL, dataReturnPage, title, url, urlParams, redirectToBuilder) {
+            var $buildButton = $(buildButton);
+
+            function openPopup(automaticSubmit) {
 
                 $("#preloader").preloader("showPreloader");
 
@@ -457,7 +488,7 @@ define(function (require) {
                                         minimumResultsForSearch: -1
                                     });
 
-                                    if (instantBuild) {
+                                    if (automaticSubmit) {
                                         $form.ajaxSubmit(formOptions);
                                     }
                                 });
@@ -465,7 +496,7 @@ define(function (require) {
                         });
 
                         $body.append($popup);
-                        if (!instantBuild) {
+                        if (!automaticSubmit) {
                             $popup.showPopup();
                         }
                     })
@@ -477,16 +508,12 @@ define(function (require) {
                     });
             }
 
-            $customBuild.bind("click.katana", function (event) {
+            $buildButton.bind("click.katana", function (event) {
                 event.preventDefault();
-                openPopup(false);
-            });
-
-            $instantBuild.bind("click.katana", function (event) {
-                event.preventDefault();
-                openPopup(true);
+                openPopup(automaticSubmit);
             });
         },
+
         initArtifacts: function (artifactList, artifactElem) {
             var $artifactElem = $(artifactElem);
 
