@@ -68,11 +68,13 @@ class BuildMaster(config.ReconfigurableServiceMixin, service.MultiService):
     # database poll operation.
     WARNING_UNCLAIMED_COUNT = 10000
 
-    def __init__(self, basedir, configFileName="master.cfg", umask=None):
+    def __init__(self, basedir, configFileName="master.cfg", umask=None, env_name='default'):
         service.MultiService.__init__(self)
         self.setName("buildmaster")
 
         self.umask = umask
+
+        self.env_name = env_name.lower()
 
         self.basedir = basedir
         assert os.path.isdir(self.basedir)

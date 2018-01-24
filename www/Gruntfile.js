@@ -19,6 +19,10 @@ module.exports = function (grunt) {
                 dest: "prod/css",
                 dest_css_file: "prod/css/default.css",
                 src_css_file: "sass/default.scss",
+                staging_dest_css_file: "prod/css/staging.css",
+                staging_src_css_file: "sass/staging.scss",
+                prod_dest_css_file: "prod/css/production.css",
+                prod_src_css_file: "sass/production.scss",
                 src_css: ['*.css', '!*.min.css'],
                 ext: '.css'
             },
@@ -72,7 +76,9 @@ module.exports = function (grunt) {
   		  	},
   			dist: {
   			    files: {
-  			        "<%= files.css.dest_css_file %>": "<%= files.css.src_css_file %>"
+  			        "<%= files.css.dest_css_file %>": "<%= files.css.src_css_file %>",
+                    "<%= files.css.staging_dest_css_file %>": "<%= files.css.staging_src_css_file %>",
+                    "<%= files.css.prod_dest_css_file %>": "<%= files.css.prod_src_css_file %>"
   				}
             }
         },

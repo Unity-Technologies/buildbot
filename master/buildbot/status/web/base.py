@@ -443,7 +443,6 @@ class AccessorMixin(object):
 
 
 class ContextMixin(AccessorMixin):
-    custom_css_file = None
     custom_css = None
 
     def getContext(self, request):
@@ -452,11 +451,10 @@ class ContextMixin(AccessorMixin):
         locale_enc = locale.getdefaultlocale()[1]
         authz = self.getAuthz(request)
         authenticated = authz.authenticated(request)
+        build_master = self.getBuildmaster(request)
 
-        self.custom_css_file = os.path.join(request.site.buildbot_service.public_html, 'prod/css/custom.css')
-        self.custom_css = os.path.isfile(self.custom_css_file) \
-            if self.custom_css is None or request.site.buildbot_service.public_html not in self.custom_css_file \
-            else self.custom_css
+        if build_master.env_name != 'default':
+            self.custom_css = '/prod/css/{}.css'.format(build_master.env_name)
 
         if locale_enc is not None:
             locale_tz = unicode(time.tzname[time.localtime()[-1]], locale_enc)

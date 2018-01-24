@@ -1,0 +1,13 @@
+/**
+* Stylesheet combiner for production
+*
+* @section Setup
+*/
+
+// Override default colors
+$brand-primary: #5e5466;
+$brand-katana: #6a5b70;
+$breadcrumb-background-top: #a9a7aa;
+$breadcrumb-background-bottom: #cdcdcd;
+
+@import 'default';

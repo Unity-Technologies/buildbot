@@ -8,7 +8,7 @@
 
     <link rel="stylesheet" href="/prod/css/default.css" type="text/css"/>
     {% if custom_styles %}
-        <link rel="stylesheet" href="/prod/css/custom.css?cachebust={{version}}" type="text/css" />
+        <link rel="stylesheet" href="{{ custom_styles }}?cachebust={{version}}" type="text/css" />
     {% endif %}
     <link rel="shortcut icon" href="{{ path_to_root }}favicon.ico">
     <script type="text/javascript">

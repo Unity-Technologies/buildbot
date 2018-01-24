@@ -105,7 +105,9 @@ class CreateMasterOptions(base.BasedirMixin, base.SubcommandOptions):
          "limit the number of kept old twisted log files"],
         ["db", None, "sqlite:///state.sqlite",
          "which DB to use for scheduler/status state. See below for syntax."],
-        ]
+        ['env', None, 'default', 'The name of the application environment. For example staging or production.'],
+    ]
+
     def getSynopsis(self):
         return "Usage:    buildbot create-master [options] [<basedir>]"
 
@@ -734,4 +736,5 @@ def run():
 
     subconfig = config.subOptions
     subcommandFunction = reflect.namedObject(subconfig.subcommandFunction)
+
     sys.exit(subcommandFunction(subconfig))

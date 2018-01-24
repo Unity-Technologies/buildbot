@@ -13,6 +13,9 @@ rotateLength = {{ log_size }}
 maxRotatedFiles = {{ log_count }}
 {%- endif %}
 configfile = {{ config|repr }}
+{% if env -%}
+env_name = {{ env|repr }}
+{%- endif %}
 
 # Default umask for server
 umask = None
@@ -33,7 +36,7 @@ logfile = LogFile.fromFullPath(os.path.join(basedir, "twistd.log"), rotateLength
 application.setComponent(ILogObserver, FileLogObserver(logfile).emit)
 {%- endif %}
 
-m = BuildMaster(basedir, configfile, umask)
+m = BuildMaster(basedir, configfile, umask, env_name)
 m.setServiceParent(application)
 {% if not no_logrotate -%}
 m.log_rotation.rotateLength = rotateLength
