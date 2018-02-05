@@ -37,6 +37,7 @@ commandRegistry = {
     "stat" : "buildslave.commands.fs.StatFile",
     "lstree": "buildslave.commands.fs.ListTree",
     "checksums" : "buildslave.commands.checksum.CheckSums",
+    "readConfigure": "buildslave.commands.read_configure.ReadConfigure"
 }
 
 def getFactory(command):
