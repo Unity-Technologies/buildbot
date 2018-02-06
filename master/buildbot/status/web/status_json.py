@@ -136,32 +136,34 @@ EXAMPLES = """\
     
     - {
 
-    -    "owner": pyflakes pyflakes <pyflakes@example.com>, 
+    -    "owner": "pyflakes pyflakes <pyflakes@example.com>",
     # (Field required)
     -    "scheduler_name": "scheduler [force]", 
     # (if not provided then the first force scheduler for given builder will be chosen)
     -    "selected_slave": "slave_name",
     # ('allCompatible' means that build will run on all slaves)
-    -    "sources_stamps": [{
+    -     "sources_stamps": [{
     
-    -        "branch": "test-branch",
+    -         "branch": "test-branch",
     
-    -        "repository": "test-repository",
+    -         "repository": "test-repository",
     
-    -        "revision": "5abcde"
+    -         "revision": "5abcde"
     
-    -    }],
+    -     }],
     
-    -   "build_properties": {
+    -     "build_properties": {
     
-    -       "force_chain_rebuild": true,
+    -         "force_chain_rebuild": true,
     
-    -       "force_rebuild": true,
+    -         "force_rebuild": true,
 
-    -       "priority": "50",
+    -         "priority": "50",
     
-    -       "reason": "description"
+    -         "reason": "description"
     
+    -     }
+
     - }
 
     - This endpoint will return the one element list of build request objects,
@@ -505,8 +507,8 @@ class StartBuildJsonResource(AccessorMixin, resource.Resource):
     schema = {
         'type': 'object',
         'properties': {
-            'owner': {'type': 'string'},
-            'scheduler_name': {'type': 'string', 'pattern': r'^\S+ (\[force\])$'},
+            'owner': {'type': 'string', 'minLength': 1},
+            'scheduler_name': {'type': 'string'},
             'selected_slave': {'type': 'string'},
             'sources_stamps': {
                 'type': 'array',
