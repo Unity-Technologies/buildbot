@@ -1085,8 +1085,8 @@ class LoggingBuildStep(BuildStep):
         else:
             return self.describe(True) + ["failed"]
 
-    def getText2(self, cmd, results):
-        return ["Step \"%s\"" % self.name]
+    def getText2(self, cmd, results, human_result=""):
+        return ["Step failed \"%s\" %s) %s" % (self.name, results, human_result)]
 
     def maybeGetText2(self, cmd, results):
         if results == SUCCESS:
@@ -1095,12 +1095,12 @@ class LoggingBuildStep(BuildStep):
         elif results == WARNINGS:
             if (self.flunkOnWarnings or self.warnOnWarnings):
                 # we're affecting the overall build, so tell them why
-                return self.getText2(cmd, results)
+                return self.getText2(cmd, results, human_result="Warning")
         else:
             if (self.haltOnFailure or self.flunkOnFailure
                 or self.warnOnFailure):
                 # we're affecting the overall build, so tell them why
-                return self.getText2(cmd, results)
+                return self.getText2(cmd, results, human_result="Error")
         return []
 
     def setStatus(self, cmd, results):
