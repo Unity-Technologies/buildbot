@@ -90,7 +90,23 @@
         </h2>
 
         <span class="{{buildCSSClass b.results }} result overall-result-js overall-result">
-            {{#each b.text}}{{this}}<br /> {{/each}}
+            {{#each b.text}}
+                {{#if @first}}
+                    {{this}}
+                {{else}}
+                    {{#if @second}}
+                        *<ul>
+                        <li>{{this}}</li>
+                    {{else}}
+                        {{#if @last}}
+                            <li>{{this}}</li>
+                            </ul>
+                        {{else}}
+                            <li>{{this}}</li>
+                        {{/if}}
+                    {{/if}}
+                {{/if}}
+            {{/each}}
         </span>
     {{/unless}}
 
