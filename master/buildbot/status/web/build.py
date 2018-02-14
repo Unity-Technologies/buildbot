@@ -36,6 +36,20 @@ from buildbot.status.results import RESUME, EXCEPTION
 from buildbot.steps.trigger import Trigger
 
 
+@defer.inlineCallbacks
+def prepare_trigger_links(current_step):
+    brids = current_step.build.brids
+    db_request = [current_step.build.builder.master.db.buildrequests\
+                    .getBuildRequestForStartbrids(brids)]
+    db_result = yield defer.DeferredList(db_request, consumeErrors=True)
+
+    results = db_result[0][1]
+    master = current_step.build.builder.master
+    for build in results:
+        url = master.status.getURLForBuild(build['buildername'], build['number'])
+        current_step.addURL(url['text'], url['path'], (build['results'],))
+
+
 class CancelBuildActionResource(ActionResource):
     def __init__(self, build_status):
         self.build_status = build_status
@@ -274,19 +288,6 @@ class StatusResourceBuild(HtmlResource):
 
         cxt['steps'] = []
 
-        @defer.inlineCallbacks
-        def prepare_Trigger_links(current_step):
-            brid = current_step.build.brids[0]
-            db_request = [current_step.build.builder.master.db.buildrequests\
-                            .getBuildRequestForStartbrid(brid)]
-            db_result = yield defer.DeferredList(db_request, consumeErrors=True)
-
-            results = db_result[0][1]
-            master = current_step.build.builder.master
-            for build in results:
-                url = master.status.getURLForBuild(build['buildername'], build['number'])
-                current_step.addURL(url['text'], url['path'], (build['results'],))
-
         for s in b.getSteps():
             step = {'name': s.getName() }
 
@@ -313,8 +314,8 @@ class StatusResourceBuild(HtmlResource):
 
             cxt['steps'].append(step)
 
-            if hasattr(s, 'step_type_obj') and  s.step_type_obj is Trigger and not s.urls:
-                prepare_Trigger_links(s)
+            if hasattr(s, 'step_type_obj') and  s.step_type_obj is Trigger:
+                prepare_trigger_links(s)
 
             urls = []
             for k,v in s.getURLs().items():
