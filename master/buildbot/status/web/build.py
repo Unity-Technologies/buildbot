@@ -39,13 +39,11 @@ from buildbot.steps.trigger import Trigger
 @defer.inlineCallbacks
 def prepare_trigger_links(current_step):
     brids = current_step.build.brids
-    db_request = [current_step.build.builder.master.db.buildrequests\
-                    .getBuildRequestForStartbrids(brids)]
-    db_result = yield defer.DeferredList(db_request, consumeErrors=True)
+    db_results = yield current_step.build.builder.master.db.buildrequests\
+                    .getBuildRequestForStartbrids(brids)
 
-    results = db_result[0][1]
     master = current_step.build.builder.master
-    for build in results:
+    for build in db_results:
         url = master.status.getURLForBuild(build['buildername'], build['number'])
         current_step.addURL(url['text'], url['path'], (build['results'],))
 
