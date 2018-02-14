@@ -1256,6 +1256,10 @@ div.force-int .label,div.force-text .label{display:block;float:left;font-weight:
 .btn-list.horisontal li{float:left;margin:0 15px 0 0}
 .codebases-list{color:#666}
 .codebases-list li,ul.revision li:not(:last-child){margin-bottom:3px}
+.child-table{margin-top:20px;margin-bottom:70px}
+.child-table dl{display:flex;flex-wrap:wrap}
+.child-table dt{float:left;width:30%;clear:both}
+.child-table dd{margin-left:auto;width:70%}
 .more-info-box{position:absolute;border:1px solid #FFF;display:none;padding:23px 20px;width:100%;overflow:auto;z-index:200;float:left;color:#333;text-shadow:0 1px 0 #FFF;-webkit-border-radius:8px;-moz-border-radius:8px;-ms-border-radius:8px;-o-border-radius:8px;border-radius:8px;-webkit-box-shadow:1px 1px 9px rgba(0,0,0,.37);box-shadow:1px 1px 9px rgba(0,0,0,.37);background-image:-moz-linear-gradient(top,rgba(255,255,255,.93) 0,#F8F8F9 100%);background-image:-webkit-linear-gradient(top,rgba(255,255,255,.93) 0,#F8F8F9 100%);background-image:-o-linear-gradient(top,rgba(255,255,255,.93) 0,#F8F8F9 100%);background-image:-ms-linear-gradient(top,rgba(255,255,255,.93) 0,#F8F8F9 100%);background-image:linear-gradient(top,rgba(255,255,255,.93) 0,#F8F8F9 100%);text-align:left}
 .more-info-box p{margin-bottom:10px;margin-top:0}
 .more-info-box h4{margin:0 15px 13px 0;padding:0}

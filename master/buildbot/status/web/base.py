@@ -267,22 +267,32 @@ def path_to_authfail(request):
 def path_to_authzfail(request):
     return path_to_root(request) + "authzfail"
 
+
 def path_to_builder(request, builderstatus, codebases=True):
+    return path_to_builder_by_params(request, builderstatus.getProject(), builderstatus.getName(), codebases)
+
+
+def path_to_builder_by_params(request, projectName, builderName, codebases=True):
     codebases_arg = ''
     if codebases:
         codebases_arg = getCodebasesArg(request=request)
 
-    return (path_to_builders(request, builderstatus.getProject(), False) +
+    return (path_to_builders(request, projectName, False) +
             "/" +
-            urllib.quote(builderstatus.getName(), safe='') + codebases_arg)
+            urllib.quote(builderName, safe='') + codebases_arg)
+
 
 def path_to_build(request, buildstatus, codebases=True):
+    return path_to_build_by_params(request, buildstatus.getBuilder().getName(), buildstatus.getNumber(), buildstatus.getBuilder().getProject(), codebases)
+
+
+def path_to_build_by_params(request, builderName, number, projectName, codebases=True):
     codebases_arg = ''
     if codebases:
         codebases_arg = getCodebasesArg(request=request)
 
-    return (path_to_builder(request, buildstatus.getBuilder(), False) +
-            "/builds/%d" % buildstatus.getNumber() + codebases_arg)
+    return (path_to_builder_by_params(request, projectName, builderName, False) +
+            "/builds/%d" % number + codebases_arg)
 
 def path_to_step(request, stepstatus, codebases = True):
     codebases_arg = ''

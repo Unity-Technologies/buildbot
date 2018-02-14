@@ -853,7 +853,8 @@ class BuildRequestsConnectorComponent(base.DBConnectorComponent):
                 buildrequests_tbl.c.mergebrid == brid,
             ]
             stmt_br = sa.select(
-                [buildrequests_tbl.c.id, buildrequests_tbl.c.buildername, builds_tbl.c.number, buildrequests_tbl.c.mergebrid],
+                [buildrequests_tbl.c.id, buildrequests_tbl.c.buildername, builds_tbl.c.number,
+                 buildrequests_tbl.c.mergebrid, buildrequests_tbl.c.startbrid, buildrequests_tbl.c.triggeredbybrid],
                 from_obj=builds_tbl.join(buildrequests_tbl, builds_tbl.c.brid == buildrequests_tbl.c.id)
             ).where(sa.or_(*where_clause)) \
              .distinct(buildrequests_tbl.c.id) \
@@ -869,9 +870,12 @@ class BuildRequestsConnectorComponent(base.DBConnectorComponent):
                     buildername=str(row.buildername),
                     number=row.number,
                     is_merged=bool(row.mergebrid),
+                    startbrid=row.startbrid,
+                    triggeredbybrid=row.triggeredbybrid,
                     full_name="{buildername} #{number} {merged}".format(merged=merged, **row),
                 )
                 buildrequests.append(buildrequest)
+            res.close()
             return buildrequests
 
         return self.db.pool.do(thd)
