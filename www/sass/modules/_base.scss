@@ -12,7 +12,8 @@
 $color-white: #fff; // white
 
 // status colors and text
-$state-colors: 
+$state-colors:
+beginning #54FF2D $color-white "Beginning",
 success #DDE6D6 $color-white "Success",
 failure #EFCFCF $color-white "Failure", 
 exception #DDD7DD $color-white "Exception",

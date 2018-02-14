@@ -80,6 +80,7 @@ class BuildStepStatus(styles.Versioned):
 
         self.waitingForLocks = False
         self.step_type = str(step_type)
+        self.step_type_obj = step_type
 
     def getName(self):
         """Returns a short string with the name of this step. This string

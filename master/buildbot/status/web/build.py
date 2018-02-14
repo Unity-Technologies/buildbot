@@ -33,6 +33,8 @@ from buildbot.status.web.tests import TestsResource
 from buildbot.status.build import BuildStatus
 from buildbot import util, interfaces
 from buildbot.status.results import RESUME, EXCEPTION
+from buildbot.steps.trigger import Trigger
+
 
 class CancelBuildActionResource(ActionResource):
     def __init__(self, build_status):
@@ -272,6 +274,19 @@ class StatusResourceBuild(HtmlResource):
 
         cxt['steps'] = []
 
+        @defer.inlineCallbacks
+        def prepare_Trigger_links(current_step):
+            brid = current_step.build.brids[0]
+            db_request = [current_step.build.builder.master.db.buildrequests\
+                            .getBuildRequestForStartbrid(brid)]
+            db_result = yield defer.DeferredList(db_request, consumeErrors=True)
+
+            results = db_result[0][1]
+            master = current_step.build.builder.master
+            for build in results:
+                url = master.status.getURLForBuild(build['buildername'], build['number'])
+                current_step.addURL(url['text'], url['path'], (build['results'],))
+
         for s in b.getSteps():
             step = {'name': s.getName() }
 
@@ -293,12 +308,15 @@ class StatusResourceBuild(HtmlResource):
                 step['css_class'] = "not-started"
                 step['time_to_run'] = ""
 
-            cxt['steps'].append(step)
-
             step['link'] = path_to_step(req, s)
             step['text'] = " ".join(s.getText())
+
+            cxt['steps'].append(step)
+
+            if hasattr(s, 'step_type_obj') and  s.step_type_obj is Trigger and not s.urls:
+                prepare_Trigger_links(s)
+
             urls = []
-            getUrls = s.getURLs().items()
             for k,v in s.getURLs().items():
                 if isinstance(v, dict):
                     if 'results' in v.keys() and v['results'] in css_classes:
