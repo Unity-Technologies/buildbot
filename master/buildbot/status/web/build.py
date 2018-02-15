@@ -33,19 +33,6 @@ from buildbot.status.web.tests import TestsResource
 from buildbot.status.build import BuildStatus
 from buildbot import util, interfaces
 from buildbot.status.results import RESUME, EXCEPTION
-from buildbot.steps.trigger import Trigger
-
-
-@defer.inlineCallbacks
-def prepare_trigger_links(current_step):
-    brids = current_step.build.brids
-    db_results = yield current_step.build.builder.master.db.buildrequests\
-                    .getBuildRequestForStartbrids(brids)
-
-    master = current_step.build.builder.master
-    for build in db_results:
-        url = master.status.getURLForBuild(build['buildername'], build['number'])
-        current_step.addURL(url['text'], url['path'], (build['results'],))
 
 
 class CancelBuildActionResource(ActionResource):
@@ -312,8 +299,7 @@ class StatusResourceBuild(HtmlResource):
 
             cxt['steps'].append(step)
 
-            if hasattr(s, 'step_type_obj') and  s.step_type_obj is Trigger:
-                prepare_trigger_links(s)
+            s.prepare_trigger_links()
 
             urls = []
             for k,v in s.getURLs().items():
