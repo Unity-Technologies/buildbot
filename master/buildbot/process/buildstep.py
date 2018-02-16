@@ -1086,9 +1086,7 @@ class LoggingBuildStep(BuildStep):
             return self.describe(True) + ["failed"]
 
     def getText2(self, cmd, results):
-        optional = ""
-        if not self.haltOnFailure and self.flunkOnFailure:
-            optional = "Optional "
+        optional =  "" if self.flunkOnFailure else "Optional "
         return ["%sStep failed \"%s\" [%s]" % (optional, self.name, Results[results])]
 
     def maybeGetText2(self, cmd, results):
