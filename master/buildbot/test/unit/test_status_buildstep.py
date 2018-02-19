@@ -13,48 +13,15 @@
 #
 # Copyright Buildbot Team Members
 
-import datetime
 import os
 from twisted.trial import unittest
-from twisted.internet import defer
-from buildbot.db import buildrequests, builds
 from buildbot.status import builder, master
-from buildbot.test.fake import fakemaster, fakedb
-from buildbot.test.util import connector_component
-from buildbot.util import UTC, epoch2datetime
+from buildbot.test.fake import fakemaster
 
-class TestBuildStepStatus(connector_component.ConnectorComponentMixin,
-                          unittest.TestCase):
+class TestBuildStepStatus(unittest.TestCase):
 
     # that buildstep.BuildStepStatus is never instantiated here should tell you
     # that these classes are not well isolated!
-    CLAIMED_AT = datetime.datetime(1978, 6, 15, 12, 31, 15, tzinfo=UTC)
-    CLAIMED_AT_EPOCH = 266761875
-    SUBMITTED_AT = datetime.datetime(1979, 6, 15, 12, 31, 15, tzinfo=UTC)
-    SUBMITTED_AT_EPOCH = 298297875
-    COMPLETE_AT = datetime.datetime(1980, 6, 15, 12, 31, 15, tzinfo=UTC)
-    COMPLETE_AT_EPOCH = 329920275
-    BSID = 567
-    BSID2 = 5670
-    MASTER_ID = "set in setUp"
-    OTHER_MASTER_ID = "set in setUp"
-
-    MASTER_NAME = "testmaster"
-    MASTER_INCARN = "pid123-boot456789"
-
-    def setUp(self):
-        self.MASTER_ID = fakedb.FakeBuildRequestsComponent.MASTER_ID
-        self.OTHER_MASTER_ID = self.MASTER_ID + 1111
-        d = self.setUpConnectorComponent(table_names=['buildrequests', 'builds' ])
-
-        def finish_setup(_):
-            self.db.buildrequests = \
-                    buildrequests.BuildRequestsConnectorComponent(self.db)
-            self.db.builds = builds.BuildsConnectorComponent(self.db)
-            self.db.master.getObjectId = lambda : defer.succeed(self.MASTER_ID)
-        d.addCallback(finish_setup)
-
-        return d
 
     def setupBuilder(self, buildername, category=None, description=None):
         self.master = fakemaster.make_master()
@@ -171,28 +138,52 @@ class TestBuildStepStatus(connector_component.ConnectorComponentMixin,
         shell_step_status.prepare_trigger_links()
         self.assertEqual(len(shell_step_status.urls), 0)
 
-    @defer.inlineCallbacks
     def test_prepare_trigger_link_for_trigger(self):
         from buildbot.steps.trigger import Trigger
+
+        class StubBuildRequest(object):
+            def getBuildRequestForStartbrids(self, brids):
+                return [{'buildername': 'foo', 'number': brids[0], 'results': 1}]
+
+        class StubDB(object):
+            def __init__(self):
+                self.buildrequests = StubBuildRequest()
+
         builder = self.setupBuilder('builder_1')
         self.setupStatus(builder)
         build = builder.newBuild()
-
         trigger_step_status = build.addStepWithName('step_2', Trigger)
-        build.builder.master.db = self.db
+        build.builder.master.db = StubDB()
         build.brids = [1]
         build.builder.master.status.getURLForBuild = lambda x,y: {'path':x, 'text': y}
 
-        breqs = [
-            fakedb.BuildRequest(id=1, buildsetid=1, complete=1, results=0,  buildername="bldr1", priority=50, submitted_at=1518616728, startbrid=None),
-            fakedb.BuildRequest(id=2, buildsetid=1, complete=1, results=0,  buildername="sub-bldr1", priority=50, submitted_at=1518616728, startbrid=1),
-        ]
-        builds = [
-            fakedb.Build(id=20, brid=1, number=5, start_time=1518616728, finish_time=1518617000),
-            fakedb.Build(id=21, brid=2, number=6, start_time=1518616728, finish_time=1518617000),
-        ]
-        self.insertTestData(breqs + builds)
+        self.assertEqual(len(trigger_step_status.urls), 0)
 
-        yield trigger_step_status.prepare_trigger_links()
+        trigger_step_status.prepare_trigger_links()
+
         self.assertEqual(len(trigger_step_status.urls), 1)
 
+    def test_prepare_trigger_link_for_trigger_with_empty_children(self):
+        from buildbot.steps.trigger import Trigger
+
+        class StubBuildRequest(object):
+            def getBuildRequestForStartbrids(self, brids):
+                return []
+
+        class StubDB(object):
+            def __init__(self):
+                self.buildrequests = StubBuildRequest()
+
+        builder = self.setupBuilder('builder_1')
+        self.setupStatus(builder)
+        build = builder.newBuild()
+        trigger_step_status = build.addStepWithName('step_2', Trigger)
+        build.builder.master.db = StubDB()
+        build.brids = [1]
+        build.builder.master.status.getURLForBuild = lambda x,y: {'path':x, 'text': y}
+
+        self.assertEqual(len(trigger_step_status.urls), 0)
+
+        trigger_step_status.prepare_trigger_links()
+
+        self.assertEqual(len(trigger_step_status.urls), 0)
