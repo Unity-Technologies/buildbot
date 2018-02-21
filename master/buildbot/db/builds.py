@@ -17,6 +17,7 @@ from datetime import datetime, timedelta
 from sqlalchemy.orm import aliased
 from twisted.internet import reactor
 from buildbot.db import base
+from buildbot.db.base import conn_execute
 from buildbot.util import epoch2datetime
 import sqlalchemy as sa
 from buildbot.db.buildrequests import maybeFilterBuildRequestsBySourceStamps, mkdt
@@ -29,17 +30,19 @@ class BuildsConnectorComponent(base.DBConnectorComponent):
     def getBuild(self, bid):
         def thd(conn):
             tbl = self.db.model.builds
-            res = conn.execute(tbl.select(whereclause=(tbl.c.id == bid)))
-            row = res.fetchone()
+            query = tbl.select(whereclause=(tbl.c.id == bid))
+            with conn_execute(conn, query) as res:
+                row = res.fetchone()
 
-            rv = None
-            if row:
-                rv = self._bdictFromRow(row)
-            res.close()
-            return rv
+                rv = None
+                if row:
+                    rv = self._bdictFromRow(row)
+                res.close()
+                return rv
         return self.db.pool.do(thd)
 
     def getBuildsAndResultForRequest(self, brid):
+        # @TODO: missing tests
         def thd(conn):
             builds_tbl = self.db.model.builds
             buildrequest_tbl = self.db.model.buildrequests
@@ -48,54 +51,57 @@ class BuildsConnectorComponent(base.DBConnectorComponent):
                                   from_obj= buildrequest_tbl.outerjoin(builds_tbl,
                                                         (buildrequest_tbl.c.id == builds_tbl.c.brid)),
                                   whereclause=(buildrequest_tbl.c.id == brid))
-            res = conn.execute(q)
-            return [ self._bdictFromRow(row)
-                     for row in res.fetchall() ]
+            with conn_execute(conn, q) as res:
+                return [ self._bdictFromRow(row)
+                         for row in res.fetchall() ]
         return self.db.pool.do(thd)
 
     def getBuildsForRequest(self, brid):
         def thd(conn):
             tbl = self.db.model.builds
             q = tbl.select(whereclause=(tbl.c.brid == brid))
-            res = conn.execute(q)
-            return [ self._bdictFromRow(row) for row in res.fetchall() ]
+            with conn_execute(conn, q) as res:
+                return [ self._bdictFromRow(row) for row in res.fetchall() ]
         return self.db.pool.do(thd)
 
     def getBuildNumberForRequest(self, brid):
+        # @TODO: missing tests
         def thd(conn):
             tbl = self.db.model.builds
             q = sa.select(columns=[sa.func.max(tbl.c.number).label("number")]).where(tbl.c.brid == brid)
-            res = conn.execute(q)
-            row = res.fetchone()
-            if row:
-                return row.number
+            with conn_execute(conn, q) as res:
+                row = res.fetchone()
+                if row:
+                    return row.number
             return None
         return self.db.pool.do(thd)
 
     def getBuildNumbersForRequests(self, brids):
+        # @TODO: missing tests
         def thd(conn):
             tbl = self.db.model.builds
             q = sa.select(columns=[sa.func.max(tbl.c.number).label("number"), tbl.c.brid])\
                 .where(tbl.c.brid.in_(brids))\
                 .group_by(tbl.c.number, tbl.c.brid)
-            res = conn.execute(q)
-            rows = res.fetchall()
             rv = []
-            if rows:
-                for row in rows:
-                    if row.number not in rv:
-                        rv.append(row.number)
-            res.close()
+            with conn_execute(conn, q) as res:
+                rows = res.fetchall()
+                if rows:
+                    for row in rows:
+                        if row.number not in rv:
+                            rv.append(row.number)
+                res.close()
             return rv
         return self.db.pool.do(thd)
 
     def addBuild(self, brid, number, slavename=None, _reactor=reactor):
         def thd(conn):
             start_time = _reactor.seconds()
-            r = conn.execute(self.db.model.builds.insert(),
-                    dict(number=number, brid=brid, slavename=slavename, start_time=start_time,
-                        finish_time=None))
-            return r.inserted_primary_key[0]
+            query = self.db.model.builds.insert()
+            conn_args = dict(number=number, brid=brid, slavename=slavename, start_time=start_time,
+                             finish_time=None)
+            with conn_execute(conn, query, conn_args) as res:
+                return res.inserted_primary_key[0]
         return self.db.pool.do(thd)
 
     def finishBuilds(self, bids, _reactor=reactor):
@@ -110,12 +116,13 @@ class BuildsConnectorComponent(base.DBConnectorComponent):
             while remaining:
                 batch, remaining = remaining[:100], remaining[100:]
                 q = tbl.update(whereclause=(tbl.c.id.in_(batch)))
-                conn.execute(q, finish_time=now)
-
+                with conn_execute(conn, q, finish_time=now):
+                    pass
             transaction.commit()
         return self.db.pool.do(thd)
 
     def finishedMergedBuilds(self, brids, number):
+        # @TODO: missing tests
         def thd(conn):
             if len(brids) > 1:
                 builds_tbl = self.db.model.builds
@@ -124,8 +131,10 @@ class BuildsConnectorComponent(base.DBConnectorComponent):
                     .where(builds_tbl.c.brid == brids[0])\
                     .where(builds_tbl.c.number == number)
 
-                res = conn.execute(q)
-                row = res.fetchone()
+                row = None
+                with conn_execute(conn, q) as res:
+                    row = res.fetchone()
+
                 if row:
                     stmt = builds_tbl.update()\
                         .where(builds_tbl.c.brid.in_(brids))\
@@ -133,8 +142,8 @@ class BuildsConnectorComponent(base.DBConnectorComponent):
                         .where(builds_tbl.c.finish_time == None)\
                         .values(finish_time = row.finish_time)
 
-                    res = conn.execute(stmt)
-                    return res.rowcount
+                    with conn_execute(conn, stmt) as res:
+                        return res.rowcount
 
         return self.db.pool.do(thd)
 
@@ -172,17 +181,15 @@ class BuildsConnectorComponent(base.DBConnectorComponent):
                 .where(builds_tbl.c.slavename == slavename)\
                 .order_by(sa.desc(buildrequests_tbl.c.complete_at)).limit(maxSearch)
 
-            res = conn.execute(q)
-
-            rows = res.fetchall()
-            if rows:
-                for row in rows:
-                    if row.buildername not in lastBuilds:
-                        lastBuilds[row.buildername] = [row.number]
-                    else:
-                        lastBuilds[row.buildername].append(row.number)
-
-            res.close()
+            with conn_execute(conn, q) as res:
+                rows = res.fetchall()
+                if rows:
+                    for row in rows:
+                        if row.buildername not in lastBuilds:
+                            lastBuilds[row.buildername] = [row.number]
+                        else:
+                            lastBuilds[row.buildername].append(row.number)
+                res.close()
 
             return lastBuilds
 
@@ -232,15 +239,13 @@ class BuildsConnectorComponent(base.DBConnectorComponent):
 
             q = q.order_by(sa.desc(buildrequests_tbl.c.complete_at)).limit(maxSearch)
 
-            res = conn.execute(q)
-
-            rows = res.fetchall()
-            if rows:
-                for row in rows:
-                    if row.number not in lastBuilds:
-                        lastBuilds.append(row.number)
-
-            res.close()
+            with conn_execute(conn, q) as res:
+                rows = res.fetchall()
+                if rows:
+                    for row in rows:
+                        if row.number not in lastBuilds:
+                            lastBuilds.append(row.number)
+                res.close()
 
             return lastBuilds
 
@@ -271,9 +276,8 @@ class BuildsConnectorComponent(base.DBConnectorComponent):
                 .limit(self.NUMBER_OF_REQUESTED_BUILDS)
             )
 
-            res = conn.execute(q)
-
-            return [self._minimal_bdict(row, botmaster) for row in res.fetchall()]
+            with conn_execute(conn, q) as res:
+                return [self._minimal_bdict(row, botmaster) for row in res.fetchall()]
         return self.db.pool.do(thd)
 
     def _bdictFromRow(self, row):
