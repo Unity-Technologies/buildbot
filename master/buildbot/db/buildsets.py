@@ -21,6 +21,7 @@ import sqlalchemy as sa
 from twisted.internet import reactor
 from buildbot.util import json
 from buildbot.db import base
+from buildbot.db.base import conn_execute
 from buildbot.util import epoch2datetime, datetime2epoch
 from buildbot.process.buildrequest import Priority
 
@@ -67,11 +68,13 @@ class BuildsetsConnectorComponent(base.DBConnectorComponent):
             transaction = conn.begin()
 
             # insert the buildset itself
-            r = conn.execute(buildsets_tbl.insert(), dict(
+            query = buildsets_tbl.insert()
+            conn_args = dict(
                 sourcestampsetid=sourcestampsetid, submitted_at=submitted_at,
                 reason=reason_val, complete=0, complete_at=None, results=-1,
-                external_idstring=external_idstring))
-            bsid = r.inserted_primary_key[0]
+                external_idstring=external_idstring)
+            with conn_execute(conn, query, conn_args) as res:
+                bsid = res.inserted_primary_key[0]
 
             # add any properties
             if properties:
@@ -88,8 +91,8 @@ class BuildsetsConnectorComponent(base.DBConnectorComponent):
                 for i in inserts:
                     self.check_length(bs_props_tbl.c.property_name,
                                       i['property_name'])
-
-                conn.execute(bs_props_tbl.insert(), inserts)
+                with conn_execute(conn, bs_props_tbl.insert(), inserts):
+                    pass
 
             # and finish with a build request for each builder.  Note that
             # sqlalchemy and the Python DBAPI do not provide a way to recover
@@ -102,10 +105,10 @@ class BuildsetsConnectorComponent(base.DBConnectorComponent):
                 q = sa.select([br_tbl.c.triggeredbybrid, br_tbl.c.startbrid]) \
                     .where(br_tbl.c.id == triggeredbybrid)
 
-                res = conn.execute(q)
-                row = res.fetchone()
-                if row and (row.startbrid is not None):
-                    startbrid = row.startbrid
+                with conn_execute(conn, q) as res:
+                    row = res.fetchone()
+                    if row and (row.startbrid is not None):
+                        startbrid = row.startbrid
 
             ins = br_tbl.insert()
             for buildername in builderNames:
@@ -125,13 +128,13 @@ class BuildsetsConnectorComponent(base.DBConnectorComponent):
                     mergebrid = artifactbrid = None
 
                 # Add the buildrequest to the database
-                res = conn.execute(ins,
-                                   dict(buildsetid=bsid, buildername=buildername, priority=priority,
-                                        complete=0, results=-1,
-                                        submitted_at=submitted_at, complete_at=None,
-                                        triggeredbybrid=triggeredbybrid, startbrid=startbrid,
-                                        mergebrid=mergebrid, artifactbrid=artifactbrid))
-                brids[buildername] = res.inserted_primary_key[0]
+                conn_args = dict(buildsetid=bsid, buildername=buildername, priority=priority,
+                                 complete=0, results=-1,
+                                 submitted_at=submitted_at, complete_at=None,
+                                 triggeredbybrid=triggeredbybrid, startbrid=startbrid,
+                                 mergebrid=mergebrid, artifactbrid=artifactbrid)
+                with conn_execute(conn, ins, conn_args) as res:
+                    brids[buildername] = res.inserted_primary_key[0]
 
             # Do the rest of the merge process for merged builds
             # Check if we have anything, because SQLAlchemy breaks if you try inserting an empty
@@ -141,9 +144,11 @@ class BuildsetsConnectorComponent(base.DBConnectorComponent):
 
                 # Register breq as claimed
                 q = self.db.model.buildrequest_claims.insert()
-                conn.execute(q, [dict(brid=brids[buildername], objectid=_master_objectid,
-                                      claimed_at=current_time)
-                                 for (buildername, _mergeBrDict) in brDictsToMerge.iteritems()])
+                conn_args = [dict(brid=brids[buildername], objectid=_master_objectid,
+                                  claimed_at=current_time)
+                             for (buildername, _mergeBrDict) in brDictsToMerge.iteritems()]
+                with conn_execute(conn, q, conn_args):
+                    pass
 
                 # If we are merging against a running request, register a build for this breq
                 # Again, check if there are merge target with build numbers, otherwise SQLAlchemy
@@ -155,10 +160,11 @@ class BuildsetsConnectorComponent(base.DBConnectorComponent):
                 }
                 if brDictsWithBuilds:
                     q = self.db.model.builds.insert()
-                    conn.execute(q, [dict(number=mergeBrDict['build_number'], brid=brids[buildername],
-                                          start_time=current_time, finish_time=None)
-                                     for (buildername, mergeBrDict) in brDictsWithBuilds.iteritems()
-                                 ])
+                    conn_args = [dict(number=mergeBrDict['build_number'], brid=brids[buildername],
+                                      start_time=current_time, finish_time=None)
+                                 for (buildername, mergeBrDict) in brDictsWithBuilds.iteritems()]
+                    with conn_execute(conn, q, conn_args):
+                        pass
 
             transaction.commit()
 
@@ -178,22 +184,23 @@ class BuildsetsConnectorComponent(base.DBConnectorComponent):
                 q = tbl.update(whereclause=(
                     (tbl.c.id == bsid) &
                     ((tbl.c.complete_at == None) | (tbl.c.complete != 1))))
-                res = conn.execute(q,
+                conn_kwargs = dict(
                     complete=1,
                     results=results,
-                    complete_at=complete_at)
-
-                return (res.rowcount > 0)
+                    complete_at=complete_at,
+                )
+                with conn_execute(conn, q, **conn_kwargs) as res:
+                    return (res.rowcount > 0)
 
             # maybe another build completed the buildset
             def checkupdated():
                 q = tbl.select(whereclause=((tbl.c.id == bsid)
                                & (tbl.c.complete==1) & (tbl.c.complete_at != None)))
-                res = conn.execute(q)
-                row = res.fetchone()
-                res.close()
-                if not row:
-                    raise KeyError
+                with conn_execute(conn, q) as res:
+                    row = res.fetchone()
+                    res.close()
+                    if not row:
+                        raise KeyError
                     
             if update():               
                 return
@@ -206,22 +213,22 @@ class BuildsetsConnectorComponent(base.DBConnectorComponent):
         def thd(conn):
             bs_tbl = self.db.model.buildsets
             q = bs_tbl.select(whereclause=(bs_tbl.c.id == bsid))
-            res = conn.execute(q)
-            row = res.fetchone()
-            if not row:
-                return None
-            return self._row2dict(row)
+            with conn_execute(conn, q) as res:
+                row = res.fetchone()
+                if not row:
+                    return None
+                return self._row2dict(row)
         return self.db.pool.do(thd)
 
     def getBuildsetsByIds(self, bsids):
         def thd(conn):
             bs_tbl = self.db.model.buildsets
             q = bs_tbl.select(whereclause=(bs_tbl.c.id.in_(bsids)))
-            res = conn.execute(q)
             build_sets = {}
-            for row in res.fetchall():
-                bs = self._row2dict(row)
-                build_sets[row.id] = bs
+            with conn_execute(conn, q) as res:
+                for row in res.fetchall():
+                    bs = self._row2dict(row)
+                    build_sets[row.id] = bs
             return build_sets
 
         return self.db.pool.do(thd)
@@ -236,8 +243,8 @@ class BuildsetsConnectorComponent(base.DBConnectorComponent):
                 else:
                     q = q.where((bs_tbl.c.complete == 0) |
                                 (bs_tbl.c.complete == None))
-            res = conn.execute(q)
-            return [ self._row2dict(row) for row in res.fetchall() ]
+            with conn_execute(conn, q) as res:
+                return [ self._row2dict(row) for row in res.fetchall() ]
         return self.db.pool.do(thd)
 
     def getRecentBuildsets(self, count, branch=None, repository=None,
@@ -260,12 +267,12 @@ class BuildsetsConnectorComponent(base.DBConnectorComponent):
                     q = q.where((bs_tbl.c.complete == 0) |
                                 (bs_tbl.c.complete == None))
             if branch:
-              q = q.where(ss_tbl.c.branch == branch)
+                q = q.where(ss_tbl.c.branch == branch)
             if repository:
-              q = q.where(ss_tbl.c.repository == repository)
-            res = conn.execute(q)
-            return list(reversed([ self._row2dict(row)
-                                  for row in res.fetchall() ]))
+                q = q.where(ss_tbl.c.repository == repository)
+            with conn_execute(conn, q) as res:
+                return list(reversed([ self._row2dict(row)
+                                      for row in res.fetchall() ]))
         return self.db.pool.do(thd)
 
     def getBuildsetProperties(self, buildsetid):
@@ -287,13 +294,14 @@ class BuildsetsConnectorComponent(base.DBConnectorComponent):
                 [ bsp_tbl.c.property_name, bsp_tbl.c.property_value ],
                 whereclause=(bsp_tbl.c.buildsetid == buildsetid))
             l = []
-            for row in conn.execute(q):
-                try:
-                    properties = json.loads(row.property_value)
-                    l.append((row.property_name,
-                           tuple(properties)))
-                except ValueError:
-                    pass
+            with conn_execute(conn, q) as res:
+                for row in res:
+                    try:
+                        properties = json.loads(row.property_value)
+                        l.append((row.property_name,
+                               tuple(properties)))
+                    except ValueError:
+                        pass
             return dict(l)
         return self.db.pool.do(thd)
 
@@ -304,14 +312,15 @@ class BuildsetsConnectorComponent(base.DBConnectorComponent):
                 [bsp_tbl.c.buildsetid, bsp_tbl.c.property_name, bsp_tbl.c.property_value],
                 whereclause=(bsp_tbl.c.buildsetid.in_(buildSetIds)))
             buildSetsProperties = {}
-            for row in conn.execute(q):
-                try:
-                    if row.buildsetid not in buildSetsProperties:
-                        buildSetsProperties[row.buildsetid] = {}
-                    properties = json.loads(row.property_value)
-                    buildSetsProperties[row.buildsetid][row.property_name] = tuple(properties)
-                except ValueError:
-                    pass
+            with conn_execute(conn, q) as res:
+                for row in res:
+                    try:
+                        if row.buildsetid not in buildSetsProperties:
+                            buildSetsProperties[row.buildsetid] = {}
+                        properties = json.loads(row.property_value)
+                        buildSetsProperties[row.buildsetid][row.property_name] = tuple(properties)
+                    except ValueError:
+                        pass
 
             return buildSetsProperties
         return self.db.pool.do(thd)
