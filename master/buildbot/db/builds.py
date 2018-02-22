@@ -71,6 +71,22 @@ class BuildsConnectorComponent(base.DBConnectorComponent):
             return None
         return self.db.pool.do(thd)
 
+    def getBuildIDForRequest(self, brid, build_number):
+        def thd(conn):
+            tbl = self.db.model.builds
+            q = sa.select([tbl.c.id]) \
+                .where(tbl.c.brid == brid) \
+                .where(tbl.c.number == build_number)
+            res = conn.execute(q)
+            row = res.fetchone()
+
+            if not row:
+                return None
+
+            return row.id
+
+        return self.db.pool.do(thd)
+
     def getBuildNumbersForRequests(self, brids):
         def thd(conn):
             tbl = self.db.model.builds
@@ -112,6 +128,15 @@ class BuildsConnectorComponent(base.DBConnectorComponent):
                 conn.execute(q, finish_time=now)
 
             transaction.commit()
+        return self.db.pool.do(thd)
+
+    def createBuildUser(self, buildid, userid, finish_time):
+        def thd(conn):
+            tbl = self.db.model.build_user
+
+            q = tbl.insert()
+            conn.execute(q, dict(buildid=buildid, userid=userid, finish_time=finish_time))
+
         return self.db.pool.do(thd)
 
     def finishedMergedBuilds(self, brids, number):

@@ -463,7 +463,6 @@ class TestGetLastBuildsOwnedBy(
 
     @defer.inlineCallbacks
     def test_results_are_correctly_filtered_for_user(self):
-        today_time = 1519115900
         day_count = 7
         first_user_builds_count = 15
         second_user_builds_count = 30
@@ -496,3 +495,61 @@ class TestGetLastBuildsOwnedBy(
             self._collect_ids(second_user_builds, 'builds_id'),
             range(first_user_builds_count, second_user_max_build_id)
         )
+
+
+class TestGetBuildIDForRequest(
+    connector_component.ConnectorComponentMixin,
+    unittest.TestCase,
+):
+
+    def setUp(self):
+        d = self.setUpConnectorComponent(table_names=['builds', 'buildrequests'])
+        self.master = fakemaster.make_master(wantDb=True, testcase='Tests for getBuildIDForRequest method')
+
+        def finish_setup(_):
+            self.db.builds = builds.BuildsConnectorComponent(self.db)
+
+        d.addCallback(finish_setup)
+
+        return d
+
+    def tearDown(self):
+        return self.tearDownConnectorComponent()
+
+    @defer.inlineCallbacks
+    def testGetBuildIDForRequestsIfBuildExists(self):
+        example_data = [
+            fakedb.BuildRequest(id=1, buildsetid=1, buildername="builder2", complete=1, results=7),
+            fakedb.BuildRequest(id=2, buildsetid=1, buildername="builder3", complete=1, results=7),
+            fakedb.Build(id=1, number=3, brid=1, slavename='slave-02', finish_time=1519115855),
+            fakedb.Build(id=2, number=4, brid=1, slavename='slave-01', finish_time=1519115850),
+            fakedb.Build(id=3, number=3, brid=2, slavename='slave-01', finish_time=1519115850),
+        ]
+        yield self.insertTestData(example_data)
+
+        bid1 = yield self.db.builds.getBuildIDForRequest(1, 3)
+        bid2 = yield self.db.builds.getBuildIDForRequest(1, 4)
+        bid3 = yield self.db.builds.getBuildIDForRequest(2, 3)
+
+        self.assertEqual(bid1, 1)
+        self.assertEqual(bid2, 2)
+        self.assertEqual(bid3, 3)
+
+    @defer.inlineCallbacks
+    def testGetBuildIDForRequestIfBuildNotExists(self):
+        example_data = [
+            fakedb.BuildRequest(id=1, buildsetid=1, buildername="builder2", complete=1, results=7),
+        ]
+        yield self.insertTestData(example_data)
+
+        bid = yield self.db.builds.getBuildIDForRequest(1, 1)
+
+        self.assertEqual(bid, None)
+
+    @defer.inlineCallbacks
+    def testGetBuildIDForRequestIfBuildRequestNotExists(self):
+        #Empty database
+
+        bid = yield self.db.builds.getBuildIDForRequest(1, 1)
+
+        self.assertEqual(bid, None)

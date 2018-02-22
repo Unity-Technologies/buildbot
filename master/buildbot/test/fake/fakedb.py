@@ -1275,6 +1275,16 @@ class FakeBuildsComponent(FakeDBComponent):
     def finishedMergedBuilds(self, brids, number):
         return defer.succeed(None)
 
+    def getBuildIDForRequest(self, brid, build_number):
+        for id, row in self.builds.items():
+            if row.brid == brid and row.number == build_number:
+                return defer.succeed(id)
+        return defer.succeed(None)
+
+    def createBuildUser(self, buildid, userid, finish_time):
+        return defer.succeed(None)
+
+
 class FakeMastersConfigComponent(FakeDBComponent):
 
     def setUp(self):

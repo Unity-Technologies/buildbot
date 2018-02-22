@@ -86,6 +86,7 @@ class BuildStatus(styles.Versioned, properties.PropertiesMixin):
         self.testResults = {}
         self.resume = []
         self.resumeSlavepool = None
+        self.savedStatus = False
         self.properties = properties.Properties()
 
     def __repr__(self):
@@ -202,8 +203,25 @@ class BuildStatus(styles.Versioned, properties.PropertiesMixin):
             d = defer.succeed(self)
         else:
             d = defer.Deferred()
+            d.addCallback(self.createBuildUserStatus)
             self.finishedWatchers.append(d)
         return d
+
+    def createBuildUserStatus(self, step):
+        @defer.inlineCallbacks
+        def thd(buildId):
+            for owner in self.owners:
+                identifier = owner.split()[0]
+                userid = yield self.master.db.users.identifierToUid(identifier)
+                yield self.master.db.builds.createBuildUser(buildId, userid, self.finished)
+
+        if self.finished and self.savedStatus == False:
+            self.savedStatus = True
+            buildIdDefer = self.master.db.builds.getBuildIDForRequest(self.buildChainID, self.number)
+            buildIdDefer.addCallback(thd)
+
+        return step
+
 
     # while the build is running, the following methods make sense.
     # Afterwards they return None
@@ -515,7 +533,7 @@ class BuildStatus(styles.Versioned, properties.PropertiesMixin):
             self.sources = [self.source]
             del self.source
         self.wasUpgraded = True
-        
+
     def checkLogfiles(self):
         # check that all logfiles exist, and remove references to any that
         # have been deleted (e.g., by purge())

@@ -142,6 +142,13 @@ class Model(base.DBConnectorComponent):
             sa.ForeignKey('sourcestampsets.id'))
     )
 
+    # This table represents BuildUser - it joins a Build with a user who runs build
+    build_user = sa.Table('build_user', metadata,
+        sa.Column('buildid', sa.Integer, sa.ForeignKey('builds.id'), nullable=False),
+        sa.Column('userid', sa.Integer, sa.ForeignKey('users.uid'), nullable=True),
+        sa.Column('finish_time', sa.Integer),
+    )
+
     # changes
 
     # Files touched in changes
@@ -428,13 +435,14 @@ class Model(base.DBConnectorComponent):
     sa.Index('builds_slavename', builds.c.slavename, unique=False)
     sa.Index('user_properties_uid', user_props.c.uid, unique=False)
     sa.Index('user_props_attrs', user_props.c.prop_type, user_props.c.prop_data)
+    sa.Index('build_user_buildid', build_user.c.buildid, build_user.c.userid)
 
     # MySQl creates indexes for foreign keys, and these appear in the
     # reflection.  This is a list of (table, index) names that should be
     # expected on this platform
 
     implied_indexes = [
-        ('change_users', 
+        ('change_users',
             dict(unique=False, column_names=['uid'], name='uid')),
         ('sourcestamps',
             dict(unique=False, column_names=['patchid'], name='patchid')),
