@@ -5,7 +5,7 @@
 
 {% block content %}
 
-<h2>Your builds run in last 24h</h2>
+<h2>Your builds run in last {% if days_count <= 1 %}day{% else %}{{ days_count }} days{% endif %}</h2>
 
 <table class="table table-katana table-stripes no-bg tablesorter dataTable tablesorter-js shortcut-js tools-js">
     <thead>

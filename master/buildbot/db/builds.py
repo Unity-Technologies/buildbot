@@ -17,14 +17,13 @@ from datetime import datetime, timedelta
 from sqlalchemy.orm import aliased
 from twisted.internet import reactor
 from buildbot.db import base
-from buildbot.util import epoch2datetime
+from buildbot.util import epoch2datetime, datetime2epoch
 import sqlalchemy as sa
 from buildbot.db.buildrequests import maybeFilterBuildRequestsBySourceStamps, mkdt
 
 
 class BuildsConnectorComponent(base.DBConnectorComponent):
     # Documentation is in developer/database.rst
-    NUMBER_OF_REQUESTED_BUILDS = 200
 
     def getBuild(self, bid):
         def thd(conn):
@@ -246,7 +245,7 @@ class BuildsConnectorComponent(base.DBConnectorComponent):
 
         return self.db.pool.do(thd)
 
-    def getLastBuildsOwnedBy(self, owner, botmaster):
+    def getLastBuildsOwnedBy(self, owner, botmaster, day_count):
         if not (isinstance(owner, str) or isinstance(owner, unicode)):
             raise ValueError("Expected owner to be string which is fullname")
 
@@ -254,6 +253,7 @@ class BuildsConnectorComponent(base.DBConnectorComponent):
             buildrequests_tbl = self.db.model.buildrequests
             buildsets_tbl = self.db.model.buildsets
             builds_tbl = self.db.model.builds
+            from_time = datetime2epoch(datetime.now() - timedelta(days=day_count))
 
             from_clause = buildsets_tbl.join(
                 buildrequests_tbl,
@@ -266,9 +266,9 @@ class BuildsConnectorComponent(base.DBConnectorComponent):
             q = (
                 sa.select([buildrequests_tbl, builds_tbl, buildsets_tbl], use_labels=True)
                 .select_from(from_clause)
+                .where(builds_tbl.c.finish_time >= from_time)
                 .where(buildsets_tbl.c.reason.like('%{}%'.format(owner)))
                 .order_by(sa.desc(builds_tbl.c.start_time))
-                .limit(self.NUMBER_OF_REQUESTED_BUILDS)
             )
 
             res = conn.execute(q)
