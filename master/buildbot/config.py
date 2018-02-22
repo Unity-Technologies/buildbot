@@ -93,6 +93,7 @@ class MasterConfig(object):
         self.autobahn_push = "false"
         self.lastBuildCacheDays = 30
         self.slave_debug_url = None
+        self.myBuildDaysCount = 7
         # This URL will only be used if no slaveManagerUrl is present in master.cfg
         self.slaveManagerUrl = None
 
@@ -132,7 +133,7 @@ class MasterConfig(object):
         "status", "title", "titleURL", "user_managers", "validation", "realTimeServer",
         "analytics_code", "gzip", "autobahn_push", "lastBuildCacheDays",
         "requireLogin", "globalFactory", "slave_debug_url", "slaveManagerUrl",
-        "cleanUpPeriod", "buildRequestsDays", "remoteCallTimeout"
+        "cleanUpPeriod", "buildRequestsDays", "remoteCallTimeout", "myBuildDayCount",
     ])
 
     @classmethod
