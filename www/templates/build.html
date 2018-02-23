@@ -21,6 +21,18 @@
 
             </div>
 
+            <dl class="child-table">
+                {% if top_build_url %}
+                    <dt>Top build in chain:</dt>
+                    <dd><a href="{{ top_build_url }}">{{ top_build_name }}</a></dd>
+                {% endif %}
+
+                {% if parent_build_url %}
+                    <dt>This build is child build of:</dt>
+                    <dd><a href="{{ parent_build_url }}">{{ parent_build_name }}</a></dd>
+                {% endif %}
+            </dl>
+
             {% if b.isResuming() %}
                 <div class="divider"></div>
                 <h2 class="head-2">

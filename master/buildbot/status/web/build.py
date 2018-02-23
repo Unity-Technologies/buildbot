@@ -13,6 +13,7 @@
 #
 # Copyright Buildbot Team Members
 import json
+from itertools import ifilter
 
 from twisted.web import html
 from twisted.internet import defer, reactor
@@ -21,14 +22,15 @@ from twisted.web.util import Redirect, DeferredResource
 import urllib, time
 from twisted.python import log
 from buildbot.status.web.base import HtmlResource, \
-     css_classes, path_to_build, path_to_builder, path_to_slave, \
+    css_classes, path_to_build, path_to_builder, path_to_slave, \
     path_to_codebases, path_to_builders, path_to_step, getCodebasesArg, \
-     getAndCheckProperties, ActionResource, path_to_authzfail, \
-     getRequestCharset, path_to_json_build
+    getAndCheckProperties, ActionResource, path_to_authzfail, \
+    getRequestCharset, path_to_json_build, path_to_build_by_params
 from buildbot.schedulers.forcesched import ForceScheduler, TextParameter
 from buildbot.status.web.status_json import BuildJsonResource
 from buildbot.status.web.step import StepsResource
 from buildbot.status.web.tests import TestsResource
+from buildbot.status.build import BuildStatus
 from buildbot import util, interfaces
 from buildbot.status.results import RESUME, EXCEPTION
 
@@ -382,6 +384,27 @@ class StatusResourceBuild(HtmlResource):
         cxt['chained_build'] = yield req.site.buildbot_service.master.db.buildrequests.getBuildChain(
             self.build_status.buildChainID,
         )
+        current_brids = self.build_status.brids
+        current_build = next(ifilter(lambda x: x['id'] in current_brids, cxt['chained_build']), None)
+
+        cxt['parent_build_url'] = None
+        cxt['top_build_url'] = None
+
+        top_build = next(ifilter(lambda x: current_build and x['id'] == current_build['startbrid'], cxt['chained_build']), None)
+        if top_build:
+            cxt['top_build_url'] = path_to_build_by_params(req, top_build['buildername'], top_build['number'], project)
+            cxt['top_build_name'] = "{builder_name} #{build_number}".format(
+                builder_name=top_build['buildername'],
+                build_number=top_build['number'],
+            )
+
+        parrent_build = next(ifilter(lambda x: current_build and x['id'] == current_build['triggeredbybrid'], cxt['chained_build']), None)
+        if parrent_build:
+            cxt['parent_build_url'] = path_to_build_by_params(req, parrent_build['buildername'], parrent_build['number'], project)
+            cxt['parent_build_name'] = "{builder_name} #{build_number}".format(
+                builder_name=parrent_build['buildername'],
+                build_number=parrent_build['number'],
+            )
 
         template = req.site.buildbot_service.templates.get_template("build.html")
         defer.returnValue(template.render(**cxt))
