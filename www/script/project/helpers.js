@@ -14,6 +14,7 @@ define(function (require) {
     var helpers,
         css_class_enum = {},
         css_classes = {
+            BEGINNING: [-1, "beginning"],
             SUCCESS: [0, "success"],
             WARNINGS: [1, "warnings"],
             FAILURE: [2, "failure"],
@@ -502,10 +503,13 @@ define(function (require) {
             return ret.join("&");
         },
         getCssClassFromStatus: function (status) {
-            var values = Object.keys(css_classes).map(function (key) {
-                return css_classes[key];
-            });
-            return values[status][1];
+            var values = {};
+            var css_keys = Object.keys(css_classes);
+            for(var i=0; i<css_keys.length; i++){
+                var css_key = css_keys[i];
+                values[css_classes[css_key][0]] = css_classes[css_key][1];
+            }
+            return values[status];
         },
         setIFrameSize: function (iFrame) {
             if (iFrame) {

@@ -1471,6 +1471,51 @@ class TestBuildsetsConnectorComponent(
             for result, expected_value in zip(results, expected_result):
                 self.assertEqual(result['id'], expected_value, msg="Wrong value for brid={}".format(brid))
 
+    @defer.inlineCallbacks
+    def test_getBuildRequestForStartbrids(self):
+        breqs = [
+            fakedb.BuildRequest(id=1, buildsetid=1, complete=1, results=0,  buildername="bldr1", priority=50, submitted_at=1518616728, startbrid=None),
+            # sub-builders for brid 1
+            fakedb.BuildRequest(id=2, buildsetid=1, complete=1, results=0,  buildername="sub-bldr1", priority=50, submitted_at=1518616728, startbrid=1),
+            fakedb.BuildRequest(id=3, buildsetid=1, complete=1, results=0,  buildername="sub-bldr2", priority=50, submitted_at=1518616728, startbrid=1),
+
+            fakedb.BuildRequest(id=4, buildsetid=2, complete=0, results=-1, buildername="bldr11", priority=50, submitted_at=1518616730, startbrid=None),
+            # sub-builders for brid 4
+            fakedb.BuildRequest(id=5, buildsetid=2, complete=1, results=7,  buildername="sub-bldr11", priority=50, submitted_at=1518616730, startbrid=4),
+            fakedb.BuildRequest(id=6, buildsetid=2, complete=0, results=-1, buildername="sub-bldr22", priority=50, submitted_at=1518616730, startbrid=4),
+            fakedb.BuildRequest(id=7, buildsetid=2, complete=1, results=6,  buildername="sub-bldr33", priority=50, submitted_at=1518616730, startbrid=4),
+        ]
+
+        builds = [
+            fakedb.Build(id=20, brid=1, number=5, start_time=1518616728, finish_time=1518617000),
+            # sub-builds for brid 1
+            fakedb.Build(id=21, brid=2, number=6, start_time=1518616728, finish_time=1518617000),
+            fakedb.Build(id=22, brid=3, number=7, start_time=1518616728, finish_time=1518617000),
+
+            fakedb.Build(id=23, brid=4, number=8, start_time=1518616728, finish_time=None),
+            # sub-builds for brid 4
+            fakedb.Build(id=24, brid=5, number=9, start_time=1518616728, finish_time=1518618000),
+            fakedb.Build(id=25, brid=6, number=10, start_time=1518616728, finish_time=None),
+            fakedb.Build(id=26, brid=7, number=11, start_time=1518616728, finish_time=1518618000),
+        ]
+        self.insertTestData(breqs + builds)
+
+        expected_results = {
+            1: [{'buildername': 'sub-bldr1', 'results': 0, 'number': 6},
+                {'buildername': 'sub-bldr2', 'results': 0, 'number': 7}],
+
+            4: [{'buildername': 'sub-bldr11', 'results': 7, 'number': 9},
+                {'buildername': 'sub-bldr22', 'results': -1, 'number': 10},
+                {'buildername': 'sub-bldr33', 'results': 6, 'number': 11}],
+            7: [],
+        }
+
+        for brid in expected_results.keys():
+            results = yield self.db.buildrequests.getBuildRequestForStartbrids([brid])
+            expected_rows = expected_results[brid]
+            self.assertEqual(len(results), len(expected_rows))
+            self.assertItemsEqual(results, expected_rows)
+
     def checkCanceledBuildRequests(self, brlist, complete=True, results=CANCELED):
         self.assertTrue(all([br['complete'] == complete and br['results'] == results
                              and (br['complete_at'] is not None if complete else br['complete_at'] is None)

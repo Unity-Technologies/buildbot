@@ -34,6 +34,7 @@ from buildbot.status.build import BuildStatus
 from buildbot import util, interfaces
 from buildbot.status.results import RESUME, EXCEPTION
 
+
 class CancelBuildActionResource(ActionResource):
     def __init__(self, build_status):
         self.build_status = build_status
@@ -293,12 +294,14 @@ class StatusResourceBuild(HtmlResource):
                 step['css_class'] = "not-started"
                 step['time_to_run'] = ""
 
-            cxt['steps'].append(step)
-
             step['link'] = path_to_step(req, s)
             step['text'] = " ".join(s.getText())
+
+            cxt['steps'].append(step)
+
+            s.prepare_trigger_links()
+
             urls = []
-            getUrls = s.getURLs().items()
             for k,v in s.getURLs().items():
                 if isinstance(v, dict):
                     if 'results' in v.keys() and v['results'] in css_classes:

@@ -960,6 +960,30 @@ class BuildRequestsConnectorComponent(base.DBConnectorComponent):
 
         return self.db.pool.do(thd)
 
+    def getBuildRequestForStartbrids(self, brids):
+        def thd(conn):
+            buildrequest_table = self.db.model.buildrequests
+            build_table = self.db.model.builds
+            query = sa.select([buildrequest_table.c.buildername, buildrequest_table.c.results, build_table.c.number],
+                              from_obj=buildrequest_table.join(build_table, (buildrequest_table.c.id == build_table.c.brid))) \
+                      .where(buildrequest_table.c.startbrid.in_(brids)) \
+                      .order_by(buildrequest_table.c.id)
+
+            result = conn.execute(query)
+            rows = result.fetchall()
+            buildrequests = []
+            for row in rows:
+                buildrequest = dict(
+                    buildername=row.buildername,
+                    results=row.results,
+                    number=row.number,
+                )
+                buildrequests.append(buildrequest)
+            result.close()
+            return buildrequests
+
+        return self.db.pool.do(thd)
+
     def insertBuildRequestClaimsTable(self, conn, _master_objectid, brids, claimed_at=None):
         tbl = self.db.model.buildrequest_claims
         q = tbl.insert()

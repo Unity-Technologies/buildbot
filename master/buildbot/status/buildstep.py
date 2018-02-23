@@ -80,6 +80,7 @@ class BuildStepStatus(styles.Versioned):
 
         self.waitingForLocks = False
         self.step_type = str(step_type)
+        self.step_type_obj = step_type
 
     def getName(self):
         """Returns a short string with the name of this step. This string
@@ -372,6 +373,22 @@ class BuildStepStatus(styles.Versioned):
         if not hasattr(self, "hidden"):
             self.hidden = False
         self.wasUpgraded = True
+
+    @defer.inlineCallbacks
+    def prepare_trigger_links(self):
+        from buildbot.steps.trigger import Trigger
+        if self.step_type_obj is not Trigger:
+            return
+
+        brids = self.build.brids
+        db_results = yield self.build.builder.master.db.buildrequests\
+                        .getBuildRequestForStartbrids(brids)
+        master = self.build.builder.master
+        for build in db_results:
+            url = master.status.getURLForBuild(build['buildername'], build['number'])
+            results = (build['results'],)  # must be tuple
+            self.addURL(url['text'], url['path'], results)
+
 
     def asDict(self, request=None):
         from buildbot.status.web.base import getCodebasesArg
