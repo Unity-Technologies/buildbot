@@ -29,6 +29,13 @@ div.force-text .label.question-icon {
 .result {
 	padding: 4px 9px;
 	display:inline-block;
+
+    ul {
+        padding-top: 5px;
+        border-top: 1px solid;
+        margin-top: 5px;
+        padding-left: 25px;
+    }
 }
 
 .status-text {

@@ -1278,6 +1278,7 @@ div.force-int .label,div.force-text .label{display:block;float:left;font-weight:
 .tooltip-cont{position:absolute;display:block;display:none;max-width:350px;background-image:-moz-linear-gradient(top,rgba(255,255,255,.93) 0,#F8F8F9 100%);background-image:-webkit-linear-gradient(top,rgba(255,255,255,.93) 0,#F8F8F9 100%);background-image:-o-linear-gradient(top,rgba(255,255,255,.93) 0,#F8F8F9 100%);background-image:-ms-linear-gradient(top,rgba(255,255,255,.93) 0,#F8F8F9 100%);background-image:linear-gradient(top,rgba(255,255,255,.93) 0,#F8F8F9 100%);-webkit-border-radius:8px;-moz-border-radius:8px;-ms-border-radius:8px;-o-border-radius:8px;border-radius:8px;text-shadow:0 1px 0 #FFF;-webkit-box-shadow:1px 1px 9px rgba(0,0,0,.37);box-shadow:1px 1px 9px rgba(0,0,0,.37);padding:8px;z-index:1000}
 div.force-text .label.question-icon{margin-top:9px}
 .result{padding:4px 9px;display:inline-block}
+.result ul{padding-top:5px;border-top:1px solid;margin-top:5px;padding-left:25px}
 .status-text{display:inline-block}
 .status-text:first-letter{text-transform:capitalize}
 .content-blocks{margin-bottom:15px}
