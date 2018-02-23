@@ -11,28 +11,28 @@
 
             {% if suite.summary.result %}
                 <div class="row">
-                    <h4>Suite type: {{ suite.name }}
+                    <h4>Suite type: {{ suite.name|e }}
                          {% if suite.description %}
-                            {{ suite.description }}
+                            {{ suite.description|e }}
                          {% endif %}
                     </h4>
                     {% if data.utrPrefix %}
                         <a class="label label-default collapse" data-target="#suiteCommand{{ loop.index }}">Command to run locally</a>
 
                         <div id="suiteCommand{{ loop.index }}" class="report-command">
-                            <input class="report-command-text" type="text" value="{{ data.utrPrefix }} --suite={{ suite.name }} {{ additionalCommandLineArguments }}" onclick="this.select();" readonly/>
+                            <input class="report-command-text" type="text" value="{{ data.utrPrefix|e }} --suite={{ suite.name|e }} {{ additionalCommandLineArguments|e }}" onclick="this.select();" readonly/>
                         </div>
                     {% endif %}
                 </div>
 
                 {% if suite.error %}
-                    <div class="failure">{{ suite.error }}</div>
+                    <div class="failure">{{ suite.error|e }}</div>
                 {% endif %}
 
                 {% if suite.failureReasons %}
                 <div>
                     {% for error in suite.failureReasons %}
-                        <div class="failure">{{ error }}</div>
+                        <div class="failure">{{ error|e }}</div>
                     {% endfor %}
                 </div>
                 {% endif %}
@@ -40,7 +40,7 @@
                 {% if suite.errors %}
                 <div>
                     {% for error in suite.errors %}
-                        <div class="failure">{{ error }}</div>
+                        <div class="failure">{{ error|e }}</div>
                     {% endfor %}
                 </div>
                 {% endif %}
@@ -93,13 +93,13 @@
                 {% for test in suite.tests %}
                     <tr>
                         <td class="txt-align-left">
-                            <h5><strong>{{ test.name }}</strong></h5>
+                            <h5><strong>{{ test.name|e }}</strong></h5>
                             {% if data.utrPrefix %}
 
                                 <a class="label label-default collapse" data-target="#testCommand{{ outer_loop.index }}{{ loop.index }}">Command to run locally</a>
 
                                 <div id="testCommand{{ outer_loop.index }}{{ loop.index }}" class="report-command">
-                                    <input class="report-command-text" type="text" value="{{ data.utrPrefix }} --suite={{ suite.name }} {{ removeTestFilter (additionalCommandLineArguments) }} --testfilter={{ test.name }}" onclick="this.select();" readonly/>
+                                    <input class="report-command-text" type="text" value="{{ data.utrPrefix|e }} --suite={{ suite.name|e }} {{ removeTestFilter (additionalCommandLineArguments|e) }} --testfilter={{ test.name|e }}" onclick="this.select();" readonly/>
                                 </div>
                             {% endif %}
 
@@ -118,28 +118,28 @@
 
                             {% if test.message %}
                                 <div><b>Message:</b></div>
-                                <div class="formatted-text"><pre>{{ test.message }}</pre></div>
+                                <div class="formatted-text"><pre>{{ test.message|e }}</pre></div>
                             {% endif %}
 
                             {% if test.stackTrace %}
                                 <div><b>Stack trace:</b></div>
-                                <div class="formatted-text"><pre>{{ test.stackTrace }}</pre></div>
+                                <div class="formatted-text"><pre>{{ test.stackTrace|e }}</pre></div>
                             {% endif %}
 
                             {% if test.reason %}
                                 <div><b>Reason:</b></div>
-                                <div class="formatted-text"><pre>{{ test.reason }}</pre></div>
+                                <div class="formatted-text"><pre>{{ test.reason|e }}</pre></div>
                             {% endif %}
 
                             {% if test.errors %}
                                 <div><b>Other errors:</b></div>
                                 {% for error in test.errors %}
-                                    <div class="formatted-text"><pre>{{ error }}</pre></div>
+                                    <div class="formatted-text"><pre>{{ error|e }}</pre></div>
                                 {% endfor %}
                             {% endif %}
                         </td>
                         {% set test_state = results[test.state] if test.state in results else 'unknown'%}
-                        <td class="{{ test_state }}">{{ test_state }}</td>
+                        <td class="{{ test_state }}">{{ test_state|e }}</td>
                         {% if test.time %}
                             <td data-time="{{ test.time }}" data-time-unit="ms"></td>
                         {% else %}
@@ -164,7 +164,7 @@
                                     </div>
                                 </div>
                             </td>
-                            <td class="hidden-result">{{ test.result }}</td>
+                            <td class="hidden-result">{{ test.result|e }}</td>
                             <td>&nbsp;</td>
                         </tr>
                     {% endif %}
