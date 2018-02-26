@@ -21,6 +21,7 @@ from buildbot.util import json
 import sqlalchemy as sa
 from twisted.internet import defer, reactor
 from buildbot.db import base
+from buildbot.db.base import conn_execute
 from buildbot.util import epoch2datetime, datetime2epoch
 from twisted.python import log
 from twisted.python.failure import Failure
@@ -66,27 +67,30 @@ class ChangesConnectorComponent(base.DBConnectorComponent):
             self.check_length(ch_tbl.c.repository, repository)
             self.check_length(ch_tbl.c.project, project)
 
-            r = conn.execute(ch_tbl.insert(), dict(
-                author=author,
-                comments=comments_val,
-                is_dir=is_dir,
-                branch=branch,
-                revision=revision,
-                revlink=revlink,
-                when_timestamp=datetime2epoch(when_timestamp),
-                category=category,
-                repository=repository,
-                codebase=codebase,
-                project=project))
-            changeid = r.inserted_primary_key[0]
+            changeid = None
+            with conn_execute(conn, ch_tbl.insert(), dict(
+                    author=author,
+                    comments=comments_val,
+                    is_dir=is_dir,
+                    branch=branch,
+                    revision=revision,
+                    revlink=revlink,
+                    when_timestamp=datetime2epoch(when_timestamp),
+                    category=category,
+                    repository=repository,
+                    codebase=codebase,
+                    project=project)) as res:
+                changeid = res.inserted_primary_key[0]
+
             if files:
                 tbl = self.db.model.change_files
                 for f in files:
                     self.check_length(tbl.c.filename, f)
-                conn.execute(tbl.insert(), [
-                    dict(changeid=changeid, filename=f)
-                        for f in files
-                    ])
+
+                conn_args = [dict(changeid=changeid, filename=f)
+                             for f in files]
+                with conn_execute(conn, tbl.insert(), conn_args):
+                    pass
             if properties:
                 tbl = self.db.model.change_properties
                 inserts = [
@@ -100,12 +104,12 @@ class ChangesConnectorComponent(base.DBConnectorComponent):
                             i['property_name'])
                     self.check_length(tbl.c.property_value,
                             i['property_value'])
-
-                conn.execute(tbl.insert(), inserts)
+                with conn_execute(conn, tbl.insert(), inserts):
+                    pass
             if uid:
                 ins = self.db.model.change_users.insert()
-                conn.execute(ins, dict(changeid=changeid, uid=uid))
-
+                with conn_execute(conn, ins, dict(changeid=changeid, uid=uid)):
+                    pass
             transaction.commit()
 
             return changeid
@@ -119,8 +123,9 @@ class ChangesConnectorComponent(base.DBConnectorComponent):
             # get the row from the 'changes' table
             changes_tbl = self.db.model.changes
             q = changes_tbl.select(whereclause=(changes_tbl.c.changeid == changeid))
-            rp = conn.execute(q)
-            row = rp.fetchone()
+            row = None
+            with conn_execute(conn, q) as res:
+                row = res.fetchone()
             if not row:
                 return None
             # and fetch the ancillary data (files, properties)
@@ -129,6 +134,7 @@ class ChangesConnectorComponent(base.DBConnectorComponent):
         return d
 
     def getChangesGreaterThan(self, changeid):
+        # @TODO: missing tests
         assert changeid >= 0
         def thd(conn):
             # get rows from the 'changes' table
@@ -137,13 +143,13 @@ class ChangesConnectorComponent(base.DBConnectorComponent):
                 whereclause=(changes_tbl.c.changeid > changeid),
                 order_by=[sa.asc(changes_tbl.c.changeid)],
             )
-            rp = conn.execute(q)
-            rows = rp.fetchall()
-            changes = [
-                self._chdict_from_change_row_thd(conn, row)
-                for row in rows
-            ]
-            return changes
+            with conn_execute(conn, q) as res:
+                rows = res.fetchall()
+                changes = [
+                    self._chdict_from_change_row_thd(conn, row)
+                    for row in rows
+                ]
+                return changes
         d = self.db.pool.do(thd)
         return d
 
@@ -152,10 +158,10 @@ class ChangesConnectorComponent(base.DBConnectorComponent):
         def thd(conn):
             cu_tbl = self.db.model.change_users
             q = cu_tbl.select(whereclause=(cu_tbl.c.changeid == changeid))
-            res = conn.execute(q)
-            rows = res.fetchall()
-            row_uids = [ row.uid for row in rows ]
-            return row_uids
+            with conn_execute(conn, q) as res:
+                rows = res.fetchall()
+                row_uids = [ row.uid for row in rows ]
+                return row_uids
         d = self.db.pool.do(thd)
         return d
 
@@ -166,10 +172,9 @@ class ChangesConnectorComponent(base.DBConnectorComponent):
             q = sa.select([changes_tbl.c.changeid],
                     order_by=[sa.desc(changes_tbl.c.changeid)],
                     limit=count)
-            rp = conn.execute(q)
-            changeids = [ row.changeid for row in rp ]
-            rp.close()
-            return list(reversed(changeids))
+            with conn_execute(conn, q) as res:
+                changeids = [ row.changeid for row in res ]
+                return list(reversed(changeids))
         d = self.db.pool.do(thd)
 
         # then turn those into changes, using the cache
@@ -211,8 +216,9 @@ class ChangesConnectorComponent(base.DBConnectorComponent):
             q = sa.select([changes_tbl.c.changeid],
                           order_by=[sa.desc(changes_tbl.c.changeid)],
                           offset=changeHorizon)
-            res = conn.execute(q)
-            ids_to_delete = [r.changeid for r in res]
+            ids_to_delete = []
+            with conn_execute(conn, q) as res:
+                ids_to_delete = [r.changeid for r in res]
 
             if not ids_to_delete:
                 return
@@ -229,8 +235,9 @@ class ChangesConnectorComponent(base.DBConnectorComponent):
                     while remaining:
                         batch, remaining = remaining[:100], remaining[100:]
                         table = self.db.model.metadata.tables[table_name]
-                        conn.execute(
-                            table.delete(table.c.changeid.in_(batch)))
+                        query = table.delete(table.c.changeid.in_(batch))
+                        with conn_execute(conn, query):
+                            pass
             except Exception:
                 transaction.rollback()
                 log.msg(Failure(), "Could not pruneChanges")
@@ -264,9 +271,9 @@ class ChangesConnectorComponent(base.DBConnectorComponent):
 
         query = change_files_tbl.select(
                 whereclause=(change_files_tbl.c.changeid == ch_row.changeid))
-        rows = conn.execute(query)
-        for r in rows:
-            chdict['files'].append(r.filename)
+        with conn_execute(conn, query) as rows:
+            for r in rows:
+                chdict['files'].append(r.filename)
 
         # and properties must be given without a source, so strip that, but
         # be flexible in case users have used a development version where the
@@ -282,12 +289,12 @@ class ChangesConnectorComponent(base.DBConnectorComponent):
 
         query = change_properties_tbl.select(
                 whereclause=(change_properties_tbl.c.changeid == ch_row.changeid))
-        rows = conn.execute(query)
-        for r in rows:
-            try:
-                v, s = split_vs(json.loads(r.property_value))
-                chdict['properties'][r.property_name] = (v,s)
-            except ValueError:
-                pass
+        with conn_execute(conn, query) as rows:
+            for r in rows:
+                try:
+                    v, s = split_vs(json.loads(r.property_value))
+                    chdict['properties'][r.property_name] = (v,s)
+                except ValueError:
+                    pass
 
         return chdict
