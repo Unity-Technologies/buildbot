@@ -16,7 +16,6 @@
 import sqlalchemy as sa
 import mock
 from buildbot.db import base
-from buildbot.db.base import conn_execute
 from twisted.trial import unittest
 from twisted.internet import defer
 
@@ -47,64 +46,6 @@ class TestBase(unittest.TestCase):
         self.comp.check_length(self.tbl.c.str32, "long string" * 5)
         # run that again since the method gets stubbed out
         self.comp.check_length(self.tbl.c.str32, "long string" * 5)
-
-
-class TestContextManager(unittest.TestCase):
-
-    def test_conn_execute_result_close(self):
-        query = "select 1"
-        connection = mock.Mock()
-        result = mock.Mock()
-        result.close = mock.Mock()
-        connection.execute = mock.Mock(return_value=result)
-
-        with conn_execute(connection, query) as res:
-            res.close()
-
-        self.assertTrue(result.close.called)
-
-    def test_conn_execute_without_close(self):
-        query = "select 2"
-        connection = mock.Mock()
-        result = mock.Mock()
-        result.close = mock.Mock()
-        connection.execute = mock.Mock(return_value=result)
-
-        with conn_execute(connection, query) as res:
-            pass
-
-        self.assertTrue(result.close.called)
-
-    def test_conn_execute_exception(self):
-        query = "select 3"
-        connection = mock.Mock()
-        result = mock.Mock()
-        result.close = mock.Mock()
-        connection.execute = mock.Mock(return_value=result)
-
-        try:
-            with conn_execute(connection, query) as res:
-                raise Exception()
-        except:
-            pass
-
-        self.assertTrue(result.close.called)
-
-    def test_conn_execute_without_query(self):
-        query = None
-        connection = mock.Mock()
-        result = mock.Mock()
-        result.close = mock.Mock()
-        connection.execute = mock.Mock(side_effect=Exception())
-
-        try:
-            with conn_execute(connection, query) as res:
-                pass
-        except:
-            pass
-
-        self.assertTrue(connection.execute.called)
-        self.assertFalse(result.close.called)
 
 
 class TestCachedDecorator(unittest.TestCase):
