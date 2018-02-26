@@ -377,6 +377,10 @@ class BuildStepStatus(styles.Versioned):
     @defer.inlineCallbacks
     def prepare_trigger_links(self):
         from buildbot.steps.trigger import Trigger
+
+        if not hasattr(self, 'step_type_obj'):
+            return
+
         if self.step_type_obj is not Trigger:
             return
 
