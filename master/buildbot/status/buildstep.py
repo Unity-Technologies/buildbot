@@ -378,10 +378,11 @@ class BuildStepStatus(styles.Versioned):
     def prepare_trigger_links(self):
         from buildbot.steps.trigger import Trigger
 
+        # for backward compatibility, the old pickled object does not have it.
         if not hasattr(self, 'step_type_obj'):
             return
 
-        if self.step_type_obj is not Trigger:
+        if not issubclass(self.step_type_obj, Trigger):
             return
 
         brids = self.build.brids
