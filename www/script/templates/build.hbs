@@ -98,12 +98,10 @@
                         *<ul>
                         <li>{{this}}</li>
                     {{else}}
-                        {{#if @last}}
-                            <li>{{this}}</li>
-                            </ul>
-                        {{else}}
-                            <li>{{this}}</li>
-                        {{/if}}
+                        <li>{{this}}</li>
+                    {{/if}}
+                    {{#if @last}}
+                        </ul>
                     {{/if}}
                 {{/if}}
             {{/each}}
