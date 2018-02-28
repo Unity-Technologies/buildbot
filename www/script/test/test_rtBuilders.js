@@ -1,4 +1,22 @@
 /*global define, describe, it, expect, beforeEach, afterEach, spyOn*/
+var customMatchers = {
+    checkUnstableTag: function(util, customEqualityTesters){
+        return {
+            compare: function(actual, tagObj){
+                var result = {};
+                result.pass = (actual === tagObj.result);
+                if(!result.pass){
+                    result.message = "Expected " + tagObj.result +
+                        " for list: [" + tagObj.data.tags.join(", ") + "]" +
+                        " and branch: " + tagObj.branch_type;
+                }
+                return result;
+            }
+        }
+    }
+}
+
+
 define(function (require) {
     "use strict";
 
@@ -117,6 +135,10 @@ define(function (require) {
     }
 
     describe("Builder tags", function () {
+        beforeEach(function() {
+            jasmine.addMatchers(customMatchers);
+        });
+
         rtBuilders.findAllTags(allTags);
 
         it("are filtered", function () {
@@ -224,6 +246,73 @@ define(function (require) {
             ];
 
             testTagFilter(tests, unstableBuilders);
+        });
+
+        it("check unstable tags", function() {
+            var tags = [
+                {data: {tags: []},                                               branch_type: undefined, result: false},
+                {data: {tags: ["Unstable"]},                                     branch_type: undefined, result: true},
+                {data: {tags: ["2017.2"]},                                       branch_type: undefined, result: false},
+                {data: {tags: ["2017.2", "2017.2-Unstable"]},                    branch_type: undefined, result: true},
+                {data: {tags: ["2017.2", "Unstable"]},                           branch_type: undefined, result: true},
+                {data: {tags: ["2017.2", "Unstable", "2017.2-Unstable"]},        branch_type: undefined, result: true},
+
+                {data: {tags: []},                                               branch_type: "2017.2", result: false},
+                {data: {tags: ["Unstable"]},                                     branch_type: "2017.2", result: true},
+                {data: {tags: ["2017.2"]},                                       branch_type: "2017.2", result: false},
+                {data: {tags: ["2017.2", "2017.2-Unstable"]},                    branch_type: "2017.2", result: true},
+                {data: {tags: ["2017.2", "Unstable"]},                           branch_type: "2017.2", result: true},
+                {data: {tags: ["2017.2", "Unstable", "2017.2-Unstable"]},        branch_type: "2017.2", result: true},
+
+                {data: {tags: ["2017.2"]},                                       branch_type: "2018.2", result: false},
+                {data: {tags: ["2017.2", "2017.2-Unstable"]},                    branch_type: "2018.2", result: false},
+                {data: {tags: ["2017.2", "Unstable"]},                           branch_type: "2018.2", result: true},
+                {data: {tags: ["2017.2", "2017.2-Unstable", "2018.2-Unstable"]}, branch_type: "2018.2", result: true},
+            ];
+
+            $.each(tags, function (i, dict) {
+                expect(rtBuilders.hasUnstableTag(dict.data.tags, dict.branch_type)).checkUnstableTag(dict);
+            });
+        });
+
+        it("check filterByTags when hide_unstable==true for unstable tags", function(){
+            var tests = [
+                {data: {tags: []},                            branch_type: undefined, result: true},
+                {data: {tags: ["2018.2"]},                    branch_type: undefined, result: true},
+                {data: {tags: ["Unstable"]},                  branch_type: undefined, result: false},
+                {data: {tags: ["2018.2", "Unstable"]},        branch_type: undefined, result: false},
+                {data: {tags: ["2018.2", "2018.2-Unstable"]}, branch_type: undefined, result: false},
+
+                {data: {tags: []},                            branch_type: "2018.2", result: true},
+                {data: {tags: ["2018.2"]},                    branch_type: "2018.2", result: false},
+                {data: {tags: ["2018.2", "2018.2-Foo"]},      branch_type: "2018.2", result: false},
+                {data: {tags: ["Unstable"]},                  branch_type: "2018.2", result: false},
+                {data: {tags: ["2018.2", "Unstable"]},        branch_type: "2018.2", result: false},
+                {data: {tags: ["2018.2", "2018.2-Unstable"]}, branch_type: "2018.2", result: false},
+
+                {data: {tags: ["2018.2"]},                    branch_type: "2017.2", result: false},
+                {data: {tags: ["2018.2", "Unstable"]},        branch_type: "2017.2", result: false},
+                {data: {tags: ["2018.2", "2018.2-Unstable"]}, branch_type: "2017.2", result: false},
+            ];
+
+            var current_tags = null;
+            var current_branch = null;
+            spyOn(rtBuilders, "getSelectedTags").and.callFake(function(){
+                return current_tags;
+            });
+            spyOn(rtBuilders, "getBranchType").and.callFake(function(){
+                return current_branch;
+            });
+            spyOn(rtBuilders, "setHideUnstable").and.callFake(function(){
+                hideUnstable = true;
+            });
+
+            $.each(tests, function(i, dict){
+                current_branch = dict.branch_type;
+                current_tags = dict.data.tags;
+
+                expect(filter(undefined, undefined, undefined, dict.data)).checkUnstableTag(dict)
+            });
         });
     });
 

@@ -159,7 +159,7 @@ define(function (require) {
                     var tags = filterTagsFunc(full.tags);
                     tags = $.map(tags, function(tag) {
                         var css_class = "label-info";
-                        if (tag.toLowerCase() === "unstable" || tag.toLowerCase() == "WIP") {
+                        if (tag.toLowerCase().endsWith("unstable") || tag.toLowerCase() == "WIP") {
                             css_class = "label-warning";
                         }
 
