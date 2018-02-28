@@ -14,6 +14,7 @@
 # Copyright Buildbot Team Members
 import mock
 from datetime import timedelta, datetime
+from freezegun import freeze_time
 
 from twisted.trial import unittest
 from twisted.internet import defer, task
@@ -424,11 +425,9 @@ class TestGetLastBuildsOwnedBy(
         return sorted([item[attribute] for item in builds])
 
     @defer.inlineCallbacks
-    @mock.patch('datetime.datetime')
-    def test_results_are_correctly_limited_by_builds_completed_time(self, mock_datetime):
+    def test_results_are_correctly_limited_by_builds_completed_time(self):
         today_time = 1519115900
         day_count = 7
-        mock_datetime.now.return_value = epoch2datetime(today_time)
         expired_time = today_time - (day_count * 24 * 60 * 60) # 7 days = 24hours * 60minuts * 60seconds
         example_data = [
             fakedb.Buildset(id=2, sourcestampsetid=2, reason='[ first_user ]'),
@@ -453,20 +452,19 @@ class TestGetLastBuildsOwnedBy(
         ]
         yield self.insertTestData(example_data)
 
-        first_user_builds = yield self.db.builds.getLastBuildsOwnedBy(
-            "first_user",
-            FakeBotMaster(self.master),
-            day_count,
-        )
+        with freeze_time("2018-02-20 8:38:00"):
+            first_user_builds = yield self.db.builds.getLastBuildsOwnedBy(
+                "first_user",
+                FakeBotMaster(self.master),
+                day_count,
+            )
         self.assertEqual(len(first_user_builds), 5)
         self.assertEqual(self._collect_ids(first_user_builds, 'builds_id'), [1, 2, 3, 4, 5])
 
     @defer.inlineCallbacks
-    @mock.patch('datetime.datetime')
-    def test_results_are_correctly_filtered_for_user(self, mock_datetime):
+    def test_results_are_correctly_filtered_for_user(self):
         today_time = 1519115900
         day_count = 7
-        mock_datetime.now.return_value = epoch2datetime(today_time)
         first_user_builds_count = 15
         second_user_builds_count = 30
         second_user_max_build_id = first_user_builds_count + second_user_builds_count
@@ -487,11 +485,12 @@ class TestGetLastBuildsOwnedBy(
 
         yield self.insertTestData(example_data)
 
-        second_user_builds = yield self.db.builds.getLastBuildsOwnedBy(
-            "second_user",
-            FakeBotMaster(self.master),
-            day_count,
-        )
+        with freeze_time("2018-02-20 8:38:00"):
+            second_user_builds = yield self.db.builds.getLastBuildsOwnedBy(
+                "second_user",
+                FakeBotMaster(self.master),
+                day_count,
+            )
         self.assertEqual(len(second_user_builds), second_user_builds_count)
         self.assertEqual(
             self._collect_ids(second_user_builds, 'builds_id'),

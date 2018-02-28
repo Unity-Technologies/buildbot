@@ -202,6 +202,7 @@ else:
         'www',
         'psutil == 4.3.0',
         'jsonschema == 2.6.0',
+        'freezegun == 0.3.9',
     ]
     setup_args['tests_require'] = [
         'mock == 1.3.0',
