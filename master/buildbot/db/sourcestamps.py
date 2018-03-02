@@ -194,9 +194,9 @@ class SourceStampsConnectorComponent(base.DBConnectorComponent):
             sourcestamps_tbl = self.db.model.sourcestamps
 
             query = sa.select(columns=[sourcestamps_tbl.c.sourcestampsetid,
-                                          sourcestamps_tbl.c.branch,
-                                          sourcestamps_tbl.c.codebase,
-                                          sourcestamps_tbl.c.revision]). \
+                                       sourcestamps_tbl.c.branch,
+                                       sourcestamps_tbl.c.codebase,
+                                       sourcestamps_tbl.c.revision]). \
                 where(sourcestamps_tbl.c.sourcestampsetid.in_(sourcestamps_ids))
 
             res = conn.execute(query)
