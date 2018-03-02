@@ -312,3 +312,11 @@ class UsersConnectorComponent(base.DBConnectorComponent):
             return row.uid
         d = self.db.pool.do(thd)
         return d
+
+    def createBulkUser(self, users):
+        def thd(conn):
+            tbl = self.db.model.user
+            q = tbl.insert()
+            conn.execute(q, users)
+
+        return self.db.pool.do(thd)

@@ -22,6 +22,7 @@ from __future__ import with_statement
 # pages and texinfo documentation.
 
 from twisted.python import usage, reflect
+import os
 import re
 import sys
 
@@ -671,6 +672,25 @@ class UserOptions(base.SubcommandOptions):
                                        "or 'get'")
 
 
+class PopulateDatabaseOptions(base.SubcommandOptions):
+    subcommandFunction = "buildbot.scripts.populatedatabase.populateDatabase"
+    optFlags = [
+        ['quiet', 'q', "Don't display error messages or tracebacks"],
+    ]
+
+    def getSynopsis(self):
+        return "Usage:		buildbot populate-database [configFile]\n" + \
+         "		If not specified, './master.cfg' will be used as 'configFile'"
+
+    def parseArgs(self, *args):
+        if len(args) >= 1:
+            self['baseDir'] = os.path.dirname(args[0])
+            self['configFile'] = os.path.basename(args[0])
+        else:
+            self['baseDir'] = './'
+            self['configFile'] = 'master.cfg'
+
+
 class Options(usage.Options):
     synopsis = "Usage:    buildbot <command> [command options]"
 
@@ -704,8 +724,11 @@ class Options(usage.Options):
         ['checkconfig', None, CheckConfigOptions,
          "test the validity of a master.cfg config file"],
         ['user', None, UserOptions,
-         "Manage users in buildbot's database"]
+         "Manage users in buildbot's database"],
+        ['populate-database', None, PopulateDatabaseOptions,
+         'populate-database try to populate the database with sample randomized data'],
         ]
+
 
     def opt_version(self):
         import buildbot
