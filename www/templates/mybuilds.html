@@ -25,7 +25,7 @@
     {% for build in builds %}
     <tr>
         <td>
-            <a href="/projects/{{ build.project }}/builders/{{ build.buildername }}/builds/{{ build.builds_number }}?{{ build.codebase }}_branch={{ build.branch }}">
+            <a href="/projects/{{ build.project }}/builders/{{ build.buildername }}/builds/{{ build.builds_number }}?{{ build.query_params|join('&') }}">
                 {{ build.builds_id }}
             </a>
         </td>

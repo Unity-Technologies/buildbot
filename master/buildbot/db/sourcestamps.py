@@ -188,3 +188,27 @@ class SourceStampsConnectorComponent(base.DBConnectorComponent):
 
             return ssdict
         return self.db.pool.do(thd)
+
+    def getSourceStampsForManyIds(self, sourcestamps_ids):
+        def thd(conn):
+            sourcestamps_tbl = self.db.model.sourcestamps
+
+            query = sa.select(columns=[sourcestamps_tbl.c.sourcestampsetid,
+                                          sourcestamps_tbl.c.branch,
+                                          sourcestamps_tbl.c.codebase,
+                                          sourcestamps_tbl.c.revision]). \
+                where(sourcestamps_tbl.c.sourcestampsetid.in_(sourcestamps_ids))
+
+            res = conn.execute(query)
+
+            sourcestamps = []
+            for row in res.fetchall():
+                sourcestamps.append({
+                    'sourcestampsetid': row.sourcestampsetid,
+                    'branch': row.branch,
+                    'codebase': row.codebase,
+                    'revision': row.revision,
+                    'short_revision': row.revision[:12],
+                })
+            return sourcestamps
+        return self.db.pool.do(thd)

@@ -253,7 +253,6 @@ class BuildsConnectorComponent(base.DBConnectorComponent):
             buildrequests_tbl = self.db.model.buildrequests
             buildsets_tbl = self.db.model.buildsets
             builds_tbl = self.db.model.builds
-            sourcestamps_tbl = self.db.model.sourcestamps
             from_time = datetime2epoch(datetime.now() - timedelta(days=day_count))
 
             from_clause = buildsets_tbl.join(
@@ -262,13 +261,10 @@ class BuildsConnectorComponent(base.DBConnectorComponent):
             ).join(
                 builds_tbl,
                 builds_tbl.c.brid == buildrequests_tbl.c.id
-            ).join(
-                sourcestamps_tbl,
-                sourcestamps_tbl.c.sourcestampsetid == buildsets_tbl.c.sourcestampsetid
             )
 
             q = (
-                sa.select([buildrequests_tbl, builds_tbl, buildsets_tbl, sourcestamps_tbl], use_labels=True)
+                sa.select([buildrequests_tbl, builds_tbl, buildsets_tbl], use_labels=True)
                 .select_from(from_clause)
                 .where(builds_tbl.c.finish_time >= from_time)
                 .where(buildsets_tbl.c.reason.like('%{}%'.format(owner)))
@@ -307,6 +303,5 @@ class BuildsConnectorComponent(base.DBConnectorComponent):
             slavename=row.builds_slavename,
             submitted_at=mkdt(row.buildrequests_submitted_at),
             complete_at=mkdt(row.buildrequests_complete_at),
-            branch=row.sourcestamps_branch,
-            codebase=row.sourcestamps_codebase,
+            sourcestampsetid=row.buildsets_sourcestampsetid,
         )

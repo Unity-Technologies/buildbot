@@ -430,7 +430,6 @@ class TestGetLastBuildsOwnedBy(
         day_count = 7
         expired_time = today_time - (day_count * 24 * 60 * 60) # 7 days = 24hours * 60minuts * 60seconds
         example_data = [
-            fakedb.SourceStamp(id=1, branch="HEAD", sourcestampsetid=2, codebase="fmod"),
             fakedb.Buildset(id=2, sourcestampsetid=2, reason='[ first_user ]'),
             fakedb.BuildRequest(id=3, buildsetid=2, buildername="builder2", complete=1, results=7),
         ] + [
@@ -471,8 +470,6 @@ class TestGetLastBuildsOwnedBy(
         second_user_max_build_id = first_user_builds_count + second_user_builds_count
 
         example_data = [
-            fakedb.SourceStamp(id=1, branch="HEAD", sourcestampsetid=2, codebase="fmod"),
-
             fakedb.Buildset(id=2, sourcestampsetid=2, reason='[ first_user ]'),
             fakedb.Buildset(id=3, sourcestampsetid=2, reason='[ second_user ]'),
 
@@ -499,37 +496,3 @@ class TestGetLastBuildsOwnedBy(
             self._collect_ids(second_user_builds, 'builds_id'),
             range(first_user_builds_count, second_user_max_build_id)
         )
-
-    @defer.inlineCallbacks
-    def test_results_has_branch_and_codebase(self):
-        day_count = 7
-        example_data = [
-            fakedb.SourceStamp(id=1, branch="HEAD", sourcestampsetid=2, codebase="fmod"),
-            fakedb.SourceStamp(id=2, branch="trunk", sourcestampsetid=3, codebase="bar"),
-
-            fakedb.Buildset(id=2, sourcestampsetid=2, reason='[ first_user ]'),
-            fakedb.Buildset(id=3, sourcestampsetid=3, reason='[ second_user ]'),
-
-            fakedb.BuildRequest(id=3, buildsetid=2, buildername="builder2", complete=1, results=7),
-            fakedb.BuildRequest(id=4, buildsetid=3, buildername="builder3", complete=1, results=7),
-
-            fakedb.Build(id=1, number=2, brid=3, slavename='slave-02', finish_time=1519115805),
-            fakedb.Build(id=2, number=3, brid=4, slavename='slave-03', finish_time=1519115805),
-            fakedb.Build(id=3, number=3, brid=4, slavename='slave-03', finish_time=1519115805),
-        ]
-
-        yield self.insertTestData(example_data)
-
-        with freeze_time("2018-02-20 8:38:00"):
-            second_user_builds = yield self.db.builds.getLastBuildsOwnedBy(
-                "second_user",
-                FakeBotMaster(self.master),
-                day_count,
-            )
-        branch_set = set(x['branch'] for x in second_user_builds)
-        codebase_set = set(x['codebase'] for x in second_user_builds)
-        self.assertEqual(len(second_user_builds), 2)
-        self.assertEqual(len(branch_set), 1)
-        self.assertEqual(len(codebase_set), 1)
-        self.assertEqual(branch_set.pop(), "trunk")
-        self.assertEqual(codebase_set.pop(), "bar")
