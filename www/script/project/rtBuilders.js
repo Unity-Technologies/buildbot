@@ -157,7 +157,7 @@ define(function (require) {
                     var tag_branch = full_tag.split("-")[0];
                     var tag_suffix = full_tag.split("-")[1];
                     var is_unstable = tag_suffix === UNSTABLE_TAG;
-                    if((branch_type === undefined || branch_type === tag_branch) && is_unstable){
+                    if((branch_type === undefined || branch_type.toLowerCase() === tag_branch.toLowerCase()) && is_unstable){
                         return true;
                     }
                 }
