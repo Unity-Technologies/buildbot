@@ -150,6 +150,23 @@ define(function (require) {
 
             return selectedTags;
         },
+        hasUnstableTag: function(builderTags, branch_type){
+            for(var i=0; i<builderTags.length; i++){
+                var full_tag = builderTags[i];
+                if(full_tag.indexOf("-") > -1){
+                    var tag_branch = full_tag.split("-")[0];
+                    var tag_suffix = full_tag.split("-")[1];
+                    var is_unstable = tag_suffix === UNSTABLE_TAG;
+                    if((branch_type === undefined || branch_type.toLowerCase() === tag_branch.toLowerCase()) && is_unstable){
+                        return true;
+                    }
+                }
+                else if(full_tag === UNSTABLE_TAG){
+                    return true;
+                }
+            }
+            return false;
+        },
         filterByTags: function filterByTags(col) {
             return function (settings, filterData, row, data) {
                 var selectedTags = rtBuilders.getSelectedTags(),
@@ -162,7 +179,7 @@ define(function (require) {
                         return b.toLowerCase() === branch_type.toLowerCase();
                     };
 
-                if (hideUnstable === true && ($.inArray(UNSTABLE_TAG, builderTags) > -1 || $.inArray(WIP_TAG, builderTags) > -1)) {
+                if (hideUnstable === true && (rtBuilders.hasUnstableTag(builderTags, branch_type) || $.inArray(WIP_TAG, builderTags) > -1)) {
                     return false;
                 }
 
