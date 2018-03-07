@@ -36,7 +36,11 @@
         <td>
             <ul class="revision list-unstyled reset">
                 {% for sourcestamp in build.sourcestamps %}
-                <li>{{ sourcestamp.codebase }} / {{ sourcestamp.branch }} / {{ sourcestamp.short_revision }}</li>
+                <li>
+                    <a href="{{ sourcestamp.display_repository }}">{{ sourcestamp.codebase }}</a> /
+                    {{ sourcestamp.branch }} /
+                    <a href="{{ sourcestamp.revision_url }}">{{ sourcestamp.short_revision }}</a>
+                </li>
                 {% endfor %}
             <ul/>
         </td>

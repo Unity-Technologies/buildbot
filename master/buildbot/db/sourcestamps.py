@@ -196,7 +196,8 @@ class SourceStampsConnectorComponent(base.DBConnectorComponent):
             query = sa.select(columns=[sourcestamps_tbl.c.sourcestampsetid,
                                        sourcestamps_tbl.c.branch,
                                        sourcestamps_tbl.c.codebase,
-                                       sourcestamps_tbl.c.revision]). \
+                                       sourcestamps_tbl.c.revision,
+                                       sourcestamps_tbl.c.repository]). \
                 where(sourcestamps_tbl.c.sourcestampsetid.in_(sourcestamps_ids))
 
             res = conn.execute(query)
@@ -209,6 +210,7 @@ class SourceStampsConnectorComponent(base.DBConnectorComponent):
                     'codebase': row.codebase,
                     'revision': row.revision,
                     'short_revision': row.revision[:12],
+                    'repository': row.repository,
                 })
             return sourcestamps
         return self.db.pool.do(thd)
