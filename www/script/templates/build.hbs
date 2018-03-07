@@ -51,11 +51,11 @@
                   {{#eachByStatus s.urls 'results'}}
                       {{#if this.results includeZero=true}}
                           <li class="log-list-{{buildCSSClass this.results }} urls-mod clearfix">
-                            <a title="{{ this.results }}" href="{{ this.url }}"><span class="{{buildCSSClass this.results }}"></span>{{ @key }}</a>
+                            <a title="{{ this.title }}" href="{{ this.url }}"><span class="{{buildCSSClass this.results }}"></span>{{ this.title }}</a>
                           </li>
                       {{else}}
                           {{this.results}}
-                          <li class="artifact-js"><a target="_blank" href="{{ this }}">{{ @key }}</a></li>
+                          <li class="artifact-js"><a target="_blank" href="{{ this }}">{{ key }}</a></li>
                       {{/if}}
                   {{/eachByStatus}}
                 </ul>

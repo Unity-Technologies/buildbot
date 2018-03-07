@@ -730,9 +730,9 @@ td.visible-print,th.visible-print{display:table-cell!important}}
 .log-list-paused>a:before{background-color:#DAE6F3}
 .waiting-for-dependency{background-color:#FCFACB}
 .color-blind-mode .waiting-for-dependency{background-color:#c2ba0a!important}
-.color-blind-mode .dependency-list .waiting-for-dependency:before{content:"Waiting for dependency"}
+.color-blind-mode .dependency-list .waiting-for-dependency:before{content:"Waiting for available slave"}
 .color-blind-mode .log-list-waiting-for-dependency>a:before{background-color:#c2ba0a}
-.state-text.waiting-for-dependency:before{content:"Waiting for dependency"}
+.state-text.waiting-for-dependency:before{content:"Waiting for available slave"}
 .table-katana .waiting-for-dependency{border-top:1px solid #fff}
 .log-list-waiting-for-dependency>a:before{background-color:#FCFACB}
 .overtime{background-color:#FCCBCB}

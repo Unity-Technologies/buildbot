@@ -524,6 +524,7 @@ define(function (require) {
                     data.index = i;
                 }
                 var item = objs[sortable[i][2]];
+                item.title = sortable[i][2];
                 ret += opts.fn(item, {data: data});
             }
             return ret
@@ -532,7 +533,8 @@ define(function (require) {
             var sortable = [];
             for(var item in objs) {
                 var orderItem = Object.keys(css_classes).filter(function(index) {
-                     return css_classes[index][0] == objs[item][key][0];
+                    var value = Array.isArray(objs[item][key]) ? objs[item][key][0] : objs[item][key];
+                    return css_classes[index][0] == value;
                 })[0];
                 sortable.push([objs[item], css_classes[orderItem][2], item]);
             }

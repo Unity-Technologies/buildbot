@@ -98,18 +98,32 @@ define(["jquery", "helpers"], function ($, helpers) {
           EXCEPTION = 4,
           WAITING_FOR_DEPENDENCY = 9;
 
-      this.input_object_by_result = {
+      this.input_object_by_results_as_list = {
         "Simple Test #1": {url: '1', results: [SUCCESS]},
         "Simple Test #2": {url: '2', results: [WARNINGS]},
         "Simple Test #3": {url: '3', results: [SUCCESS]},
         "Simple Test #4": {url: '4', results: [WAITING_FOR_DEPENDENCY]},
       };
 
-      this.input_object_by_order = {
+      this.input_object_by_order_as_list = {
         "Simple Test #1": {url: '1', order: [SUCCESS]},
         "Simple Test #2": {url: '2', order: [WARNINGS]},
         "Simple Test #3": {url: '3', order: [SUCCESS]},
         "Simple Test #4": {url: '4', order: [WAITING_FOR_DEPENDENCY]},
+      };
+
+      this.input_object_by_result = {
+        "Simple Test #1": {url: '1', results: SUCCESS},
+        "Simple Test #2": {url: '2', results: WARNINGS},
+        "Simple Test #3": {url: '3', results: SUCCESS},
+        "Simple Test #4": {url: '4', results: WAITING_FOR_DEPENDENCY},
+      };
+
+      this.input_object_without_results = {
+        "Simple Test #1": {url: '1'},
+        "Simple Test #2": {url: '2'},
+        "Simple Test #3": {url: '3'},
+        "Simple Test #4": {url: '4'},
       };
 
       this.opts_stub = {
@@ -119,17 +133,31 @@ define(["jquery", "helpers"], function ($, helpers) {
       };
 
     });
-    it("sort result passed as object by 'results' key", function() {
-      var ret = helpers.sortByStatus(this.input_object_by_result, 'results', this.opts_stub);
+    it("sort result passed as object by 'results' key as list of integer value", function() {
+      var ret = helpers.sortByStatus(this.input_object_by_results_as_list, 'results', this.opts_stub);
 
       var expected_value = '4\n1\n3\n2\n';
       expect(ret).toBe(expected_value);
     });
 
     it("sort result passed as object by 'order' key", function() {
-      var ret = helpers.sortByStatus(this.input_object_by_order, 'order', this.opts_stub);
+      var ret = helpers.sortByStatus(this.input_object_by_order_as_list, 'order', this.opts_stub);
 
       var expected_value = '4\n1\n3\n2\n';
+      expect(ret).toBe(expected_value);
+    });
+
+    it("sort result passed as object by 'results' key as integer value", function() {
+      var ret = helpers.sortByStatus(this.input_object_by_result, 'results', this.opts_stub);
+
+      var expected_value = '4\n1\n3\n2\n';
+      expect(ret).toBe(expected_value);
+    });
+
+    it("sort result passed as object without results", function() {
+      var ret = helpers.sortByStatus(this.input_object_without_results, 'results', this.opts_stub);
+
+      var expected_value = '1\n2\n3\n4\n';
       expect(ret).toBe(expected_value);
     });
   });
