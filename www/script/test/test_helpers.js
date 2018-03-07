@@ -106,10 +106,10 @@ define(["jquery", "helpers"], function ($, helpers) {
       };
 
       this.input_object_by_order = {
-        "Simple Test #1": {url: 'http://example.com/1', order: [SUCCESS]},
-        "Simple Test #2": {url: 'http://example.com/2', order: [WARNINGS]},
-        "Simple Test #3": {url: 'http://example.com/3', order: [SUCCESS]},
-        "Simple Test #4": {url: 'http://example.com/4', order: [WAITING_FOR_DEPENDENCY]},
+        "Simple Test #1": {url: '1', order: [SUCCESS]},
+        "Simple Test #2": {url: '2', order: [WARNINGS]},
+        "Simple Test #3": {url: '3', order: [SUCCESS]},
+        "Simple Test #4": {url: '4', order: [WAITING_FOR_DEPENDENCY]},
       };
 
       this.opts_stub = {
@@ -127,7 +127,7 @@ define(["jquery", "helpers"], function ($, helpers) {
     });
 
     it("sort result passed as object by 'order' key", function() {
-      var ret = helpers.sortByStatus(this.input_object_by_result, 'results', this.opts_stub);
+      var ret = helpers.sortByStatus(this.input_object_by_order, 'order', this.opts_stub);
 
       var expected_value = '4\n1\n3\n2\n';
       expect(ret).toBe(expected_value);
