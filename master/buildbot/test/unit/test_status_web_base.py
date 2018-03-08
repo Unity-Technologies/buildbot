@@ -94,6 +94,15 @@ class Functions(unittest.TestCase):
 
         self.assertEqual(expected_tags, filtered_tags)
 
+    def test_filter_tags_by_codebases_many_cb(self):
+        tags = ['Unstable', 'Trunk', 'Trunk-ABV', 'Trunk-Unstable', '2018.2', '2018.2-QV']
+        codebases = {'unity': 'trunk', 'mod': '2018.2'}
+        expected_tags = ['2018.2', 'ABV', 'QV', 'Trunk', 'Unstable']
+
+        filtered_tags = base.filter_tags_by_codebases(tags, codebases)
+
+        self.assertEqual(expected_tags, filtered_tags)
+
     def test_filter_tags_by_codebases_simple_unstable(self):
         tags = ['Unstable', 'Trunk', 'Trunk-ABV', '2018.2', '2018.2-QV']
         codebases = {'unity': 'trunk'}
@@ -122,8 +131,6 @@ class Functions(unittest.TestCase):
         filtered_tags = base.filter_tags_by_codebases(tags, codebases)
 
         self.assertEqual(expected_tags, filtered_tags)
-
-
 
 
 class TestGetResultsArg(unittest.TestCase):
