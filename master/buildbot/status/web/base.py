@@ -403,6 +403,33 @@ def path_to_json_past_builds(request, builderName, number, filter_data=False):
     return url
 
 
+def filter_tags_by_codebases(tags, codebases):
+    """
+    Return list of tags filtered by branches from query params.
+
+    @param tags: list of builder-tags
+    @param codebases: dict with codebases from query, ex. {'unity': 'trunk', ...}
+    """
+    if not codebases:
+        return sorted(tags)
+
+    branches = map(lambda s: s.lower(), codebases.values())
+    filtered_tags = []
+    for full_tag in tags:
+        tag_parts = full_tag.split("-")
+        branch = tag_parts[0]
+        l_branch = branch.lower()
+
+        if l_branch in branches or l_branch == 'unstable':
+            if len(tag_parts) == 1:
+                filtered_tags.append(branch)
+            elif len(tag_parts) > 1:
+                tag = tag_parts[1]
+                filtered_tags.append(tag)
+
+    return sorted(set(filtered_tags))
+
+
 class Box:
     # a Box wraps an Event. The Box has HTML <td> parameters that Events
     # lack, and it has a base URL to which each File's name is relative.

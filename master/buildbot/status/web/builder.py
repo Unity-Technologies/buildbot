@@ -27,7 +27,8 @@ from buildbot.status.web.base import HtmlResource, BuildLineMixin, \
     path_to_root, getCodebasesArg, \
     path_to_authzfail, ActionResource, \
     getRequestCharset, path_to_json_builders, path_to_json_pending, path_to_json_project_builder, \
-    path_to_json_past_builds, path_to_json_builder_slaves, path_to_json_builder_startslaves
+    path_to_json_past_builds, path_to_json_builder_slaves, path_to_json_builder_startslaves, \
+    filter_tags_by_codebases
 from buildbot.schedulers.forcesched import ForceScheduler
 from buildbot.schedulers.forcesched import ValidationError
 from buildbot.status.web.build import BuildsResource, StatusResourceBuild
@@ -347,9 +348,10 @@ class StatusResourceBuilder(HtmlResource, BuildLineMixin):
         project_json = SingleProjectBuilderJsonResource(self.status, self.builder_status, latest_rev=True)
         project_dict = yield project_json.asDict(req, params=project_params)
         url = self.status.getBuildbotURL() + path_to_json_project_builder(req, project, self.builder_status.name)
+        filtered_tags = filter_tags_by_codebases(project_dict['tags'], codebases)
         cxt['instant_json']['project'] = {"url": url,
                                           "data": json.dumps(project_dict, separators=(',', ':')),
-                                          "tags": project_dict['tags'],
+                                          "tags": filtered_tags,
                                           "waitForPush": self.status.master.config.autobahn_push,
                                           "pushFilters": {
                                               "buildStarted": filters,
@@ -425,6 +427,7 @@ class StatusResourceBuilder(HtmlResource, BuildLineMixin):
             return BuildsResource(self.builder_status)
 
         return HtmlResource.getChild(self, path, req)
+
 
 class CancelChangeResource(ActionResource):
 

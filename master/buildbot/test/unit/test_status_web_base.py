@@ -61,6 +61,8 @@ class ActionResource(unittest.TestCase):
 
 class Functions(unittest.TestCase):
 
+    ### getRequestCharset ###
+
     def do_test_getRequestCharset(self, hdr, exp):
         req = mock.Mock()
         req.getHeader.return_value = hdr
@@ -79,6 +81,49 @@ class Functions(unittest.TestCase):
         return self.do_test_getRequestCharset(
             'application/x-www-form-urlencoded ; charset=UTF-16 ; foo=bar',
             'UTF-16')
+
+
+    ### filter_tags_by_codebases ###
+
+    def test_filter_tags_by_codebases_many_tags(self):
+        tags = ['Unstable', 'Trunk', 'Trunk-ABV', 'Trunk-Unstable', '2018.2', '2018.2-QV']
+        codebases = {'unity': 'trunk'}
+        expected_tags = ['ABV', 'Trunk', 'Unstable']
+
+        filtered_tags = base.filter_tags_by_codebases(tags, codebases)
+
+        self.assertEqual(expected_tags, filtered_tags)
+
+    def test_filter_tags_by_codebases_simple_unstable(self):
+        tags = ['Unstable', 'Trunk', 'Trunk-ABV', '2018.2', '2018.2-QV']
+        codebases = {'unity': 'trunk'}
+        expected_tags = ['ABV', 'Trunk', 'Unstable']
+        filtered_tags = base.filter_tags_by_codebases(tags, codebases)
+
+        filtered_tags = base.filter_tags_by_codebases(tags, codebases)
+
+        self.assertEqual(expected_tags, filtered_tags)
+
+    def test_filter_tags_by_codebases_foreign_unstable(self):
+        tags = ['Trunk', 'Trunk-ABV', '2018.2', '2018.2-QV', '2018.2-QV-Unstable']
+        codebases = {'unity': 'trunk'}
+        expected_tags = ['ABV', 'Trunk']
+        filtered_tags = base.filter_tags_by_codebases(tags, codebases)
+
+        filtered_tags = base.filter_tags_by_codebases(tags, codebases)
+
+        self.assertEqual(expected_tags, filtered_tags)
+
+    def test_filter_tags_by_codebases_empty_cb(self):
+        tags = ['Unstable', 'Trunk', 'Trunk-ABV', 'Trunk-Unstable', '2018.2', '2018.2-QV']
+        codebases = {}
+        expected_tags = sorted(tags)
+
+        filtered_tags = base.filter_tags_by_codebases(tags, codebases)
+
+        self.assertEqual(expected_tags, filtered_tags)
+
+
 
 
 class TestGetResultsArg(unittest.TestCase):
