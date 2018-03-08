@@ -21,7 +21,6 @@ define(function (require) {
         $tagsSelect,
         NO_TAG = "No Tag",
         UNSTABLE_TAG = "Unstable",
-        WIP_TAG = "WIP",
         tagSeparator = " && ",
         extra_tags = [NO_TAG],
         MAIN_REPO = "unity_branch",
@@ -179,7 +178,7 @@ define(function (require) {
                         return b.toLowerCase() === branch_type.toLowerCase();
                     };
 
-                if (hideUnstable === true && (rtBuilders.hasUnstableTag(builderTags, branch_type) || $.inArray(WIP_TAG, builderTags) > -1)) {
+                if (hideUnstable === true && rtBuilders.hasUnstableTag(builderTags, branch_type)) {
                     return false;
                 }
 
