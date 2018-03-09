@@ -87,8 +87,8 @@ class Functions(unittest.TestCase):
 
     def test_filter_tags_by_codebases_many_tags(self):
         tags = ['Unstable', 'Trunk', 'Trunk-ABV', 'Trunk-Unstable', '2018.2', '2018.2-QV']
-        codebases = {'unity': 'trunk'}
-        expected_tags = ['ABV', 'Trunk', 'Unstable']
+        codebases = {'unity': '2018.2/'}
+        expected_tags = ['QV', 'Unstable']
 
         filtered_tags = base.filter_tags_by_codebases(tags, codebases)
 
@@ -96,8 +96,8 @@ class Functions(unittest.TestCase):
 
     def test_filter_tags_by_codebases_many_cb(self):
         tags = ['Unstable', 'Trunk', 'Trunk-ABV', 'Trunk-Unstable', '2018.2', '2018.2-QV']
-        codebases = {'unity': 'trunk', 'mod': '2018.2'}
-        expected_tags = ['2018.2', 'ABV', 'QV', 'Trunk', 'Unstable']
+        codebases = {'unity': 'trunk/', 'mod': '2018.2/'}
+        expected_tags = ['ABV', 'QV', 'Unstable']
 
         filtered_tags = base.filter_tags_by_codebases(tags, codebases)
 
@@ -105,8 +105,8 @@ class Functions(unittest.TestCase):
 
     def test_filter_tags_by_codebases_simple_unstable(self):
         tags = ['Unstable', 'Trunk', 'Trunk-ABV', '2018.2', '2018.2-QV']
-        codebases = {'unity': 'trunk'}
-        expected_tags = ['ABV', 'Trunk', 'Unstable']
+        codebases = {'unity': 'trunk/'}
+        expected_tags = ['ABV', 'Unstable']
         filtered_tags = base.filter_tags_by_codebases(tags, codebases)
 
         filtered_tags = base.filter_tags_by_codebases(tags, codebases)
@@ -115,8 +115,8 @@ class Functions(unittest.TestCase):
 
     def test_filter_tags_by_codebases_foreign_unstable(self):
         tags = ['Trunk', 'Trunk-ABV', '2018.2', '2018.2-QV', '2018.2-QV-Unstable']
-        codebases = {'unity': 'trunk'}
-        expected_tags = ['ABV', 'Trunk']
+        codebases = {'unity': 'trunk/'}
+        expected_tags = ['ABV']
         filtered_tags = base.filter_tags_by_codebases(tags, codebases)
 
         filtered_tags = base.filter_tags_by_codebases(tags, codebases)
@@ -131,6 +131,72 @@ class Functions(unittest.TestCase):
         filtered_tags = base.filter_tags_by_codebases(tags, codebases)
 
         self.assertEqual(expected_tags, filtered_tags)
+
+    def test_filter_tags_by_codebases_uknown_branch(self):
+        tags = ['Unstable', 'Trunk', 'Trunk-ABV', 'Trunk-Unstable', '2018.2', '2018.2-QV']
+        codebases = {'foo': '2019.2/'}       # not unity, good pattern
+        expected_tags = ['ABV', 'Unstable']  # use Trunk tags
+
+        filtered_tags = base.filter_tags_by_codebases(tags, codebases)
+
+        self.assertEqual(expected_tags, filtered_tags)
+
+    def test_filter_tags_by_codebases_unity_cb(self):
+        tags = ['Unstable', 'Trunk', 'Trunk-ABV', 'Trunk-Unstable', '2018.2', '2018.2-QV']
+        codebases = {'unity': 'zupa/'}       # unity, wrong pattern
+        expected_tags = ['ABV', 'Unstable']  # use Trunk tags
+
+        filtered_tags = base.filter_tags_by_codebases(tags, codebases)
+
+        self.assertEqual(expected_tags, filtered_tags)
+
+    def test_filter_tags_by_codebases_wrong_cb_and_branch(self):
+        tags = ['Unstable', 'Trunk', 'Trunk-ABV', 'Trunk-Unstable', '2018.2', '2018.2-QV']
+        codebases = {'foo': 'zupa/'}         # not unity, wrong pattern
+        expected_tags = sorted(tags)         # return original tags
+
+        filtered_tags = base.filter_tags_by_codebases(tags, codebases)
+
+        self.assertEqual(expected_tags, filtered_tags)
+
+
+    ### get_query_branches_for_codebases ###
+
+    def test_get_query_branches_for_codebases_good_case(self):
+        tags = ['Trunk', 'Trunk-ABV', '2018.2', '2018.2-QV']
+        codebases = {'foo': '2018.2/'}
+        expected_branches = ['2018.2']
+
+        branches = base.get_query_branches_for_codebases(tags, codebases)
+
+        self.assertEqual(branches, expected_branches)
+
+    def test_get_query_branches_for_codebases_unity_key(self):
+        tags = ['Trunk', 'Trunk-ABV', '2018.2', '2018.2-QV']
+        codebases = {'unity': 'bar/'}
+        expected_branches = ['trunk']
+
+        branches = base.get_query_branches_for_codebases(tags, codebases)
+
+        self.assertEqual(branches, expected_branches)
+
+    def test_get_query_branches_for_codebases_wrong_codebase(self):
+        tags = ['Trunk', 'Trunk-ABV', '2018.2', '2018.2-QV']
+        codebases = {'foo': 'bar/'}
+        expected_branches = []
+
+        branches = base.get_query_branches_for_codebases(tags, codebases)
+
+        self.assertEqual(branches, expected_branches)
+
+    def test_get_query_branches_for_codebases_not_tags(self):
+        tags = ['Trunk', 'Trunk-ABV', '2018.2', '2018.2-QV']
+        codebases = {'foo': '2019.2/'}
+        expected_branches = ['trunk']
+
+        branches = base.get_query_branches_for_codebases(tags, codebases)
+
+        self.assertEqual(branches, expected_branches)
 
 
 class TestGetResultsArg(unittest.TestCase):

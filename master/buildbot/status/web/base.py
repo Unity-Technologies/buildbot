@@ -13,10 +13,10 @@
 #
 # Copyright Buildbot Team Members
 import json
-
 import urlparse, urllib, time, re
 import os, cgi, sys, locale
 import jinja2
+from itertools import product
 from zope.interface import Interface
 from twisted.internet import defer
 from twisted.web import resource, static, server
@@ -403,6 +403,35 @@ def path_to_json_past_builds(request, builderName, number, filter_data=False):
     return url
 
 
+def get_query_branches_for_codebases(tags, codebases):
+    regex_branches = [
+        r'^(trunk)/',                 # Trunk
+        r'^(20[0-9][0-9].[0-9])\/',   # 2017.1/
+        r'^([0-9].[0-9])\/',          # 5.0/
+        r'^release\/([0-9].[0-9])/'   # release/4.6
+    ]
+
+    branches = map(lambda s: s.lower(), codebases.values())
+    codebase_keys = map(lambda s: s.lower(), codebases.keys())
+    query_branches = []
+
+    for branch, pattern in product(branches, regex_branches):
+        match = re.match(pattern, branch)
+        if match:
+            query_branches.append(match.group(1))
+
+    if not query_branches:
+        if 'unity' in codebase_keys:
+            query_branches = ['trunk']
+        else:
+            return []
+
+    if not filter(lambda tag: tag.split("-")[0].lower() in query_branches, tags):
+        query_branches = ['trunk']
+
+    return query_branches
+
+
 def filter_tags_by_codebases(tags, codebases):
     """
     Return list of tags filtered by branches from query params.
@@ -413,19 +442,25 @@ def filter_tags_by_codebases(tags, codebases):
     if not codebases:
         return sorted(tags)
 
-    branches = map(lambda s: s.lower(), codebases.values())
+    tag_as_branch_regex = r'^(20[0-9][0-9].[0-9]|[0-9].[0-9]|trunk)$'
+    tag_as_branch_pattern = re.compile(tag_as_branch_regex)
+
+    query_branches = get_query_branches_for_codebases(tags, codebases)
+    if not query_branches:
+        return sorted(tags)
+
     filtered_tags = []
     for full_tag in tags:
         tag_parts = full_tag.split("-")
         branch = tag_parts[0]
-        l_branch = branch.lower()
+        branch_l = branch.lower()
+        tag_as_branch = tag_as_branch_pattern.match(branch_l)
 
-        if l_branch in branches or l_branch == 'unstable':
-            if len(tag_parts) == 1:
-                filtered_tags.append(branch)
-            elif len(tag_parts) > 1:
-                tag = tag_parts[1]
-                filtered_tags.append(tag)
+        if len(tag_parts) == 1 and (not tag_as_branch or branch_l == 'unstable'):
+            filtered_tags.append(branch)
+        elif len(tag_parts) > 1 and branch_l in query_branches:
+            tag = tag_parts[1]
+            filtered_tags.append(tag)
 
     return sorted(set(filtered_tags))
 
