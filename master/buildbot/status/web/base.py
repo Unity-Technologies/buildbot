@@ -413,21 +413,21 @@ def get_query_branches_for_codebases(tags, codebases):
 
     branches = map(lambda s: s.lower(), codebases.values())
     codebase_keys = map(lambda s: s.lower(), codebases.keys())
-    query_branches = []
+    query_branches = set()
 
     for branch, pattern in product(branches, regex_branches):
         match = re.match(pattern, branch)
         if match:
-            query_branches.append(match.group(1))
+            query_branches.add(match.group(1))
 
     if not query_branches:
         if 'unity' in codebase_keys:
-            query_branches = ['trunk']
+            query_branches = {'trunk'}
         else:
-            return []
+            return set()
 
     if not filter(lambda tag: tag.split("-")[0].lower() in query_branches, tags):
-        query_branches = ['trunk']
+        query_branches = {'trunk'}
 
     return query_branches
 
@@ -449,20 +449,19 @@ def filter_tags_by_codebases(tags, codebases):
     if not query_branches:
         return sorted(tags)
 
-    filtered_tags = []
+    filtered_tags = set()
     for full_tag in tags:
         tag_parts = full_tag.split("-")
         branch = tag_parts[0]
-        branch_l = branch.lower()
-        tag_as_branch = tag_as_branch_pattern.match(branch_l)
+        tag_as_branch = tag_as_branch_pattern.match(branch.lower())
 
-        if len(tag_parts) == 1 and (not tag_as_branch or branch_l == 'unstable'):
-            filtered_tags.append(branch)
-        elif len(tag_parts) > 1 and branch_l in query_branches:
-            tag = tag_parts[1]
-            filtered_tags.append(tag)
+        if len(tag_parts) == 1 and (not tag_as_branch or branch.lower() == 'unstable'):
+            filtered_tags.add(branch)
+        elif len(tag_parts) > 1 and branch.lower() in query_branches:
+            tag = "-".join(tag_parts[1:])
+            filtered_tags.add(tag)
 
-    return sorted(set(filtered_tags))
+    return sorted(filtered_tags)
 
 
 class Box:

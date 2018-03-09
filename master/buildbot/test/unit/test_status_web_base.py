@@ -107,7 +107,6 @@ class Functions(unittest.TestCase):
         tags = ['Unstable', 'Trunk', 'Trunk-ABV', '2018.2', '2018.2-QV']
         codebases = {'unity': 'trunk/'}
         expected_tags = ['ABV', 'Unstable']
-        filtered_tags = base.filter_tags_by_codebases(tags, codebases)
 
         filtered_tags = base.filter_tags_by_codebases(tags, codebases)
 
@@ -117,7 +116,6 @@ class Functions(unittest.TestCase):
         tags = ['Trunk', 'Trunk-ABV', '2018.2', '2018.2-QV', '2018.2-QV-Unstable']
         codebases = {'unity': 'trunk/'}
         expected_tags = ['ABV']
-        filtered_tags = base.filter_tags_by_codebases(tags, codebases)
 
         filtered_tags = base.filter_tags_by_codebases(tags, codebases)
 
@@ -165,7 +163,7 @@ class Functions(unittest.TestCase):
     def test_get_query_branches_for_codebases_good_case(self):
         tags = ['Trunk', 'Trunk-ABV', '2018.2', '2018.2-QV']
         codebases = {'foo': '2018.2/'}
-        expected_branches = ['2018.2']
+        expected_branches = {'2018.2'}
 
         branches = base.get_query_branches_for_codebases(tags, codebases)
 
@@ -174,7 +172,7 @@ class Functions(unittest.TestCase):
     def test_get_query_branches_for_codebases_unity_key(self):
         tags = ['Trunk', 'Trunk-ABV', '2018.2', '2018.2-QV']
         codebases = {'unity': 'bar/'}
-        expected_branches = ['trunk']
+        expected_branches = {'trunk'}
 
         branches = base.get_query_branches_for_codebases(tags, codebases)
 
@@ -183,7 +181,7 @@ class Functions(unittest.TestCase):
     def test_get_query_branches_for_codebases_wrong_codebase(self):
         tags = ['Trunk', 'Trunk-ABV', '2018.2', '2018.2-QV']
         codebases = {'foo': 'bar/'}
-        expected_branches = []
+        expected_branches = set()
 
         branches = base.get_query_branches_for_codebases(tags, codebases)
 
@@ -192,7 +190,7 @@ class Functions(unittest.TestCase):
     def test_get_query_branches_for_codebases_not_tags(self):
         tags = ['Trunk', 'Trunk-ABV', '2018.2', '2018.2-QV']
         codebases = {'foo': '2019.2/'}
-        expected_branches = ['trunk']
+        expected_branches = {'trunk'}
 
         branches = base.get_query_branches_for_codebases(tags, codebases)
 
