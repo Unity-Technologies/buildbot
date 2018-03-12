@@ -525,6 +525,7 @@ define(function (require) {
                     data.key = i;
                 }
                 var item = objs[sortable[i][2]];
+                console.log(item, data);
                 ret += opts.fn(item, {data: data});
             }
             return ret
