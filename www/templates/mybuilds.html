@@ -39,7 +39,7 @@
                 <li>
                     <a href="{{ sourcestamp.display_repository }}">{{ sourcestamp.codebase }}</a> /
                     {{ sourcestamp.branch }} /
-                    <a href="{{ sourcestamp.revision_url }}">{{ sourcestamp.short_revision }}</a>
+                    <a href="{{ sourcestamp.revision_url or '' }}">{{ sourcestamp.short_revision }}</a>
                 </li>
                 {% endfor %}
             <ul/>
