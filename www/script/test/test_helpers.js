@@ -126,38 +126,54 @@ define(["jquery", "helpers"], function ($, helpers) {
         "Simple Test #4": {url: '4'},
       };
 
-      this.opts_stub = {
-        'fn': function(item, data) {
+      this.input_as_simple_object = {
+        "build.zip": "https://example.url/builds.zip",
+      };
+
+      this.opts_obj_stub = {
+        fn: function(item, data) {
           return item.url + '\n';
         },
       };
-
+      this.opts_str_stub = {
+        fn: function(item, data) {
+          return item + '\n';
+        },
+      };
     });
+
     it("sort result passed as object by 'results' key as list of integer value", function() {
-      var ret = helpers.sortByStatus(this.input_object_by_results_as_list, 'results', this.opts_stub);
+      var ret = helpers.sortByStatus(this.input_object_by_results_as_list, 'results', this.opts_obj_stub);
 
       var expected_value = '4\n1\n3\n2\n';
       expect(ret).toBe(expected_value);
     });
 
     it("sort result passed as object by 'order' key", function() {
-      var ret = helpers.sortByStatus(this.input_object_by_order_as_list, 'order', this.opts_stub);
+      var ret = helpers.sortByStatus(this.input_object_by_order_as_list, 'order', this.opts_obj_stub);
 
       var expected_value = '4\n1\n3\n2\n';
       expect(ret).toBe(expected_value);
     });
 
     it("sort result passed as object by 'results' key as integer value", function() {
-      var ret = helpers.sortByStatus(this.input_object_by_result, 'results', this.opts_stub);
+      var ret = helpers.sortByStatus(this.input_object_by_result, 'results', this.opts_obj_stub);
 
       var expected_value = '4\n1\n3\n2\n';
       expect(ret).toBe(expected_value);
     });
 
     it("sort result passed as object without results", function() {
-      var ret = helpers.sortByStatus(this.input_object_without_results, 'results', this.opts_stub);
+      var ret = helpers.sortByStatus(this.input_object_without_results, 'results', this.opts_obj_stub);
 
       var expected_value = '1\n2\n3\n4\n';
+      expect(ret).toBe(expected_value);
+    });
+
+    it("sort result passed as object by 'results' key as list of integer value", function() {
+      var ret = helpers.sortByStatus(this.input_as_simple_object, 'results', this.opts_str_stub);
+
+      var expected_value = 'https://example.url/builds.zip\n';
       expect(ret).toBe(expected_value);
     });
   });

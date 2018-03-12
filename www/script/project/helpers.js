@@ -521,10 +521,10 @@ define(function (require) {
             var ret = ''
             for(var i in sortable) {
                 if(data) {
-                    data.index = i;
+                    data.index = sortable[i][2];
+                    data.key = i;
                 }
                 var item = objs[sortable[i][2]];
-                item.title = sortable[i][2];
                 ret += opts.fn(item, {data: data});
             }
             return ret

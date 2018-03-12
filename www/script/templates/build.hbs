@@ -51,7 +51,7 @@
                   {{#eachByStatus s.urls 'results'}}
                       {{#if this.results includeZero=true}}
                           <li class="log-list-{{buildCSSClass this.results }} urls-mod clearfix">
-                            <a title="{{ this.title }}" href="{{ this.url }}"><span class="{{buildCSSClass this.results }}"></span>{{ this.title }}</a>
+                            <a title="{{ this }}" href="{{ this.url }}"><span class="{{buildCSSClass this.results }}"></span>{{ this }}</a>
                           </li>
                       {{else}}
                           {{this.results}}
