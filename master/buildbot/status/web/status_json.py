@@ -998,6 +998,11 @@ class SingleProjectJsonResource(LatestRevisionResource):
     def asDict(self, request):
         result = {'builders': []}
 
+        # use regexes from config in rtBuilders.js
+        config = self.status.master.config
+        result['regex_branches'] = config.regex_branches
+        result['tag_as_branch_regex'] = config.tag_as_branch_regex
+
         #Get codebases
         codebases = {}
         getCodebasesArg(request=request, codebases=codebases)

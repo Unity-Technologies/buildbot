@@ -61,6 +61,12 @@ class ActionResource(unittest.TestCase):
 
 class Functions(unittest.TestCase):
 
+    def setUp(self):
+        from buildbot.config import MasterConfig
+        master = MasterConfig()
+        self.regex_branches = master.regex_branches
+        self.tag_as_branch_regex = master.tag_as_branch_regex
+
     ### getRequestCharset ###
 
     def do_test_getRequestCharset(self, hdr, exp):
@@ -90,7 +96,7 @@ class Functions(unittest.TestCase):
         codebases = {'unity': '2018.2/'}
         expected_tags = ['QV', 'Unstable']
 
-        filtered_tags = base.filter_tags_by_codebases(tags, codebases)
+        filtered_tags = base.filter_tags_by_codebases(tags, codebases, self.tag_as_branch_regex, self.regex_branches)
 
         self.assertEqual(expected_tags, filtered_tags)
 
@@ -99,7 +105,7 @@ class Functions(unittest.TestCase):
         codebases = {'unity': 'trunk/', 'mod': '2018.2/'}
         expected_tags = ['ABV', 'QV', 'Unstable']
 
-        filtered_tags = base.filter_tags_by_codebases(tags, codebases)
+        filtered_tags = base.filter_tags_by_codebases(tags, codebases, self.tag_as_branch_regex, self.regex_branches)
 
         self.assertEqual(expected_tags, filtered_tags)
 
@@ -108,7 +114,7 @@ class Functions(unittest.TestCase):
         codebases = {'unity': 'trunk/'}
         expected_tags = ['ABV', 'Unstable']
 
-        filtered_tags = base.filter_tags_by_codebases(tags, codebases)
+        filtered_tags = base.filter_tags_by_codebases(tags, codebases, self.tag_as_branch_regex, self.regex_branches)
 
         self.assertEqual(expected_tags, filtered_tags)
 
@@ -117,7 +123,7 @@ class Functions(unittest.TestCase):
         codebases = {'unity': 'trunk/'}
         expected_tags = ['ABV']
 
-        filtered_tags = base.filter_tags_by_codebases(tags, codebases)
+        filtered_tags = base.filter_tags_by_codebases(tags, codebases, self.tag_as_branch_regex, self.regex_branches)
 
         self.assertEqual(expected_tags, filtered_tags)
 
@@ -126,7 +132,7 @@ class Functions(unittest.TestCase):
         codebases = {}
         expected_tags = sorted(tags)
 
-        filtered_tags = base.filter_tags_by_codebases(tags, codebases)
+        filtered_tags = base.filter_tags_by_codebases(tags, codebases, self.tag_as_branch_regex, self.regex_branches)
 
         self.assertEqual(expected_tags, filtered_tags)
 
@@ -135,7 +141,7 @@ class Functions(unittest.TestCase):
         codebases = {'foo': '2019.2/'}       # not unity, good pattern
         expected_tags = ['ABV', 'Unstable']  # use Trunk tags
 
-        filtered_tags = base.filter_tags_by_codebases(tags, codebases)
+        filtered_tags = base.filter_tags_by_codebases(tags, codebases, self.tag_as_branch_regex, self.regex_branches)
 
         self.assertEqual(expected_tags, filtered_tags)
 
@@ -144,7 +150,7 @@ class Functions(unittest.TestCase):
         codebases = {'unity': 'zupa/'}       # unity, wrong pattern
         expected_tags = ['ABV', 'Unstable']  # use Trunk tags
 
-        filtered_tags = base.filter_tags_by_codebases(tags, codebases)
+        filtered_tags = base.filter_tags_by_codebases(tags, codebases, self.tag_as_branch_regex, self.regex_branches)
 
         self.assertEqual(expected_tags, filtered_tags)
 
@@ -153,7 +159,7 @@ class Functions(unittest.TestCase):
         codebases = {'foo': 'zupa/'}         # not unity, wrong pattern
         expected_tags = sorted(tags)         # return original tags
 
-        filtered_tags = base.filter_tags_by_codebases(tags, codebases)
+        filtered_tags = base.filter_tags_by_codebases(tags, codebases, self.tag_as_branch_regex, self.regex_branches)
 
         self.assertEqual(expected_tags, filtered_tags)
 
@@ -165,7 +171,7 @@ class Functions(unittest.TestCase):
         codebases = {'foo': '2018.2/'}
         expected_branches = {'2018.2'}
 
-        branches = base.get_query_branches_for_codebases(tags, codebases)
+        branches = base.get_query_branches_for_codebases(tags, codebases, self.regex_branches)
 
         self.assertEqual(branches, expected_branches)
 
@@ -174,7 +180,7 @@ class Functions(unittest.TestCase):
         codebases = {'unity': 'bar/'}
         expected_branches = {'trunk'}
 
-        branches = base.get_query_branches_for_codebases(tags, codebases)
+        branches = base.get_query_branches_for_codebases(tags, codebases, self.regex_branches)
 
         self.assertEqual(branches, expected_branches)
 
@@ -183,7 +189,7 @@ class Functions(unittest.TestCase):
         codebases = {'foo': 'bar/'}
         expected_branches = set()
 
-        branches = base.get_query_branches_for_codebases(tags, codebases)
+        branches = base.get_query_branches_for_codebases(tags, codebases, self.regex_branches)
 
         self.assertEqual(branches, expected_branches)
 
@@ -192,7 +198,7 @@ class Functions(unittest.TestCase):
         codebases = {'foo': '2019.2/'}
         expected_branches = {'trunk'}
 
-        branches = base.get_query_branches_for_codebases(tags, codebases)
+        branches = base.get_query_branches_for_codebases(tags, codebases, self.regex_branches)
 
         self.assertEqual(branches, expected_branches)
 

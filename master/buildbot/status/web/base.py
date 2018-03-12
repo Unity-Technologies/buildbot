@@ -403,14 +403,7 @@ def path_to_json_past_builds(request, builderName, number, filter_data=False):
     return url
 
 
-def get_query_branches_for_codebases(tags, codebases):
-    regex_branches = [
-        r'^(trunk)/',                 # Trunk
-        r'^(20[0-9][0-9].[0-9])\/',   # 2017.1/
-        r'^([0-9].[0-9])\/',          # 5.0/
-        r'^release\/([0-9].[0-9])/'   # release/4.6
-    ]
-
+def get_query_branches_for_codebases(tags, codebases, regex_branches):
     branches = map(lambda s: s.lower(), codebases.values())
     codebase_keys = map(lambda s: s.lower(), codebases.keys())
     query_branches = set()
@@ -432,20 +425,21 @@ def get_query_branches_for_codebases(tags, codebases):
     return query_branches
 
 
-def filter_tags_by_codebases(tags, codebases):
+def filter_tags_by_codebases(tags, codebases, tag_as_branch_regex, regex_branches):
     """
     Return list of tags filtered by branches from query params.
 
     @param tags: list of builder-tags
     @param codebases: dict with codebases from query, ex. {'unity': 'trunk', ...}
+    @param tag_as_branch_regex: regex for check if tag has branch format
+    @param regex_branches: list of regex to fit query params as a branch
     """
     if not codebases:
         return sorted(tags)
 
-    tag_as_branch_regex = r'^(20[0-9][0-9].[0-9]|[0-9].[0-9]|trunk)$'
     tag_as_branch_pattern = re.compile(tag_as_branch_regex)
 
-    query_branches = get_query_branches_for_codebases(tags, codebases)
+    query_branches = get_query_branches_for_codebases(tags, codebases, regex_branches)
     if not query_branches:
         return sorted(tags)
 

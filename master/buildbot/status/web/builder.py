@@ -300,6 +300,7 @@ class StatusResourceBuilder(HtmlResource, BuildLineMixin):
     @defer.inlineCallbacks
     def content(self, req, cxt):
         b = self.builder_status
+        master = self.getBuildmaster(req)
 
         # Grab all the parameters which are prefixed with 'property.'.
         # We'll use these to filter the builds and build requests we
@@ -348,7 +349,10 @@ class StatusResourceBuilder(HtmlResource, BuildLineMixin):
         project_json = SingleProjectBuilderJsonResource(self.status, self.builder_status, latest_rev=True)
         project_dict = yield project_json.asDict(req, params=project_params)
         url = self.status.getBuildbotURL() + path_to_json_project_builder(req, project, self.builder_status.name)
-        filtered_tags = filter_tags_by_codebases(project_dict['tags'], codebases)
+        filtered_tags = filter_tags_by_codebases(project_dict['tags'],
+                                                 codebases,
+                                                 master.config.tag_as_branch_regex,
+                                                 master.config.regex_branches)
         cxt['instant_json']['project'] = {"url": url,
                                           "data": json.dumps(project_dict, separators=(',', ':')),
                                           "tags": filtered_tags,
