@@ -10,15 +10,16 @@
 <table class="table table-katana table-stripes no-bg tablesorter dataTable tablesorter-js shortcut-js tools-js">
     <thead>
     <tr>
-        <th>Build ID</th>
-        <th>Project</th>
-        <th>Builder name</th>
-        <th>Completed</th>
-        <th>Build number</th>
-        <th>Build slave</th>
-        <th>Submitted at</th>
-        <th>Completed at</th>
-        <th>Reason</th>
+        <th style="width:5%">Build ID</th>
+        <th style="width:10%">Project</th>
+        <th style="width:15%">Revision</th>
+        <th style="width:10%">Builder name</th>
+        <th style="width:10%">Completed</th>
+        <th style="width:10%">Build number</th>
+        <th style="width:10%">Build slave</th>
+        <th style="width:10%">Submitted at</th>
+        <th style="width:10%">Completed at</th>
+        <th style="width:10%">Reason</th>
     </tr>
     </thead>
     <tbody>
@@ -31,6 +32,17 @@
         </td>
         <td>
             {{ build.project }}
+        </td>
+        <td>
+            <ul class="revision list-unstyled reset">
+                {% for sourcestamp in build.sourcestamps %}
+                <li>
+                    <a href="{{ sourcestamp.display_repository }}">{{ sourcestamp.codebase }}</a> /
+                    {{ sourcestamp.branch }} /
+                    <a href="{{ sourcestamp.revision_url }}">{{ sourcestamp.short_revision }}</a>
+                </li>
+                {% endfor %}
+            <ul/>
         </td>
         <td>
             {{ build.buildername }}
