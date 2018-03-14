@@ -525,7 +525,6 @@ define(function (require) {
                     data.key = i;
                 }
                 var item = objs[sortable[i][2]];
-                console.log(item, data);
                 ret += opts.fn(item, {data: data});
             }
             return ret
@@ -540,6 +539,8 @@ define(function (require) {
                 sortable.push([objs[item], css_classes[orderItem][2], item]);
             }
             return sortable.sort(function(a, b) {
+                if(a[1] == b[1])
+                    return a[2].toLowerCase().localeCompare(b[2].toLowerCase());
                 return a[1] - b[1];
             });
         },
