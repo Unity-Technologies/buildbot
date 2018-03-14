@@ -319,6 +319,13 @@ class Status(config.ReconfigurableServiceMixin, service.MultiService):
 
         return None
 
+    def getFriendlyName(self, buildNumber):
+        _builder = self.getBuilder(buildNumber)
+        if _builder is not None:
+            return _builder.friendly_name
+        else:
+            return None
+
     def getSlaveNames(self):
         return self.botmaster.slaves.keys()
 

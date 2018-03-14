@@ -215,7 +215,7 @@ class Trigger(ResumeBuild):
                     if was_cb:
                         for build in builddicts:
                             bn = triggeredBuildIdsToBuildNames[build['brid']]
-                            friendly_name = self._getFriendlyName(master, bn)
+                            friendly_name = master.status.getFriendlyName(bn)
                             num = build['number']
                             url = yield master.status.getURLForBuildRequest(build['brid'], bn, num,
                                                                             friendly_name, self.sourceStamps)
@@ -226,7 +226,7 @@ class Trigger(ResumeBuild):
                     if was_cb:
                         for build in builddicts:
                             bn = triggeredBuildIdsToBuildNames[build['brid']]
-                            friendly_name = self._getFriendlyName(master, bn)
+                            friendly_name = master.status.getFriendlyName(bn)
                             num = build['number']
                             url = master.status.getURLForBuild(bn, num, friendly_name, self.sourceStamps)
                             self.step_status.addURL(url['text'], url['path'], *getBuildResults(build))
@@ -241,15 +241,6 @@ class Trigger(ResumeBuild):
         log.msg("Trigger scheduler result %d " % result)
         self.finishIfRunning(result)
         return
-
-
-    def _getFriendlyName(self, master, buildNumber):
-        builder = master.getStatus().getBuilder(buildNumber)
-        if builder is not None:
-            return builder.friendly_name
-        else:
-            return None
-
 
     def _triggerSchedulers(self, triggered_schedulers):
         dl = []

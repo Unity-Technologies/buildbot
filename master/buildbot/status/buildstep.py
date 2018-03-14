@@ -390,7 +390,9 @@ class BuildStepStatus(styles.Versioned):
                         .getBuildRequestForStartbrids(brids)
         master = self.build.builder.master
         for build in db_results:
-            url = master.status.getURLForBuild(build['buildername'], build['number'])
+            friendly_name = master.status.getFriendlyName(build['buildername'])
+            url = master.status.getURLForBuild(build['buildername'], build['number'],
+                                               friendly_name=friendly_name)
             results = (build['results'],)  # must be tuple
             self.addURL(url['text'], url['path'], results)
 
