@@ -7,19 +7,19 @@
 */
 
 // Colors
-  
+
 // Generics
 $color-white: #fff; // white
 
 // status colors and text
 $state-colors:
-beginning #54FF2D $color-white "Beginning",
+running #C2BA0A $color-white "Running",
 success #DDE6D6 $color-white "Success",
-failure #EFCFCF $color-white "Failure", 
+failure #EFCFCF $color-white "Failure",
 exception #DDD7DD $color-white "Exception",
-warnings #fa3 $color-white "Warnings", 
-skipped #CBDCE6 $color-white "Skipped", 
-inconclusive #CBDCE6 false "Inconclusive", 
+warnings #fa3 $color-white "Warnings",
+skipped #CBDCE6 $color-white "Skipped",
+inconclusive #CBDCE6 false "Inconclusive",
 ignored #CBDCE6 false "Ignored",
 dependency-failure #FCF2F2 $color-white "Dependency failure",
 not-rebuilt #F8FCF2 $color-white "Not rebuilt",
@@ -27,12 +27,13 @@ start #ccc false "Start",
 not-started #ddd false "Not Started",
 idle #F5F5F5 false "Idle" #e0e0e0,
 paused #DAE6F3 false "Paused" #e0e0e0,
-running #FCFACB false "Running",
+waiting-for-dependency #FCFACB false "Waiting for available slave",
 overtime #FCCBCB false "Overtime",
 offline #E7E7E7 false "Offline" #d1d1d1,
 waiting #E7E7E7 false "Waiting for buildslave",
 retry #DDD7DD $color-white "Retry",
-interrupted #DDD7DD $color-white "Interrupted";
+interrupted #DDD7DD $color-white "Interrupted",
+canceled #DDD7DD $color-white "Canceled";
 
 // Create colorblind version of colors
 @each $colorvar in $state-colors {

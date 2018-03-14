@@ -17,6 +17,10 @@ define(function (require) {
         Handlebars.registerHelper('buildCSSClass', function (value) {
             return helpers.getCssClassFromStatus(value);
         });
+
+        Handlebars.registerHelper('eachByStatus', function (array, key, opts) {
+            return helpers.sortByStatus(array, key, opts);
+        });
     }
     registerHelpers();
     return KT;

@@ -625,14 +625,14 @@ td.visible-print,th.visible-print{display:table-cell!important}}
 .panel-warning>.panel-heading{background-image:-webkit-linear-gradient(top,#fcf8e3 0,#faf2cc 100%);background-image:linear-gradient(to bottom,#fcf8e3 0,#faf2cc 100%);background-repeat:repeat-x;filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#fffcf8e3', endColorstr='#fffaf2cc', GradientType=0)}
 .panel-danger>.panel-heading{background-image:-webkit-linear-gradient(top,#f2dede 0,#ebcccc 100%);background-image:linear-gradient(to bottom,#f2dede 0,#ebcccc 100%);background-repeat:repeat-x;filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#fff2dede', endColorstr='#ffebcccc', GradientType=0)}
 .well{background-image:-webkit-linear-gradient(top,#e8e8e8 0,#f5f5f5 100%);background-image:linear-gradient(to bottom,#e8e8e8 0,#f5f5f5 100%);background-repeat:repeat-x;filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#ffe8e8e8', endColorstr='#fff5f5f5', GradientType=0);border-color:#dcdcdc;-webkit-box-shadow:inset 0 1px 3px rgba(0,0,0,.05),0 1px 0 rgba(255,255,255,.1);box-shadow:inset 0 1px 3px rgba(0,0,0,.05),0 1px 0 rgba(255,255,255,.1)}
-.beginning{background-color:#54FF2D}
-.color-blind-mode .beginning{background-color:#2cc20a!important;color:#fff}
-.color-blind-mode .beginning a{color:#fff!important}
-.color-blind-mode .dependency-list .beginning:before{content:"Beginning"}
-.color-blind-mode .log-list-beginning>a:before{background-color:#2cc20a}
-.state-text.beginning:before{content:"Beginning"}
-.table-katana .beginning{border-top:1px solid #fff}
-.log-list-beginning>a:before{background-color:#54FF2D}
+.running{background-color:#C2BA0A}
+.color-blind-mode .running{background-color:#c2ba0a!important;color:#fff}
+.color-blind-mode .running a{color:#fff!important}
+.color-blind-mode .dependency-list .running:before{content:"Running"}
+.color-blind-mode .log-list-running>a:before{background-color:#c2ba0a}
+.state-text.running:before{content:"Running"}
+.table-katana .running{border-top:1px solid #fff}
+.log-list-running>a:before{background-color:#C2BA0A}
 .success{background-color:#DDE6D6}
 .color-blind-mode .success{background-color:#5bc20a!important;color:#fff}
 .color-blind-mode .success a{color:#fff!important}
@@ -728,13 +728,13 @@ td.visible-print,th.visible-print{display:table-cell!important}}
 .state-text.paused:before{content:"Paused"}
 .table-katana .paused{border-top:1px solid #fff}
 .log-list-paused>a:before{background-color:#DAE6F3}
-.running{background-color:#FCFACB}
-.color-blind-mode .running{background-color:#c2ba0a!important}
-.color-blind-mode .dependency-list .running:before{content:"Running"}
-.color-blind-mode .log-list-running>a:before{background-color:#c2ba0a}
-.state-text.running:before{content:"Running"}
-.table-katana .running{border-top:1px solid #fff}
-.log-list-running>a:before{background-color:#FCFACB}
+.waiting-for-dependency{background-color:#FCFACB}
+.color-blind-mode .waiting-for-dependency{background-color:#c2ba0a!important}
+.color-blind-mode .dependency-list .waiting-for-dependency:before{content:"Waiting for available slave"}
+.color-blind-mode .log-list-waiting-for-dependency>a:before{background-color:#c2ba0a}
+.state-text.waiting-for-dependency:before{content:"Waiting for available slave"}
+.table-katana .waiting-for-dependency{border-top:1px solid #fff}
+.log-list-waiting-for-dependency>a:before{background-color:#FCFACB}
 .overtime{background-color:#FCCBCB}
 .color-blind-mode .overtime{background-color:#c20a0a!important}
 .color-blind-mode .dependency-list .overtime:before{content:"Overtime"}
@@ -768,7 +768,14 @@ td.visible-print,th.visible-print{display:table-cell!important}}
 .color-blind-mode .log-list-interrupted>a:before{background-color:#c20ac2}
 .state-text.interrupted:before{content:"Interrupted"}
 .table-katana .interrupted{border-top:1px solid #fff}
-.log-list-interrupted>a:before{background-color:#DDD7DD}
+.canceled,.log-list-interrupted>a:before{background-color:#DDD7DD}
+.color-blind-mode .canceled{background-color:#c20ac2!important;color:#fff}
+.color-blind-mode .canceled a{color:#fff!important}
+.color-blind-mode .dependency-list .canceled:before{content:"Canceled"}
+.color-blind-mode .log-list-canceled>a:before{background-color:#c20ac2}
+.state-text.canceled:before{content:"Canceled"}
+.table-katana .canceled{border-top:1px solid #fff}
+.log-list-canceled>a:before{background-color:#DDD7DD}
 .table-katana tr .success:first-child{border-top:none}
 .current-step,.waiting,td.building{background-color:#FCFACB}
 .offline,td.offline{background-color:#E7E7E7;text-shadow:0 1px 0 #fff}
