@@ -199,6 +199,14 @@ module.exports = function (grunt) {
                 src: ["<%= files.handlebars.src %>"],
                 dest: "<%= files.handlebars.dest %>"
             }
+        },
+        "file-creator": {
+            "version": {
+                "../master/buildbot/VERSION": function (fs, fd, done) {
+                    fs.writeSync(fd, Math.floor(Date.now() / 1000)); // Enough in seconds
+                    done();
+                }
+            }
         }
     });
 
@@ -211,6 +219,7 @@ module.exports = function (grunt) {
     grunt.loadNpmTasks('grunt-open');
     grunt.loadNpmTasks('grunt-sass');
     grunt.loadNpmTasks('grunt-fontello-update');
+    grunt.loadNpmTasks('grunt-file-creator');
 
     // Define your tasks here
     grunt.registerTask("prod", ["test", "build:prod"]);
@@ -218,7 +227,7 @@ module.exports = function (grunt) {
         if (overrideTarget !== undefined) {
             target = overrideTarget;
         }
-        grunt.task.run(["sass", "cssmin", "handlebars:compile", "requirejs:" + target]);
+        grunt.task.run(["sass", "cssmin", "handlebars:compile", "requirejs:" + target, "file-creator:version"]);
     });
     grunt.registerTask("styles", ["sass", "cssmin"]);
     grunt.registerTask("test", ["handlebars:compile", "karma:unit"]);
