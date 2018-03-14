@@ -15,7 +15,8 @@
 import sys
 import traceback
 
-from twisted.internet import defer, reactor
+import names
+from twisted.internet import defer
 
 from buildbot.db import connector
 from buildbot.master import BuildMaster
@@ -23,60 +24,83 @@ from buildbot.util import in_reactor
 from buildbot import config as config_module
 
 
+MAX_UNIQUE_USER_COUNT = 5494
+
+
 @in_reactor
-def populateDatabase(config):
+@defer.inlineCallbacks
+def populate_database(config):
     master = BuildMaster(config['baseDir'])
-    master.config = loadConfig(config, config['configFile'])
+    master.config = load_config(config, config['configFile'])
     db = connector.DBConnector(master, basedir=config['baseDir'])
 
-    deferDb = db.setup(check_version=False, verbose=not config['quiet'])
-    deferDb.addCallback(lambda x: populateUser(db, 1000))
-    deferDb.addCallback(lambda x: populateBuild(db))
-    deferDb.addCallback(endPopulating)
-    deferDb.addErrback(errorPopulate)
+    yield db.setup(check_version=False, verbose=not config['quiet'])
+    yield populate_user(db, 100)
+    yield populate_build(db)
 
 
-def loadConfig(config, configFileName='master.cfg'):
+def load_config(config, config_file_name='master.cfg'):
     if not config['quiet']:
-        print "checking %s" % configFileName
+        print("checking %s" % config_file_name)
 
     try:
         master_cfg = config_module.MasterConfig.loadConfig(
             config['baseDir'],
-            configFileName,
+            config_file_name,
         )
-    except config_module.ConfigErrors, e:
-        print "Errors loading configuration:"
+    except config_module.ConfigErrors as e:
+        print("Errors loading configuration:")
         for msg in e.errors:
-            print "  " + msg
+            print("  " + msg)
         return
-    except:
-        print "Errors loading configuration:"
+    except Exception:
+        print("Errors loading configuration:")
         traceback.print_exc(file=sys.stdout)
         return
 
     return master_cfg
 
+
 @defer.inlineCallbacks
-def populateUser(db, userCount):
+def populate_user(db, user_count):
+    if user_count > MAX_UNIQUE_USER_COUNT:
+        raise ValueError("Can not generate more than %d unique user" % MAX_UNIQUE_USER_COUNT)
+
     users = []
-    for ind in xrange(userCount):
-        user = dict(
-            identifier='ABC',
-            bb_username='',
-            bb_password='pyflakes'
-        )
-    yield db.users.createBulkUser(users)
+    unique_identifier = set()
+    for ind in range(user_count):
+        # generate random identifier
+        identifier = names.get_first_name()
+        attempt = 0
+        while identifier in unique_identifier:
+            identifier = names.get_first_name()
+            attempt += 1
+            if attempt > user_count:
+                raise RuntimeError("Can not find unique name. Please choose small amount of records")
+
+        unique_identifier.add(identifier)
+        user = {
+            'identifier': identifier,
+            'bb_username': identifier,
+            'bb_password': 'pyflakes'
+        }
+        users.append(user)
+
+    created, skipped = yield db.users.createUsers(users)
+    print_summary('users', created, skipped)
 
 
-def populateBuild(db):
-    print db, 'start', 'build'
+def populate_build(db):
+    print(db, 'start', 'build')
 
 
-def endPopulating(db):
+def end_populating(db):
     pass
 
 
-def errorPopulate(err):
-    print err, 'error'
-    reactor.kill()
+def error_populate(err):
+    print(err, 'error')
+
+
+def print_summary(table, created, skipped):
+    print("Created %d new %s, %d skipped" % (created, table, skipped))

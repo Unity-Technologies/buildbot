@@ -673,7 +673,7 @@ class UserOptions(base.SubcommandOptions):
 
 
 class PopulateDatabaseOptions(base.SubcommandOptions):
-    subcommandFunction = "buildbot.scripts.populatedatabase.populateDatabase"
+    subcommandFunction = "buildbot.scripts.populatedatabase.populate_database"
     optFlags = [
         ['quiet', 'q', "Don't display error messages or tracebacks"],
     ]
