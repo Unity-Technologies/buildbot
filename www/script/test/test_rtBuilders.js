@@ -49,13 +49,6 @@ define(function (require) {
         noTags = [
             []
         ],
-        trunkWIPTags = [
-          ["Trunk", "WIP"]
-        ],
-
-        trunkWIPTags_reversed = [
-          ["WIP", "Trunk"]
-        ],
         unstableNightly = [
             ["Nightly", "Unstable"]
         ],
@@ -63,7 +56,6 @@ define(function (require) {
             abvTag,
             noTags,
             abvNightlyTag,
-            trunkWIPTags
         ],
         expandedBuilders = [
             trunk,
@@ -72,15 +64,12 @@ define(function (require) {
             unity46Nightly,
             noTags,
             abvNightlyTag,
-            trunkWIPTags
         ],
         expandedBuilders_reversed = [
             trunk,
             trunkNightly,
             unity46,
             unity46Nightly,
-            trunkWIPTags,
-            trunkWIPTags_reversed,
             noTags,
             abvNightlyTag_reversed,
             abvNightlyTag
@@ -90,7 +79,6 @@ define(function (require) {
             noTags,
             abvNightlyTag,
             unstableNightly,
-            trunkWIPTags,
             trunk
         ],
         allTags = [
@@ -154,8 +142,8 @@ define(function (require) {
         it("are not filtered when no tags are selected", function () {
             var tests = [
                 {branch: "", result: expandedBuilders, tags: []},
-                {branch: "trunk", result: [trunk, trunkNightly, noTags, abvNightlyTag, trunkWIPTags], tags: []},
-                {branch: "release/5.0/test", result: [trunk, trunkNightly, noTags, abvNightlyTag, trunkWIPTags], tags: []},
+                {branch: "trunk", result: [trunk, trunkNightly, noTags, abvNightlyTag], tags: []},
+                {branch: "release/5.0/test", result: [trunk, trunkNightly, noTags, abvNightlyTag], tags: []},
                 {branch: "release/4.6/test", result: [unity46, unity46Nightly, noTags, abvNightlyTag], tags: []}
             ];
 
@@ -199,7 +187,6 @@ define(function (require) {
                     {branch: "5.0/release/test", result: [abvNightlyTag_reversed, abvNightlyTag], tags: [abvNightlyTag[0].join(tagSeparator)]},
                     {branch: "5.1/release/test", result: [abvNightlyTag_reversed, abvNightlyTag], tags: [abvNightlyTag[0].join(tagSeparator)]},
                     {branch: "test", result: [abvNightlyTag_reversed, abvNightlyTag], tags: [abvNightlyTag[0].join(tagSeparator)]} ,
-                    {branch: "", result: [trunkWIPTags, trunkWIPTags_reversed], tags: [trunkWIPTags[0].join(tagSeparator)]}
                 ];
 
             testTagFilter(tests, expandedBuilders_reversed);
@@ -239,7 +226,6 @@ define(function (require) {
         it("are filtered and hide unstable", function () {
             var tests = [
                 {branch: "", result: [trunk], tags: ["Trunk"], hide_unstable: true},
-                {branch: "", result: [trunkWIPTags, trunk], tags: ["Trunk"], hide_unstable: false},
                 {branch: "", result: [abvTag, abvNightlyTag], tags: ["ABV"], hide_unstable: true},
                 {branch: "", result: [abvNightlyTag, unstableNightly], tags: ["Nightly"], hide_unstable: false},
                 {branch: "", result: [abvTag, abvNightlyTag], tags: ["ABV", "Nightly"], hide_unstable: true},
