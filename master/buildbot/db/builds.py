@@ -302,5 +302,6 @@ class BuildsConnectorComponent(base.DBConnectorComponent):
             project=botmaster.getBuilderConfig(row.buildrequests_buildername).project,
             slavename=row.builds_slavename,
             submitted_at=mkdt(row.buildrequests_submitted_at),
-            complete_at=mkdt(row.buildrequests_complete_at)
+            complete_at=mkdt(row.buildrequests_complete_at),
+            sourcestampsetid=row.buildsets_sourcestampsetid,
         )

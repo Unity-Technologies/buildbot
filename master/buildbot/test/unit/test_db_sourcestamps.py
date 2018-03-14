@@ -13,6 +13,7 @@
 #
 # Copyright Buildbot Team Members
 
+from twisted.internet import defer
 from twisted.trial import unittest
 from buildbot.db import sourcestamps
 from buildbot.test.util import connector_component
@@ -246,3 +247,21 @@ class TestSourceStampsConnectorComponent(
         d.addCallback(checkRevision, codebase='c2', revision='r2')
 
         return d
+
+    @defer.inlineCallbacks
+    def test_getSourceStampsForManyIds(self):
+        example_data = [
+            fakedb.SourceStamp(id=1, branch="HEAD",    sourcestampsetid=11, codebase="fmod"),
+            fakedb.SourceStamp(id=2, branch="trunk",   sourcestampsetid=33, codebase="bar"),
+            fakedb.SourceStamp(id=3, branch="general", sourcestampsetid=33, codebase="foo"),
+            fakedb.SourceStamp(id=4, branch="trunk",   sourcestampsetid=44, codebase="bar"),
+        ]
+
+        yield self.insertTestData(example_data)
+
+        sourcestampsetids = [11, 33]
+        sourcestamps = yield self.db.sourcestamps.getSourceStampsForManyIds(sourcestampsetids)
+        result_sourcestampsetids = set(x['sourcestampsetid'] for x in sourcestamps)
+
+        self.assertEqual(len(sourcestamps), 3)
+        self.assertEqual(set(sourcestampsetids), result_sourcestampsetids)
