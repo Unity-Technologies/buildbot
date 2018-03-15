@@ -155,7 +155,8 @@ class TestBuildStepStatus(unittest.TestCase):
         trigger_step_status = build.addStepWithName('step_2', Trigger)
         build.builder.master.db = StubDB()
         build.brids = [1]
-        build.builder.master.status.getURLForBuild = lambda x,y: {'path':x, 'text': y}
+        build.builder.master.status.getURLForBuild = lambda x, y, friendly_name: {'path':x, 'text': y}
+        build.builder.master.status.getFriendlyName = lambda x: None
 
         self.assertEqual(len(trigger_step_status.urls), 0)
 
@@ -180,7 +181,8 @@ class TestBuildStepStatus(unittest.TestCase):
         trigger_step_status = build.addStepWithName('step_2', Trigger)
         build.builder.master.db = StubDB()
         build.brids = [1]
-        build.builder.master.status.getURLForBuild = lambda x,y: {'path':x, 'text': y}
+        build.builder.master.status.getFriendlyName = lambda x: None
+        build.builder.master.status.getURLForBuild = lambda x, y, friendly_name: {'path':x, 'text': y}
 
         self.assertEqual(len(trigger_step_status.urls), 0)
 
