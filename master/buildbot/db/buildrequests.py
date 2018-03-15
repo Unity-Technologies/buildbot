@@ -853,7 +853,8 @@ class BuildRequestsConnectorComponent(base.DBConnectorComponent):
                 buildrequests_tbl.c.mergebrid == brid,
             ]
             stmt_br = sa.select(
-                [buildrequests_tbl.c.id, buildrequests_tbl.c.buildername, builds_tbl.c.number, buildrequests_tbl.c.mergebrid],
+                [buildrequests_tbl.c.id, buildrequests_tbl.c.buildername, builds_tbl.c.number,
+                 buildrequests_tbl.c.mergebrid, buildrequests_tbl.c.startbrid, buildrequests_tbl.c.triggeredbybrid],
                 from_obj=builds_tbl.join(buildrequests_tbl, builds_tbl.c.brid == buildrequests_tbl.c.id)
             ).where(sa.or_(*where_clause)) \
              .distinct(buildrequests_tbl.c.id) \
@@ -869,9 +870,12 @@ class BuildRequestsConnectorComponent(base.DBConnectorComponent):
                     buildername=str(row.buildername),
                     number=row.number,
                     is_merged=bool(row.mergebrid),
+                    startbrid=row.startbrid,
+                    triggeredbybrid=row.triggeredbybrid,
                     full_name="{buildername} #{number} {merged}".format(merged=merged, **row),
                 )
                 buildrequests.append(buildrequest)
+            res.close()
             return buildrequests
 
         return self.db.pool.do(thd)
@@ -953,6 +957,30 @@ class BuildRequestsConnectorComponent(base.DBConnectorComponent):
                 res.close()
 
             return rv
+
+        return self.db.pool.do(thd)
+
+    def getBuildRequestForStartbrids(self, brids):
+        def thd(conn):
+            buildrequest_table = self.db.model.buildrequests
+            build_table = self.db.model.builds
+            query = sa.select([buildrequest_table.c.buildername, buildrequest_table.c.results, build_table.c.number],
+                              from_obj=buildrequest_table.join(build_table, (buildrequest_table.c.id == build_table.c.brid))) \
+                      .where(buildrequest_table.c.startbrid.in_(brids)) \
+                      .order_by(buildrequest_table.c.id)
+
+            result = conn.execute(query)
+            rows = result.fetchall()
+            buildrequests = []
+            for row in rows:
+                buildrequest = dict(
+                    buildername=row.buildername,
+                    results=row.results,
+                    number=row.number,
+                )
+                buildrequests.append(buildrequest)
+            result.close()
+            return buildrequests
 
         return self.db.pool.do(thd)
 

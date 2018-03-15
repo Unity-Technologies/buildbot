@@ -48,16 +48,19 @@
                   {{/if}}
                 </div>
                 <ul class="log-list log-list-js dependency-list">
-                  {{#each s.urls }}
-                      {{#if results includeZero=true}}
+                  {{#eachByStatus s.urls 'results'}}
+                      {{#if this.results includeZero=true}}
                           <li class="log-list-{{buildCSSClass this.results }} urls-mod clearfix">
-                            <a title="{{ this.results }}" href="{{ this.url }}"><span class="{{buildCSSClass this.results }}"></span>{{ @key }}</a>
+                            <a title="{{ @index }}" href="{{ this.url }}">
+                                <span class="{{buildCSSClass this.results }}"></span>{{ @index }}
+                            </a>
                           </li>
                       {{else}}
-                          {{results}}
-                          <li class="artifact-js"><a target="_blank" href="{{ this }}">{{ @key }}</a></li>
+                            <li class="artifact-js">
+                                <a target="_blank" href="{{ this }}">{{ @index }}</a>
+                            </li>
                       {{/if}}
-                  {{/each}}
+                  {{/eachByStatus}}
                 </ul>
           {{/if}}
         </li>
@@ -90,7 +93,21 @@
         </h2>
 
         <span class="{{buildCSSClass b.results }} result overall-result-js overall-result">
-            {{#each b.text}}{{this}} {{/each}}
+            {{#each b.text}}
+                {{#if @first}}
+                    {{this}}
+                {{else}}
+                    {{#if @second}}
+                        *<ul>
+                        <li>{{this}}</li>
+                    {{else}}
+                        <li>{{this}}</li>
+                    {{/if}}
+                    {{#if @last}}
+                        </ul>
+                    {{/if}}
+                {{/if}}
+            {{/each}}
         </span>
     {{/unless}}
 

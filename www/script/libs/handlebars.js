@@ -258,6 +258,7 @@ var __module2__ = (function(__dependency1__, __dependency2__) {
             if (data) {
               data.index = i;
               data.first = (i === 0);
+              data.second = (i === 1);
               data.last  = (i === (context.length-1));
             }
             ret = ret + fn(context[i], { data: data });

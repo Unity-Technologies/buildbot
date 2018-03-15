@@ -45,9 +45,16 @@ define(function (require) {
             $("form[data-stop-chain]").ajaxForm({
                 beforeSubmit: function beforeSubmit(data, $form) {
                     var chainBuild = $form.data("chain").toString().split(';');
-                    return confirm('This will cancel all builds in this chain, which may take a little while.' +
-                                   '\nThese builds will also be affected: \n\n' + chainBuild.join('\n') +
-                                   '\n\nAre you sure you want to continue?');
+                    var deleteMsg = '';
+                    if(chainBuild.length > 1) {
+                        deleteMsg = 'This will cancel all builds in this chain, which may take a little while.' +
+                                  '\nThese builds will also be affected: \n\n' + chainBuild.join('\n') +
+                                  '\n\nAre you sure you want to cancel those builds?';
+                    } else {
+                        deleteMsg = 'This will cancel this build.' +
+                                    '\n\nAre you sure you want to cancel those builds?';
+                    }
+                    return confirm(deleteMsg);
 
                 }
             });

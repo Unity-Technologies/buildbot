@@ -110,6 +110,8 @@
       {% if 'Reason' in f.label %}
         <span title="This will be filled out automatically if a build is triggered as a dependency. Otherwise, you can write a reason here for why you are requesting the build (this information will show up on the build details page)." class="question-icon tooltip">
         </span>
+      {% elif f.tooltip %}
+        <span title='{{f.tooltip}}' class="tooltip question-icon"></span>
       {% endif %}
       <input type='text' size='{{f.size}}'  name='{{f.fullName}}' value='{{default_props[sch.name+"."+f.fullName]}}' {{ f.readonly and "disabled" or ""}} />
       {% if f.readonly %}

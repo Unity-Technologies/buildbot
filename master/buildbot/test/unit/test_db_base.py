@@ -47,6 +47,7 @@ class TestBase(unittest.TestCase):
         # run that again since the method gets stubbed out
         self.comp.check_length(self.tbl.c.str32, "long string" * 5)
 
+
 class TestCachedDecorator(unittest.TestCase):
 
     def setUp(self):

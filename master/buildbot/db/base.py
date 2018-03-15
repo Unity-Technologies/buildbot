@@ -13,10 +13,12 @@
 #
 # Copyright Buildbot Team Members
 
+from contextlib import contextmanager
 from sqlalchemy.dialects import mysql
 from datetime import datetime
 from decimal import Decimal
 from sqlalchemy.orm import Query
+
 
 class DBConnectorComponent(object):
     # A fixed component of the DBConnector, handling one particular aspect of

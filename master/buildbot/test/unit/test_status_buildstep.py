@@ -127,3 +127,65 @@ class TestBuildStepStatus(unittest.TestCase):
         bss1.addURL("URL", "http://www.url")
         bss1.addURL("URL2", "http://www.url2")
         self.assertEquals(bss1.getURLs(), urlList)
+
+    def test_prepare_trigger_links_for_nontrigger(self):
+        from buildbot.steps.shell import ShellCommand
+        builder = self.setupBuilder('builder_1')
+        self.setupStatus(builder)
+        build = builder.newBuild()
+
+        shell_step_status = build.addStepWithName('step_1', ShellCommand)
+        shell_step_status.prepare_trigger_links()
+        self.assertEqual(len(shell_step_status.urls), 0)
+
+    def test_prepare_trigger_link_for_trigger(self):
+        from buildbot.steps.trigger import Trigger
+
+        class StubBuildRequest(object):
+            def getBuildRequestForStartbrids(self, brids):
+                return [{'buildername': 'foo', 'number': brids[0], 'results': 1}]
+
+        class StubDB(object):
+            def __init__(self):
+                self.buildrequests = StubBuildRequest()
+
+        builder = self.setupBuilder('builder_1')
+        self.setupStatus(builder)
+        build = builder.newBuild()
+        trigger_step_status = build.addStepWithName('step_2', Trigger)
+        build.builder.master.db = StubDB()
+        build.brids = [1]
+        build.builder.master.status.getURLForBuild = lambda x, y, friendly_name: {'path':x, 'text': y}
+        build.builder.master.status.getFriendlyName = lambda x: None
+
+        self.assertEqual(len(trigger_step_status.urls), 0)
+
+        trigger_step_status.prepare_trigger_links()
+
+        self.assertEqual(len(trigger_step_status.urls), 1)
+
+    def test_prepare_trigger_link_for_trigger_with_empty_children(self):
+        from buildbot.steps.trigger import Trigger
+
+        class StubBuildRequest(object):
+            def getBuildRequestForStartbrids(self, brids):
+                return []
+
+        class StubDB(object):
+            def __init__(self):
+                self.buildrequests = StubBuildRequest()
+
+        builder = self.setupBuilder('builder_1')
+        self.setupStatus(builder)
+        build = builder.newBuild()
+        trigger_step_status = build.addStepWithName('step_2', Trigger)
+        build.builder.master.db = StubDB()
+        build.brids = [1]
+        build.builder.master.status.getFriendlyName = lambda x: None
+        build.builder.master.status.getURLForBuild = lambda x, y, friendly_name: {'path':x, 'text': y}
+
+        self.assertEqual(len(trigger_step_status.urls), 0)
+
+        trigger_step_status.prepare_trigger_links()
+
+        self.assertEqual(len(trigger_step_status.urls), 0)

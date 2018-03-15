@@ -13,19 +13,21 @@ define(function (require) {
 
     var helpers,
         css_class_enum = {},
+        // Status name: [numberInDatabase, css class name, ordering]
         css_classes = {
-            SUCCESS: [0, "success"],
-            WARNINGS: [1, "warnings"],
-            FAILURE: [2, "failure"],
-            SKIPPED: [3, "skipped"],
-            EXCEPTION: [4, "exception"],
-            RETRY: [5, "retry"],
-            CANCELED: [6, "exception"],
-            NOT_REBUILT: [7, "not-rebuilt"],
-            DEPENDENCY_FAILURE: [8, "dependency-failure"],
-            RUNNING: [9, "running"],
-            NOT_STARTED: [10, "not-started"],
-            INTERRUPTED: [11, "interrupted"],
+            RUNNING: [-1, "running", 8],
+            SUCCESS: [0, "success", 9],
+            WARNINGS: [1, "warnings", 12],
+            FAILURE: [2, "failure", 3],
+            SKIPPED: [3, "skipped", 11],
+            EXCEPTION: [4, "exception", 2],
+            RETRY: [5, "retry", 5],
+            CANCELED: [6, "canceled", 1],
+            NOT_REBUILT: [7, "not-rebuilt", 10],
+            DEPENDENCY_FAILURE: [8, "dependency-failure", 4],
+            WAITING_FOR_DEPENDENCY: [9, "waiting-for-dependency", 7],
+            NOT_STARTED: [10, "not-started", 6],
+            INTERRUPTED: [11, "interrupted", 0],
             None: ""
         },
         settings = {},
@@ -502,10 +504,45 @@ define(function (require) {
             return ret.join("&");
         },
         getCssClassFromStatus: function (status) {
-            var values = Object.keys(css_classes).map(function (key) {
-                return css_classes[key];
+            var values = {};
+            var css_keys = Object.keys(css_classes);
+            for(var i=0; i<css_keys.length; i++){
+                var css_key = css_keys[i];
+                values[css_classes[css_key][0]] = css_classes[css_key][1];
+            }
+            return values[status];
+        },
+        sortByStatus: function(objs, key, opts) {
+            var data = {}
+            if(opts.data) {
+                data = Handlebars.createFrame(opts.data)
+            }
+            var sortable = this.sortObject(key, objs);
+            var ret = ''
+            for(var i in sortable) {
+                if(data) {
+                    data.index = sortable[i][2];
+                    data.key = i;
+                }
+                var item = objs[sortable[i][2]];
+                ret += opts.fn(item, {data: data});
+            }
+            return ret
+        },
+        sortObject: function(key, objs) {
+            var sortable = [];
+            for(var item in objs) {
+                var orderItem = Object.keys(css_classes).filter(function(index) {
+                    var value = Array.isArray(objs[item][key]) ? objs[item][key][0] : objs[item][key];
+                    return css_classes[index][0] == value;
+                })[0];
+                sortable.push([objs[item], css_classes[orderItem][2], item]);
+            }
+            return sortable.sort(function(a, b) {
+                if(a[1] === b[1])
+                    return a[2].toLowerCase().localeCompare(b[2].toLowerCase());
+                return a[1] - b[1];
             });
-            return values[status][1];
         },
         setIFrameSize: function (iFrame) {
             if (iFrame) {

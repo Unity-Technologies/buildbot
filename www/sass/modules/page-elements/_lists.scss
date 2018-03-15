@@ -12,11 +12,11 @@
 	    font-size: 15px;
 	    position: relative;
 	    line-height:14px;
-	}		
+	}
 }
 
 .recent-build-icon-spacer {
-	padding-right:15px;		
+	padding-right:15px;
 	.recent-build-icon:after {
 		margin-right: -15px;
 	}
@@ -353,4 +353,25 @@ div.force-int {
 
 ul.revision li:not(:last-child) {
   margin-bottom:3px;
+}
+
+.child-table {
+	margin-top: 20px;
+	margin-bottom: 70px;
+	dl {
+		display: flex;
+		flex-wrap: wrap;
+	}
+}
+
+.child-table dt {
+	float: left;
+	width: 30%;
+	clear: both;
+
+}
+
+.child-table dd {
+	margin-left: auto;
+	width: 70%;
 }

@@ -349,6 +349,7 @@ class StatusResourceBuilder(HtmlResource, BuildLineMixin):
         url = self.status.getBuildbotURL() + path_to_json_project_builder(req, project, self.builder_status.name)
         cxt['instant_json']['project'] = {"url": url,
                                           "data": json.dumps(project_dict, separators=(',', ':')),
+                                          "tags": project_dict['tags'],
                                           "waitForPush": self.status.master.config.autobahn_push,
                                           "pushFilters": {
                                               "buildStarted": filters,

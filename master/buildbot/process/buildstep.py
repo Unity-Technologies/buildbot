@@ -27,7 +27,7 @@ from twisted.python.reflect import accumulateClassList
 from buildbot import interfaces, util, config
 from buildbot.status import progress
 from buildbot.status.results import SUCCESS, WARNINGS, FAILURE, SKIPPED, \
-     EXCEPTION, RETRY, INTERRUPTED, worst_status
+     EXCEPTION, RETRY, INTERRUPTED, worst_status, Results
 from buildbot.process import metrics, properties
 from buildbot.util.eventual import eventually
 from buildbot.interfaces import BuildSlaveTooOldError
@@ -1086,7 +1086,8 @@ class LoggingBuildStep(BuildStep):
             return self.describe(True) + ["failed"]
 
     def getText2(self, cmd, results):
-        return ["Step \"%s\"" % self.name]
+        optional =  "" if self.flunkOnFailure else "Optional "
+        return ["%sStep failed \"%s\" [%s]" % (optional, self.name, Results[results])]
 
     def maybeGetText2(self, cmd, results):
         if results == SUCCESS:

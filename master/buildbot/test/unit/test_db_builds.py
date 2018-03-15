@@ -12,7 +12,10 @@
 # Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 # Copyright Buildbot Team Members
+import mock
 from datetime import timedelta, datetime
+from freezegun import freeze_time
+
 from twisted.trial import unittest
 from twisted.internet import defer, task
 from buildbot.db import builds
@@ -409,7 +412,6 @@ class TestGetLastBuildsOwnedBy(
 
         def finish_setup(_):
             self.db.builds = builds.BuildsConnectorComponent(self.db)
-            self.mybuild_limit = self.db.builds.NUMBER_OF_REQUESTED_BUILDS
 
         d.addCallback(finish_setup)
 
@@ -423,23 +425,46 @@ class TestGetLastBuildsOwnedBy(
         return sorted([item[attribute] for item in builds])
 
     @defer.inlineCallbacks
-    def test_results_are_correctly_limited_by_builds_count(self):
-        builds_count = self.mybuild_limit + 10
+    def test_results_are_correctly_limited_by_builds_completed_time(self):
+        today_time = 1519115900
+        day_count = 7
+        expired_time = today_time - (day_count * 24 * 60 * 60) # 7 days = 24hours * 60minuts * 60seconds
         example_data = [
             fakedb.Buildset(id=2, sourcestampsetid=2, reason='[ first_user ]'),
             fakedb.BuildRequest(id=3, buildsetid=2, buildername="builder2", complete=1, results=7),
         ] + [
-            fakedb.Build(id=i, number=i+2, brid=3, slavename='slave-02')
-            for i in xrange(builds_count)
+            # Should be included in result
+            fakedb.Build(id=1, number=3, brid=3, slavename='slave-02', finish_time=1519115855),
+            fakedb.Build(id=2, number=4, brid=3, slavename='slave-02', finish_time=1519115865),
+            fakedb.Build(id=3, number=5, brid=3, slavename='slave-02', finish_time=1519115875),
+            fakedb.Build(id=4, number=6, brid=3, slavename='slave-02', finish_time=1519115885),
+            fakedb.Build(id=5, number=7, brid=3, slavename='slave-02', finish_time=1519115895),
+        ] + [
+            # Shouldn't be included in result
+            fakedb.Build(id=6, number=8, brid=3, slavename='slave-02', finish_time=expired_time - 30),
+            fakedb.Build(id=7, number=9, brid=3, slavename='slave-02', finish_time=expired_time - 40),
+            fakedb.Build(id=8, number=10, brid=3, slavename='slave-02', finish_time=expired_time - 50),
+            fakedb.Build(id=9, number=11, brid=3, slavename='slave-02', finish_time=expired_time - 60),
+            fakedb.Build(id=10, number=12, brid=3, slavename='slave-02', finish_time=expired_time - 70),
+            fakedb.Build(id=11, number=13, brid=3, slavename='slave-02', finish_time=expired_time - 80),
+            fakedb.Build(id=12, number=14, brid=3, slavename='slave-02', finish_time=expired_time - 90),
+            fakedb.Build(id=13, number=15, brid=3, slavename='slave-02', finish_time=expired_time - 100),
         ]
         yield self.insertTestData(example_data)
 
-        first_user_builds = yield self.db.builds.getLastBuildsOwnedBy("first_user", FakeBotMaster(self.master))
-        self.assertEqual(len(first_user_builds), self.mybuild_limit)
-        self.assertEqual(self._collect_ids(first_user_builds, 'builds_id'), range(self.mybuild_limit))
+        with freeze_time("2018-02-20 8:38:00"):
+            first_user_builds = yield self.db.builds.getLastBuildsOwnedBy(
+                "first_user",
+                FakeBotMaster(self.master),
+                day_count,
+            )
+        self.assertEqual(len(first_user_builds), 5)
+        self.assertEqual(self._collect_ids(first_user_builds, 'builds_id'), [1, 2, 3, 4, 5])
 
     @defer.inlineCallbacks
     def test_results_are_correctly_filtered_for_user(self):
+        today_time = 1519115900
+        day_count = 7
         first_user_builds_count = 15
         second_user_builds_count = 30
         second_user_max_build_id = first_user_builds_count + second_user_builds_count
@@ -451,16 +476,21 @@ class TestGetLastBuildsOwnedBy(
             fakedb.BuildRequest(id=3, buildsetid=2, buildername="builder2", complete=1, results=7),
             fakedb.BuildRequest(id=4, buildsetid=3, buildername="builder3", complete=1, results=7),
         ] + [
-            fakedb.Build(id=i, number=i+2, brid=3, slavename='slave-02')
+            fakedb.Build(id=i, number=i+2, brid=3, slavename='slave-02', finish_time=(1519115855 - 50 * i))
             for i in xrange(first_user_builds_count)
         ] + [
-            fakedb.Build(id=i, number=i + 2, brid=4, slavename='slave-02')
+            fakedb.Build(id=i, number=i + 2, brid=4, slavename='slave-02', finish_time=(1519115855 - 50 * i))
             for i in xrange(first_user_builds_count, second_user_max_build_id)
         ]
 
         yield self.insertTestData(example_data)
 
-        second_user_builds = yield self.db.builds.getLastBuildsOwnedBy("second_user", FakeBotMaster(self.master))
+        with freeze_time("2018-02-20 8:38:00"):
+            second_user_builds = yield self.db.builds.getLastBuildsOwnedBy(
+                "second_user",
+                FakeBotMaster(self.master),
+                day_count,
+            )
         self.assertEqual(len(second_user_builds), second_user_builds_count)
         self.assertEqual(
             self._collect_ids(second_user_builds, 'builds_id'),
