@@ -3,6 +3,7 @@ from operator import itemgetter
 from twisted.internet import defer
 
 from buildbot.status.web.base import HtmlResource
+from buildbot.status.results import RESULT_TO_CSS, Results
 from buildbot.config import MasterConfig
 
 class MybuildsResource(HtmlResource):
@@ -21,6 +22,7 @@ class MybuildsResource(HtmlResource):
             master.config.myBuildDaysCount,
         )
 
+        self.add_css_classes_to_results(builds)
         builds_by_ssid = self.prepare_builds_by_ssid(builds)
         sourcestamps = yield master.db.sourcestamps.getSourceStampsForManyIds(builds_by_ssid.keys())
 
@@ -39,6 +41,12 @@ class MybuildsResource(HtmlResource):
         template = req.site.buildbot_service.templates.get_template("mybuilds.html")
         template.autoescape = True
         defer.returnValue(template.render(**cxt))
+
+    @staticmethod
+    def add_css_classes_to_results(builds):
+        for build in builds:
+            build['result_css_class'] = RESULT_TO_CSS.get(build['results'], "")
+            build['result_name'] = Results[build['results']] if build['results'] >= 0 else "running"
 
     @staticmethod
     def prepare_display_repositories(status):

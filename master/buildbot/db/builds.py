@@ -304,4 +304,5 @@ class BuildsConnectorComponent(base.DBConnectorComponent):
             submitted_at=mkdt(row.buildrequests_submitted_at),
             complete_at=mkdt(row.buildrequests_complete_at),
             sourcestampsetid=row.buildsets_sourcestampsetid,
+            results=row.buildrequests_results,
         )
