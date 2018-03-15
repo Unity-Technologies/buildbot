@@ -539,7 +539,7 @@ define(function (require) {
                 sortable.push([objs[item], css_classes[orderItem][2], item]);
             }
             return sortable.sort(function(a, b) {
-                if(a[1] == b[1])
+                if(a[1] === b[1])
                     return a[2].toLowerCase().localeCompare(b[2].toLowerCase());
                 return a[1] - b[1];
             });
