@@ -21,7 +21,7 @@ from zope.interface import implements
 from twisted.python import log, runtime, components
 from twisted.persisted import styles
 from twisted.internet import reactor, defer, threads
-from buildbot import interfaces, util, sourcestamp
+from buildbot import interfaces, util, sourcestamp, klog
 from buildbot.process import properties
 from buildbot.process.buildtag import BuildTag
 from buildbot.status.buildstep import BuildStepStatus
@@ -569,7 +569,7 @@ class BuildStatus(styles.Versioned, properties.PropertiesMixin):
         except:
             log.msg("unable to save build %s-#%d" % (self.builder.name,
                                                      self.number))
-            log.err()
+            klog.err_json()
 
     def currentStepDict(self, dict):
         if self.getCurrentStep():
