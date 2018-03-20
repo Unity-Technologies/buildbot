@@ -28,8 +28,9 @@ def err_json(_stuff=None, _why=None, **kw):
     if _stuff is None:
         _stuff = failure.Failure()
     if isinstance(_stuff, failure.Failure):
-        log.msg(__get_json(_stuff), why=_why, isError=1, **kw)
+        log.msg(__get_json(_stuff), failure=_stuff, why=_why, isError=1, **kw)
     elif isinstance(_stuff, Exception):
-        log.msg(__get_json(failure.Failure(_stuff)), why=_why, isError=1, **kw)
+        failure_stuff = failure.Failure(_stuff)
+        log.msg(__get_json(failure_stuff), failure=failure_stuff, why=_why, isError=1, **kw)
     else:
         log.msg(repr(_stuff), why=_why, isError=1, **kw)
