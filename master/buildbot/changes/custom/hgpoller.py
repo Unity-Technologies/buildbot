@@ -20,7 +20,7 @@ import sys
 from twisted.python import log
 from twisted.internet import defer, utils
 
-from buildbot import config
+from buildbot import config, klog
 from buildbot.util import deferredLocked
 from buildbot.changes import base
 from buildbot.util import epoch2datetime
@@ -297,7 +297,7 @@ class HgPoller(base.PollingChangeSource, StateMixin):
                                    path=self._absWorkdir(), env=os.environ, errortoo=False)
 
         def no_head_err(exc):
-            log.err("hgpoller: could not find branch %r in repository %r" % (
+            klog.err_json("hgpoller: could not find branch %r in repository %r" % (
                 branch, self.repourl))
         d.addErrback(no_head_err)
 
@@ -306,11 +306,11 @@ class HgPoller(base.PollingChangeSource, StateMixin):
                 return
 
             if len(heads.split()) > 1:
-                log.err(("hgpoller: caught several heads in branch %r "
-                         "from repository %r. Staying at previous revision"
-                         "You should wait until the situation is normal again "
-                         "due to a merge or directly strip if remote repo "
-                         "gets stripped later.") % (branch, self.repourl))
+                klog.err_json(("hgpoller: caught several heads in branch %r "
+                               "from repository %r. Staying at previous revision"
+                               "You should wait until the situation is normal again "
+                               "due to a merge or directly strip if remote repo "
+                               "gets stripped later.") % (branch, self.repourl))
                 return
 
             # in case of whole reconstruction, are we sure that we'll get the
@@ -322,7 +322,7 @@ class HgPoller(base.PollingChangeSource, StateMixin):
 
     def _processChangesFailure(self, f):
         log.msg('hgpoller: repo poll failed')
-        log.err(f)
+        klog.err_json(f)
         # eat the failure to continue along the defered chain - we still want to catch up
         return None
 

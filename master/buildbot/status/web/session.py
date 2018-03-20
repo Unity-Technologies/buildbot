@@ -18,6 +18,7 @@
 #    details.
 from cPickle import dump, load
 from twisted.python import log, runtime
+from buildbot import klog
 
 try:
     from hashlib import sha1
@@ -150,5 +151,5 @@ class SessionManager(object):
             os.rename(tmpfilename, filename)
         except:
             log.msg("unable to save builder %s" % self.name)
-            log.err()
+            klog.err_json()
 

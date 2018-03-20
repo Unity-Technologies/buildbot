@@ -12,7 +12,7 @@
 # Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 # Copyright Buildbot Team Members
-
+from buildbot import klog
 from twisted.python import failure, log
 
 class SubscriptionPoint(object):
@@ -33,7 +33,7 @@ class SubscriptionPoint(object):
             try:
                 sub.callback(*args, **kwargs)
             except:
-                log.err(failure.Failure(),
+                klog.err_json(failure.Failure(),
                         'while invoking callback %s to %s' % (sub.callback, self))
 
     def _unsubscribe(self, subscription):

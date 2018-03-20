@@ -25,7 +25,7 @@ from buildbot.process.buildrequest import BuildRequest
 from buildbot.status.results import RESUME, BEGINNING
 from buildbot.db.buildrequests import AlreadyClaimedError, UnsupportedQueueError, Queue
 from buildbot.process.builder import Slavepool
-from buildbot import util
+from buildbot import util, klog
 from buildbot.util import lru
 
 import random
@@ -974,7 +974,7 @@ class BuildRequestDistributor(service.Service):
                 if not self.active:
                     self._activityLoop()
             except Exception:
-                log.err(Failure(),
+                klog.err_json(Failure(),
                         "while attempting to start builds on %s" % self.name)
 
         return self.pending_builders_lock.run(
@@ -1033,7 +1033,7 @@ class BuildRequestDistributor(service.Service):
             builders = yield defer.maybeDeferred(lambda:
                                                  sorter(self.master, builders))
         except Exception:
-            log.err(Failure(), "prioritizing builders; order unspecified")
+            klog.err_json(Failure(), "prioritizing builders; order unspecified")
 
         # and return the names
         rv = [b.name for b in builders]
@@ -1068,7 +1068,7 @@ class BuildRequestDistributor(service.Service):
                 if bldr:
                     yield self._maybeStartBuildsOnBuilder(bldr)
             except Exception:
-                log.err(Failure(),
+                klog.err_json(Failure(),
                         "from maybeStartBuild for builder '%s'" % (bldr_name,))
 
             self.activity_lock.release()
@@ -1215,7 +1215,7 @@ class KatanaBuildRequestDistributor(service.Service):
 
         except Exception:
             self.katanaBuildChooser.initializeBuildRequestQueue()
-            log.err(Failure(), "from _selectNextBuildRequest for builder '%s' queue '%s'" % (breq.buildername, queue))
+            klog.err_json(Failure(), "from _selectNextBuildRequest for builder '%s' queue '%s'" % (breq.buildername, queue))
 
         timerLogFinished(msg="asyncFunc finished", timer=timer)
 

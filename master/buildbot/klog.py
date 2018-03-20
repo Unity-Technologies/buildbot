@@ -4,7 +4,7 @@ import json
 
 def __get_json(failure_):
     failure_dict = {
-        'type': str(type(failure_.type())),
+        'type': str(failure_.type),
         'value': str(failure_.value),
         'msg': str(failure_),
         'datetime': str(datetime.datetime.now()),

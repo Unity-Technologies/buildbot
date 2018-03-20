@@ -24,7 +24,7 @@ from twisted.python.failure import Failure
 from twisted.web.util import formatFailure
 from twisted.python.reflect import accumulateClassList
 
-from buildbot import interfaces, util, config
+from buildbot import interfaces, util, config, klog
 from buildbot.status import progress
 from buildbot.status.results import SUCCESS, WARNINGS, FAILURE, SKIPPED, \
      EXCEPTION, RETRY, INTERRUPTED, worst_status, Results
@@ -796,7 +796,7 @@ class BuildStep(object, properties.PropertiesMixin):
             self.finished(FAILURE)
             return
 
-        log.err(why, "BuildStep.failed; traceback follows")
+        klog.err_json(why, "BuildStep.failed; traceback follows")
         results = EXCEPTION
         try:
             if self.progress:
@@ -805,7 +805,7 @@ class BuildStep(object, properties.PropertiesMixin):
                 self.addCompleteLog("err.text", why.getTraceback())
                 self.addHTMLLog("err.html", formatFailure(why))
             except Exception:
-                log.err(Failure(), "error while formatting exceptions")
+                klog.err_json(Failure(), "error while formatting exceptions")
 
             # could use why.getDetailedTraceback() for more information
             self.step_status.setText(["'%s'" % self.name, "exception"])
@@ -817,7 +817,7 @@ class BuildStep(object, properties.PropertiesMixin):
             hidden = self._maybeEvaluate(self.hideStepIf, EXCEPTION, self)
             self.step_status.setHidden(hidden)
         except Exception:
-            log.err(Failure(), "exception during failure processing")
+            klog.err_json(Failure(), "exception during failure processing")
             # the progress stuff may still be whacked (the StepStatus may
             # think that it is still running), but the build overall will now
             # finish
@@ -825,7 +825,7 @@ class BuildStep(object, properties.PropertiesMixin):
         try:
             self.releaseLocks()
         except Exception:
-            log.err(Failure(), "exception while releasing locks")
+            klog.err_json(Failure(), "exception while releasing locks")
 
         log.msg("BuildStep.failed now firing callback")
         self.deferred.callback(results)

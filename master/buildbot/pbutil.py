@@ -23,6 +23,8 @@ from twisted.spread.pb import PBClientFactory
 from twisted.internet import protocol
 from twisted.python import log
 
+from buildbot import klog
+
 class NewCredPerspective(pb.Avatar):
     def attached(self, mind):
         return self
@@ -152,4 +154,4 @@ class ReconnectingPBClientFactory(PBClientFactory,
             return
         # probably authorization
         self.stopTrying() # logging in harder won't help
-        log.err(why)
+        klog.err_json(why)

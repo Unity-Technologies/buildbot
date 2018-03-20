@@ -22,7 +22,7 @@ from twisted.persisted import styles
 from twisted.internet import defer
 from twisted.application import service
 from zope.interface import implements
-from buildbot import config, interfaces, util
+from buildbot import config, interfaces, util, klog
 from buildbot.status.web.base import getCodebasesArg, _revlinkcfg
 from buildbot.util import bbcollections
 from buildbot.util.eventual import eventually
@@ -488,7 +488,7 @@ class Status(config.ReconfigurableServiceMixin, service.MultiService):
         except:
             log.msg("error while loading status pickle, creating a new one")
             log.msg("error follows:")
-            log.err()
+            klog.err_json()
         if not builder_status:
             builder_status = builder.BuilderStatus(name, category, self.master, friendly_name,
                                                    description, project=project)

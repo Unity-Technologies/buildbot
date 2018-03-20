@@ -25,7 +25,7 @@ from twisted.internet import defer, threads
 from zope.interface import implements
 from twisted.python import log, runtime
 from twisted.persisted import styles
-from buildbot import interfaces, util
+from buildbot import interfaces, util, klog
 from buildbot.util.lru import LRUCache
 from buildbot.status.event import Event
 from buildbot.status.build import BuildStatus
@@ -237,7 +237,7 @@ class BuilderStatus(styles.Versioned):
             os.rename(tmpfilename, filename)
         except:
             log.msg("unable to save builder %s" % self.name)
-            log.err()
+            klog.err_json()
 
     # build cache management
 
@@ -843,7 +843,7 @@ class BuilderStatus(styles.Versioned):
                 w.builderChangedState(self.name, state)
             except:
                 log.msg("Exception caught publishing state to %r" % w)
-                log.err()
+                klog.err_json()
 
     def newBuild(self):
         """The Builder has decided to start a build, but the Build object is
@@ -884,7 +884,7 @@ class BuilderStatus(styles.Versioned):
                     d.addCallback(lambda s: s.unsubscribe(receiver))
             except:
                 log.msg("Exception caught notifying %r of buildStarted event" % w)
-                log.err()
+                klog.err_json()
 
     @defer.inlineCallbacks
     def _buildFinished(self, s):
@@ -899,7 +899,7 @@ class BuilderStatus(styles.Versioned):
                 w.buildFinished(name, s, results)
             except:
                 log.msg("Exception caught notifying %r of buildFinished event" % w)
-                log.err()
+                klog.err_json()
 
         self.saveLatestBuild(s)
         yield threads.deferToThread(self.prune) # conserve disk

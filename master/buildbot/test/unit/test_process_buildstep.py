@@ -18,6 +18,7 @@ import mock
 from twisted.trial import unittest
 from twisted.internet import defer
 from twisted.python import log
+from buildbot import klog
 from buildbot.process import buildstep
 from buildbot.process.buildstep import regex_log_evaluator
 from buildbot.status.results import FAILURE, SUCCESS, WARNINGS, EXCEPTION, SKIPPED
@@ -250,7 +251,7 @@ class TestBuildStep(steps.BuildStepMixin, config.ConfigErrorsMixin, unittest.Tes
         self.expectHidden(True)
 
         d = self.runStep()
-        d.addErrback(log.err)
+        d.addErrback(klog.err_json)
         d.addCallback(lambda _ :
             self.assertEqual(len(self.flushLoggedErrors(defer.FirstError)), 1))
         d.addCallback(lambda _:

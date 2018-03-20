@@ -20,7 +20,7 @@ from twisted.application import service
 from twisted.internet import defer
 from buildbot.process.properties import Properties
 from buildbot.util import ComparableMixin
-from buildbot import config, interfaces
+from buildbot import config, interfaces, klog
 from buildbot.util.state import StateMixin
 
 
@@ -250,7 +250,7 @@ class BaseScheduler(service.MultiService, ComparableMixin, StateMixin, ScheduleO
                     if not important and onlyImportant:
                         return
                 except:
-                    log.err(failure.Failure(),
+                    klog.err_json(failure.Failure(),
                             'in fileIsImportant check for %s' % change)
                     return
             else:

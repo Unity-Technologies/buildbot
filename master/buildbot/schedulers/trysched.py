@@ -19,7 +19,7 @@ from twisted.internet import defer
 from twisted.python import log
 from twisted.protocols import basic
 
-from buildbot import pbutil
+from buildbot import pbutil, klog
 from buildbot.util.maildir import MaildirService
 from buildbot.util import json
 from buildbot.util import netstrings
@@ -165,7 +165,7 @@ class Try_Jobdir(TryBase):
             builderNames = parsed_job['builderNames']
         except BadJobfile:
             log.msg("%s reports a bad jobfile in %s" % (self, filename))
-            log.err()
+            klog.err_json()
             return defer.succeed(None)
 
         # Validate/fixup the builder names.

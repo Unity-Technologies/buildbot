@@ -23,7 +23,7 @@ import warnings
 import urllib
 from buildbot.util import safeTranslate
 from buildbot import interfaces
-from buildbot import locks
+from buildbot import locks, klog
 from buildbot.revlinks import default_revlink_matcher
 from twisted.python import log, failure
 from twisted.internet import defer
@@ -178,7 +178,7 @@ class MasterConfig(object):
                     error(err)
                 raise errors
             except:
-                log.err(failure.Failure(), 'error while parsing config file:')
+                klog.err_json(failure.Failure(), 'error while parsing config file:')
                 error("error while parsing config file: %s (traceback in logfile)" %
                         (sys.exc_info()[1],),
                 )

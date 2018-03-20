@@ -21,7 +21,7 @@ from twisted.spread import pb
 from buildbot.process import buildstep
 from buildbot.status.results import SUCCESS, WARNINGS, FAILURE
 from buildbot.status.logfile import STDOUT, STDERR
-from buildbot import config
+from buildbot import config, klog
 from buildbot.util import flatten
 
 # for existing configurations that import WithProperties from here.  We like
@@ -221,7 +221,7 @@ class ShellCommand(buildstep.LoggingBuildStep):
             return desc
 
         except:
-            log.err(failure.Failure(), "Error describing step")
+            klog.err_json(failure.Failure(), "Error describing step")
             return ["???"]
 
     def setupEnvironment(self, cmd):

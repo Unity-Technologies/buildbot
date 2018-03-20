@@ -22,7 +22,7 @@ from twisted.spread import pb
 from twisted.application import service, internet
 from twisted.internet import defer
 
-from buildbot import interfaces, config
+from buildbot import interfaces, config, klog
 from buildbot.process.buildrequest import BuildRequest
 from buildbot.status.progress import Expectations
 from buildbot.status.results import RETRY, RESUME, BEGINNING
@@ -267,7 +267,7 @@ class Builder(config.ReconfigurableServiceMixin,
         # already log.err'ed by SlaveBuilder._attachFailure
         # TODO: remove from self.slaves (except that detached() should get
         #       run first, right?)
-        log.err(why, 'slave failed to attach')
+        klog.err_json(why, 'slave failed to attach')
         self.builder_status.addPointEvent(['failed', 'connect',
                                            slave.slavename])
         # TODO: add an HTMLLogFile of the exception
@@ -311,7 +311,7 @@ class Builder(config.ReconfigurableServiceMixin,
             else:
                 self.builder_status.setBigState("idle")
         except Exception:
-            log.err(None, "while trying to update status of builder '%s'" % (self.name,))
+            klog.err_json(None, "while trying to update status of builder '%s'" % (self.name,))
 
     def getAvailableSlaves(self):
         if self.config.startSlavenames:
@@ -397,7 +397,7 @@ class Builder(config.ReconfigurableServiceMixin,
                     fn = cleanups.pop()
                     fn()
             except:
-                log.err(failure.Failure(), "while running %r" % (run_cleanups,))
+                klog.err_json(failure.Failure(), "while running %r" % (run_cleanups,))
 
         # the last cleanup we want to perform is to update the big
         # status based on any other cleanup
@@ -434,7 +434,7 @@ class Builder(config.ReconfigurableServiceMixin,
         try:
             ping_success = yield slavebuilder.ping(timeout=self.master.config.remoteCallTimeout)
         except:
-            log.err(failure.Failure(), 'while pinging slave before build:')
+            klog.err_json(failure.Failure(), 'while pinging slave before build:')
             raise
 
         if not ping_success:
@@ -448,7 +448,7 @@ class Builder(config.ReconfigurableServiceMixin,
             try:
                 ready = yield slavebuilder.prepare(self.builder_status, build)
             except:
-                log.err(failure.Failure(), 'while preparing slavebuilder:')
+                klog.err_json(failure.Failure(), 'while preparing slavebuilder:')
                 raise
 
         # If prepare returns True then it is ready and we start a build
@@ -494,7 +494,7 @@ class Builder(config.ReconfigurableServiceMixin,
                     self.master.status.build_started(req.id, self.name, bs)
                     bids.append(bid)
         except:
-            log.err(failure.Failure(), 'while adding rows to build table:')
+            klog.err_json(failure.Failure(), 'while adding rows to build table:')
             run_cleanups()
             raise
 
@@ -610,7 +610,7 @@ class Builder(config.ReconfigurableServiceMixin,
 
     @defer.inlineCallbacks
     def finishBuildRequestsFailed(self, failure, msg, brids):
-        log.err(failure, msg)
+        klog.err_json(failure, msg)
         log.msg("Katana will retry buildrequests with ids %s" % brids)
         yield self.master.db.buildrequests.unclaimBuildRequests(brids, results=BEGINNING)
 

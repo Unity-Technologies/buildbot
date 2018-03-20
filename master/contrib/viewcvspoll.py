@@ -11,6 +11,8 @@ from twisted.cred import credentials
 from twisted.internet import reactor
 from twisted.python import log
 
+from buildbot import klog
+
 
 class ViewCvsPoller:
 
@@ -74,7 +76,7 @@ poller = ViewCvsPoller()
 
 
 def error(*args):
-    log.err()
+    klog.err_json()
     reactor.stop()
 
 

@@ -4,7 +4,7 @@ from twisted.python import log
 from twisted.internet import reactor
 from twisted.web import client, error
 
-from buildbot import status
+from buildbot import status, klog
 
 MAX_ATTEMPTS     = 10
 RETRY_MULTIPLIER = 5
@@ -79,7 +79,7 @@ class WebHookTransmitter(status.base.StatusReceiverMultiService):
                            postdata=data, followRedirect=0)
 
         def _maybe_retry(e):
-            log.err()
+            klog.err_json()
             if attempt < self.max_attempts:
                 reactor.callLater(attempt * self.retry_multiplier,
                                   self._retrying_fetch, u, data, event, attempt + 1)
@@ -111,7 +111,7 @@ class WebHookTransmitter(status.base.StatusReceiverMultiService):
         d.addCallback(lambda x: log.msg("Completed %s event hook on attempt %d" %
                                         (event, attempt+1)))
         d.addErrback(_maybe_retry)
-        d.addErrback(lambda e: log.err("Giving up delivering %s to %s" % (event, u)))
+        d.addErrback(lambda e: klog.err_json("Giving up delivering %s to %s" % (event, u)))
 
     def builderAdded(self, builderName, builder):
         builder.subscribe(self)

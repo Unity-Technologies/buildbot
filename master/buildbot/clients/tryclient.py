@@ -32,6 +32,7 @@ from twisted.python import log
 from twisted.python.procutils import which
 from twisted.spread import pb
 
+from buildbot import klog
 from buildbot.sourcestamp import SourceStamp
 from buildbot.status import builder
 from buildbot.util import json
@@ -820,7 +821,7 @@ class Try(pb.Referenceable):
                 self.announce("%s: %s" % (n, t))
             self.announce("")
         except Exception:
-            log.err(None, "printing status")
+            klog.err_json(None, "printing status")
 
     def statusDone(self):
         if self.printloop:

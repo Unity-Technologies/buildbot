@@ -21,7 +21,7 @@ from twisted.spread import pb
 from twisted.application import service
 
 from buildbot.process.builder import Builder
-from buildbot import interfaces, locks, config, util
+from buildbot import interfaces, locks, config, util, klog
 from buildbot.process import metrics
 from buildbot.process.buildrequest import BuildRequest, BuildRequestControl
 from buildbot.process.buildrequestdistributor import KatanaBuildRequestDistributor
@@ -468,7 +468,7 @@ class DuplicateSlaveArbitrator(object):
         d.addErrback(old_gone)
 
         def other_err(f):
-            log.err(f, "unexpected error pinging old slave; disconnecting it")
+            klog.err_json(f, "unexpected error pinging old slave; disconnecting it")
             self.old_slave_connected = False
         d.addErrback(other_err)
 

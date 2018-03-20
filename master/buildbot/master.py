@@ -31,7 +31,7 @@ from buildbot.util import subscription, epoch2datetime
 from buildbot.status.master import Status
 from buildbot.changes import changes
 from buildbot.changes.manager import ChangeManager
-from buildbot import interfaces
+from buildbot import interfaces, klog
 from buildbot.process.builder import BuilderControl
 from buildbot.db import connector
 from buildbot.schedulers.manager import SchedulerManager
@@ -193,7 +193,7 @@ class BuildMaster(config.ReconfigurableServiceMixin, service.MultiService):
                 _reactor.stop()
                 return
             except:
-                log.err(failure.Failure(), 'while starting BuildMaster')
+                klog.err_json(failure.Failure(), 'while starting BuildMaster')
                 _reactor.stop()
                 return
 
@@ -226,7 +226,7 @@ class BuildMaster(config.ReconfigurableServiceMixin, service.MultiService):
 
         except:
             f = failure.Failure()
-            log.err(f, 'while starting BuildMaster')
+            klog.err_json(f, 'while starting BuildMaster')
             _reactor.stop()
 
         log.msg("BuildMaster is running")
@@ -304,7 +304,7 @@ class BuildMaster(config.ReconfigurableServiceMixin, service.MultiService):
             failed = True
 
         except:
-            log.err(failure.Failure(), 'during reconfig:')
+            klog.err_json(failure.Failure(), 'during reconfig:')
             failed = True
 
         if failed:

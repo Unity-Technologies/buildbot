@@ -96,6 +96,7 @@ Maintainer/author: gary.poster@canonical.com
 """
 
 try:
+    from buildbot import klog
     import buildbot.util
     import buildbot.changes.base
     import buildbot.changes.changes
@@ -255,7 +256,7 @@ if DEFINE_POLLER:
                 raise
             except:
                 # we'll try again next poll.  Meanwhile, let's report.
-                twisted.python.log.err()
+                klog.err_json()
             else:
                 for change in changes:
                     yield self.addChange(

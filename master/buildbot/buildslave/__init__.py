@@ -31,7 +31,7 @@ from buildbot.interfaces import IBuildSlave, ILatentBuildSlave
 from buildbot.process.properties import Properties
 from buildbot.util import subscription
 from buildbot.util.eventual import eventually
-from buildbot import config
+from buildbot import config, klog
 
 class AbstractBuildSlave(config.ReconfigurableServiceMixin, pb.Avatar,
                         service.MultiService):
@@ -412,7 +412,7 @@ class AbstractBuildSlave(config.ReconfigurableServiceMixin, pb.Avatar,
                 why.trap(pb.NoSuchMethod)
                 # maybe an old slave, doesn't implement remote_getSlaveInfo
                 log.msg("BuildSlave.info_unavailable")
-                log.err(why)
+                klog.err_json(why)
             d1.addCallbacks(_got_info, _info_unavailable)
             return d1
         d.addCallback(_get_info)
@@ -439,7 +439,7 @@ class AbstractBuildSlave(config.ReconfigurableServiceMixin, pb.Avatar,
                 if why.check(AttributeError):
                     return
                 log.msg("BuildSlave.getCommands is unavailable - ignoring")
-                log.err(why)
+                klog.err_json(why)
             d1.addCallbacks(_got_commands, _commands_unavailable)
             return d1
         d.addCallback(_get_commands)
@@ -710,10 +710,10 @@ class AbstractBuildSlave(config.ReconfigurableServiceMixin, pb.Avatar,
                     if why.check(pb.PBConnectionLost):
                         log.msg("Lost connection to %s" % self.slavename)
                     else:
-                        log.err("Unexpected error when trying to shutdown %s" % self.slavename)
+                        klog.err_json("Unexpected error when trying to shutdown %s" % self.slavename)
                 d.addErrback(_errback)
                 return d
-            log.err("Couldn't find remote builder to shut down slave")
+            klog.err_json("Couldn't find remote builder to shut down slave")
             return defer.succeed(None)
         yield old_way()
 
@@ -727,7 +727,7 @@ class AbstractBuildSlave(config.ReconfigurableServiceMixin, pb.Avatar,
         if active_builders:
             return
         d = self.shutdown()
-        d.addErrback(log.err, 'error while shutting down slave')
+        d.addErrback(klog.err_json, 'error while shutting down slave')
 
     def isPaused(self):
         return self.slave_status.paused
@@ -750,7 +750,7 @@ class BuildSlave(AbstractBuildSlave):
             return defer.DeferredList(dl)
         def _set_failed(why):
             log.msg("BuildSlave.sendBuilderList (%s) failed" % self)
-            log.err(why)
+            klog.err_json(why)
             # TODO: hang up on them?, without setBuilderList we can't use
             # them
         d.addCallbacks(_sent, _set_failed)
@@ -1027,7 +1027,7 @@ class AbstractLatentBuildSlave(AbstractBuildSlave):
             return defer.DeferredList(dl)
         def _set_failed(why):
             log.msg("BuildSlave.sendBuilderList (%s) failed" % self)
-            log.err(why)
+            klog.err_json(why)
             # TODO: hang up on them?, without setBuilderList we can't use
             # them
             if self.substantiation_deferred:

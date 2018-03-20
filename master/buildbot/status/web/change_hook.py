@@ -19,6 +19,7 @@
 # but "the rest" is pretty minimal
 
 import re
+from buildbot import klog
 from twisted.web import resource, server
 from twisted.python.reflect import namedModule
 from twisted.python import log
@@ -64,7 +65,7 @@ class ChangeHookResource(resource.Resource):
             request.setResponseCode(400, err.args[0])
             return err.args[0]
         except Exception, e:
-            log.err(e, "processing changes from web hook")
+            klog.err_json(e, "processing changes from web hook")
             msg = "Error processing changes."
             request.setResponseCode(500, msg)
             return msg
@@ -79,7 +80,7 @@ class ChangeHookResource(resource.Resource):
             request.setResponseCode(202)
             request.finish()
         def err(why):
-            log.err(why, "adding changes from web hook")
+            klog.err_json(why, "adding changes from web hook")
             request.setResponseCode(500)
             request.finish()
         d.addCallbacks(ok, err)

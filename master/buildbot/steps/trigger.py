@@ -18,7 +18,7 @@ from buildbot.process.buildstep import BuildStep, SUCCESS, FAILURE, EXCEPTION
 from buildbot.process.properties import Properties, Property
 from twisted.python import log
 from twisted.internet import defer
-from buildbot import config
+from buildbot import config, klog
 from buildbot.status.results import DEPENDENCY_FAILURE, RETRY, WARNINGS, SKIPPED, CANCELED
 from twisted.python.failure import Failure
 from buildbot.schedulers.triggerable import TriggerableSchedulerStopped
@@ -185,7 +185,7 @@ class Trigger(ResumeBuild):
 
             if not was_cb:
                 was_exception = True
-                log.err(results)
+                klog.err_json(results)
                 continue
 
             if results == FAILURE:

@@ -23,7 +23,7 @@ from twisted.python import usage, log
 from twisted.application import internet
 from twisted.internet import defer, task
 
-from buildbot import interfaces, util
+from buildbot import interfaces, util, klog
 from buildbot import version
 from buildbot.interfaces import IStatusReceiver
 from buildbot.sourcestamp import SourceStamp
@@ -819,7 +819,7 @@ class IRCContact(base.StatusReceiver):
                 self.send(str(f.value))
             @d.addErrback
             def logErr(f):
-                log.err(f)
+                klog.err_json(f)
                 self.send("Something bad happened (see logs)")
             d.addErrback(log.err)
             return d

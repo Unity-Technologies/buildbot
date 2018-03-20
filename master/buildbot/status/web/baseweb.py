@@ -24,7 +24,7 @@ from twisted.web import server, distrib, static, resource
 from twisted.internet import defer
 from twisted.spread import pb
 from twisted.web.util import Redirect
-from buildbot import config
+from buildbot import config, klog
 from buildbot.interfaces import IStatusReceiver
 from buildbot.status.web.base import StaticFile, createJinjaEnv
 from buildbot.status.web.feeds import Rss20StatusResource, \
@@ -569,7 +569,7 @@ class WebStatus(service.MultiService):
             except:
                 log.msg("WebStatus.stopService: error while disconnecting"
                         " leftover clients")
-                log.err()
+                klog.err_json()
         yield service.MultiService.stopService(self)
 
         # having shut them down, now remove our child services so they don't
