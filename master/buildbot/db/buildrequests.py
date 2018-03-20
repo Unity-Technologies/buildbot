@@ -1370,6 +1370,28 @@ class BuildRequestsConnectorComponent(base.DBConnectorComponent):
 
         return self.db.pool.do(thd)
 
+    def create_custom_build_request(self, buildername, buildsetid, submitted_at,
+                                    complete_at, results, slavepool, complete):
+        def thd(conn):
+            table = self.db.model.buildrequests
+            q = table.insert()
+            buildrequest = {
+                'buildsetid': buildsetid,
+                'buildername': buildername,
+                'proiority': 50,
+                'complete': complete,
+                'results': results,
+                'submitted_at': submitted_at,
+                'complete_at': complete_at,
+                'slavepool': slavepool,
+            }
+            res = conn.execute(q, buildrequest)
+            brid = res.inserted_primary_key[0]
+
+            return brid
+
+        return self.db.pool.do(thd)
+
     def _brdictFromRow(self, row, master_objectid):
         claimed = mine = False
         claimed_at = None
