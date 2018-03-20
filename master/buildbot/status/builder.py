@@ -269,7 +269,7 @@ class BuilderStatus(styles.Versioned):
                     build = load(f)
                 except ImportError as err:
                     log.msg("ImportError loading builder %s's build %d from disk pickle" % (self.name, number))
-                    log.msg(str(err))
+                    klog.err_json(err)
                     return None
 
             build.setProcessObjects(self, self.master)
