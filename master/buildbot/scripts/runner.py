@@ -684,6 +684,8 @@ class PopulateDatabaseOptions(base.SubcommandOptions):
          "how many users should be created (max %d)" % MAX_UNIQUE_USER_COUNT],
         ["builds", "b", 1000,
          "how many builds should be created"],
+        ["seed", "s", None,
+         "seed for randomizer, default current timestamp"]
     ]
 
     def getSynopsis(self):

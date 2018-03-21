@@ -18,6 +18,7 @@ from __future__ import print_function
 import random
 import sys
 import traceback
+from time import time
 
 import datetime
 import names
@@ -39,6 +40,12 @@ def populate_database(config):
     master = BuildMaster(config['baseDir'])
     master.config = load_config(config, config['configFile'])
     db = connector.DBConnector(master, basedir=config['baseDir'])
+    seed = int(time())
+    if config['seed']:
+        seed = int(config['seed'])
+    random.seed(seed)
+    if not config['quiet']:
+        print("Seed =", seed)
 
     yield db.setup(check_version=False, verbose=not config['quiet'])
     users = yield populate_user(db, int(config['users']), verbose=not config['quiet'])
