@@ -18,6 +18,7 @@ import os, tarfile, tempfile
 from twisted.python import log
 from twisted.internet import defer
 
+from buildbot import klog
 from buildslave.commands.base import Command
 
 class TransferCommand(Command):
@@ -112,7 +113,7 @@ class SlaveFileUploadCommand(TransferCommand):
             d1 = self.writer.callRemote("close")
             def eb(f2):
                 log.msg("ignoring error from remote close():")
-                log.err(f2)
+                klog.err_json(f2)
             d1.addErrback(eb)
             d1.addBoth(lambda _ : f) # always return _loop failure
             return d1

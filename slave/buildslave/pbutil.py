@@ -24,6 +24,8 @@ from twisted.internet import protocol, reactor
 from twisted.python import log
 from twisted.cred import error
 
+from buildbot import klog
+
 class ReconnectingPBClientFactory(PBClientFactory,
                                   protocol.ReconnectingClientFactory):
     """Reconnecting client factory for PB brokers.
@@ -135,7 +137,7 @@ class ReconnectingPBClientFactory(PBClientFactory,
             log.msg("unauthorized login; check slave name and password")
             # fall through
         else:
-            log.err(why, 'While trying to connect:')
+            klog.err_json(why, 'While trying to connect:')
             self.stopTrying()
             reactor.stop()
             return
