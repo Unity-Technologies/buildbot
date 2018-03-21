@@ -314,27 +314,23 @@ class UsersConnectorComponent(base.DBConnectorComponent):
         d = self.db.pool.do(thd)
         return d
 
-    def createUsers(self, users):
+    def createUser(self, user):
         """ This method creates users in a database.
-            :param users: list of users, if the user exists in the database, it will skip it
-            :type users: list of dictionary with 'identifier', 'bb_username' and 'bb_password' fields.
+            :param user: user, if the user exists in the database, it will skip it
+            :type user: dictionary with 'identifier', 'bb_username' and 'bb_password' fields.
 
             :return: defer
         """
         def thd(conn):
             tbl = self.db.model.users
             q = tbl.insert()
-            created = 0
-            skipped = 0
-            for user in users:
-                try:
-                    conn.execute(q, user)
-                    created += 1
-                except IntegrityError:
-                    skipped += 1
-                except Exception as e:
-                    print("An exception occurs during creating users", e)
-                    raise e
-            return created, skipped
+            try:
+                conn.execute(q, user)
+                return True
+            except IntegrityError:
+                return False
+            except Exception as e:
+                print("An exception occurs during creating users", e)
+                raise e
 
         return self.db.pool.do(thd)

@@ -316,35 +316,6 @@ class BuildsetsConnectorComponent(base.DBConnectorComponent):
             return buildSetsProperties
         return self.db.pool.do(thd)
 
-    def add_custom_buildset(self, reason, sourcestampsetid, submitted_at,
-                            complete, complete_at, results):
-        """ This method create custom, not related with Katana, buildset
-
-        :param reason: a string value with reason why build was executed
-        :param sourcestampsetid: an integer value which contains a existing sourcestampset id
-        :param submitted_at: an integer value with timestamp
-        :param complete: an integer value (0 or 1) with completed status. 0 means in progress
-        :param complete_at: an integer value or None with timestamp
-        :param results: an integer value with results. See more at buildbot.status.results
-        :return: a new buildset id
-        """
-        def thd(conn):
-            table = self.db.model.buildsets
-            q = table.insert()
-            res = conn.execute(q, {
-                'reason': reason,
-                'sourcestampsetid': sourcestampsetid,
-                'submitted_at': submitted_at,
-                'complete': complete,
-                'complete_at': complete_at,
-                'results': results,
-            })
-            bsid = res.inserted_primary_key[0]
-
-            return bsid
-
-        return self.db.pool.do(thd)
-
     def _row2dict(self, row):
         def mkdt(epoch):
             if epoch:
