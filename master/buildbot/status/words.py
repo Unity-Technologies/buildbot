@@ -23,13 +23,14 @@ from twisted.python import usage, log
 from twisted.application import internet
 from twisted.internet import defer, task
 
-from buildbot import interfaces, util, klog
+from buildbot import interfaces, util
 from buildbot import version
 from buildbot.interfaces import IStatusReceiver
 from buildbot.sourcestamp import SourceStamp
 from buildbot.status import base
 from buildbot.status.results import SUCCESS, WARNINGS, FAILURE, EXCEPTION, RETRY
 from buildbot.process.properties import Properties
+import klog
 
 # twisted.internet.ssl requires PyOpenSSL, so be resilient if it's missing
 try:

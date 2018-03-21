@@ -31,7 +31,8 @@ from buildbot.interfaces import IBuildSlave, ILatentBuildSlave
 from buildbot.process.properties import Properties
 from buildbot.util import subscription
 from buildbot.util.eventual import eventually
-from buildbot import config, klog
+from buildbot import config
+import klog
 
 class AbstractBuildSlave(config.ReconfigurableServiceMixin, pb.Avatar,
                         service.MultiService):

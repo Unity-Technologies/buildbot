@@ -40,7 +40,7 @@ from twisted.cred import credentials
 from twisted.internet import reactor
 from twisted.python import log
 
-from buildbot import klog
+import klog
 
 def done(*args):
     reactor.stop()

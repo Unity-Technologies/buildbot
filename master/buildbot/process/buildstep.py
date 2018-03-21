@@ -24,13 +24,14 @@ from twisted.python.failure import Failure
 from twisted.web.util import formatFailure
 from twisted.python.reflect import accumulateClassList
 
-from buildbot import interfaces, util, config, klog
+from buildbot import interfaces, util, config
 from buildbot.status import progress
 from buildbot.status.results import SUCCESS, WARNINGS, FAILURE, SKIPPED, \
      EXCEPTION, RETRY, INTERRUPTED, worst_status, Results
 from buildbot.process import metrics, properties
 from buildbot.util.eventual import eventually
 from buildbot.interfaces import BuildSlaveTooOldError
+import klog
 
 class BuildStepFailed(Exception):
     pass

@@ -19,7 +19,7 @@ import xml.parsers.expat
 from twisted.python import log
 from twisted.internet import defer
 
-from buildbot import klog
+import klog
 from buildbot.process import buildstep
 from buildbot.steps.source.base import Source
 from buildbot.interfaces import BuildSlaveTooOldError

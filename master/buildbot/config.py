@@ -23,8 +23,9 @@ import warnings
 import urllib
 from buildbot.util import safeTranslate
 from buildbot import interfaces
-from buildbot import locks, klog
+from buildbot import locks
 from buildbot.revlinks import default_revlink_matcher
+import klog
 from twisted.python import log, failure
 from twisted.internet import defer
 from twisted.application import service

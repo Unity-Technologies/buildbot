@@ -40,11 +40,12 @@ try:
 except ImportError:
     import json
 
-from buildbot import config, klog
+from buildbot import config
 from buildbot.status.base import StatusReceiverMultiService
 from buildbot.status.persistent_queue import DiskQueue, IndexedQueue, \
         MemoryQueue, PersistentQueue
 from buildbot.status.web.status_json import FilterOut
+import klog
 from twisted.internet import defer, reactor
 from twisted.python import log
 from twisted.web import client

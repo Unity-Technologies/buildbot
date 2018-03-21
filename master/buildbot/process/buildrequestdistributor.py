@@ -25,8 +25,9 @@ from buildbot.process.buildrequest import BuildRequest
 from buildbot.status.results import RESUME, BEGINNING
 from buildbot.db.buildrequests import AlreadyClaimedError, UnsupportedQueueError, Queue
 from buildbot.process.builder import Slavepool
-from buildbot import util, klog
+from buildbot import util
 from buildbot.util import lru
+import klog
 
 import random
 import time

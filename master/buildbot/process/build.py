@@ -21,13 +21,14 @@ from twisted.python import log, components
 from twisted.python.failure import Failure
 from twisted.internet import defer, error
 
-from buildbot import interfaces, klog
+from buildbot import interfaces
 from buildbot.status.results import SUCCESS, WARNINGS, FAILURE, EXCEPTION, \
   RETRY, SKIPPED, worst_status, NOT_REBUILT, DEPENDENCY_FAILURE, RESUME, INTERRUPTED
 from buildbot.status.builder import Results
 from buildbot.status.progress import BuildProgress
 from buildbot.process import metrics, properties
 from buildbot.util.eventual import eventually
+import klog
 
 
 class Build(properties.PropertiesMixin):

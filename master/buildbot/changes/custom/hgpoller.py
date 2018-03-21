@@ -20,11 +20,12 @@ import sys
 from twisted.python import log
 from twisted.internet import defer, utils
 
-from buildbot import config, klog
+from buildbot import config
 from buildbot.util import deferredLocked
 from buildbot.changes import base
 from buildbot.util import epoch2datetime
 from buildbot.util.state import StateMixin
+import klog
 import re
 
 class HgPoller(base.PollingChangeSource, StateMixin):

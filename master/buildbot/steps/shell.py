@@ -21,8 +21,9 @@ from twisted.spread import pb
 from buildbot.process import buildstep
 from buildbot.status.results import SUCCESS, WARNINGS, FAILURE
 from buildbot.status.logfile import STDOUT, STDERR
-from buildbot import config, klog
+from buildbot import config
 from buildbot.util import flatten
+import klog
 
 # for existing configurations that import WithProperties from here.  We like
 # to move this class around just to keep our readers guessing.

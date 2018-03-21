@@ -200,6 +200,7 @@ else:
         'PyJWT == 1.4.0',
         'pynats == 0.0.1',
         'www',
+        'klog',
         'psutil == 4.3.0',
         'jsonschema == 2.6.0',
         'freezegun == 0.3.9',

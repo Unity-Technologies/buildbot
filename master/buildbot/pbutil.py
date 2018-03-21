@@ -23,7 +23,7 @@ from twisted.spread.pb import PBClientFactory
 from twisted.internet import protocol
 from twisted.python import log
 
-from buildbot import klog
+import klog
 
 class NewCredPerspective(pb.Avatar):
     def attached(self, mind):

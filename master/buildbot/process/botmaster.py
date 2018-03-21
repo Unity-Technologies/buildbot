@@ -21,10 +21,11 @@ from twisted.spread import pb
 from twisted.application import service
 
 from buildbot.process.builder import Builder
-from buildbot import interfaces, locks, config, util, klog
+from buildbot import interfaces, locks, config, util
 from buildbot.process import metrics
 from buildbot.process.buildrequest import BuildRequest, BuildRequestControl
 from buildbot.process.buildrequestdistributor import KatanaBuildRequestDistributor
+import klog
 
 class BotMaster(config.ReconfigurableServiceMixin, service.MultiService):
 

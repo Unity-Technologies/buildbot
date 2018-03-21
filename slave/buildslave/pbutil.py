@@ -24,7 +24,7 @@ from twisted.internet import protocol, reactor
 from twisted.python import log
 from twisted.cred import error
 
-from buildbot import klog
+import klog
 
 class ReconnectingPBClientFactory(PBClientFactory,
                                   protocol.ReconnectingClientFactory):

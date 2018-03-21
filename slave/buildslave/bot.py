@@ -24,7 +24,7 @@ from twisted.internet import error, reactor, task, defer
 from twisted.application import service, internet
 from twisted.cred import credentials
 
-from buildbot import klog
+import klog
 import buildslave
 from buildslave.pbutil import ReconnectingPBClientFactory
 from buildslave.commands import registry, base

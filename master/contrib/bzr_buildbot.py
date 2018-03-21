@@ -96,7 +96,7 @@ Maintainer/author: gary.poster@canonical.com
 """
 
 try:
-    from buildbot import klog
+    import klog
     import buildbot.util
     import buildbot.changes.base
     import buildbot.changes.changes

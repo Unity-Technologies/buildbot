@@ -21,11 +21,12 @@ from zope.interface import implements
 from twisted.python import log, runtime, components
 from twisted.persisted import styles
 from twisted.internet import reactor, defer, threads
-from buildbot import interfaces, util, sourcestamp, klog
+from buildbot import interfaces, util, sourcestamp
 from buildbot.process import properties
 from buildbot.process.buildtag import BuildTag
 from buildbot.status.buildstep import BuildStepStatus
 from buildbot.status.results import SUCCESS, NOT_REBUILT, SKIPPED, RESUME, CANCELED, RETRY, MERGED
+import klog
 import time
 
 # Avoid doing an import since it creates circular reference

@@ -26,7 +26,7 @@ from twisted.python import log
 from twisted.internet import defer
 from twisted.web import html, resource, server
 
-from buildbot import klog
+import klog
 from buildbot.schedulers.forcesched import ForceScheduler
 from buildbot.status.buildrequest import BuildRequestStatus
 from buildbot.status.web.base import AccessorMixin, HtmlResource, path_to_root, map_branches, getCodebasesArg, \

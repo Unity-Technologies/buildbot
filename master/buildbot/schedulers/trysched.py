@@ -19,13 +19,14 @@ from twisted.internet import defer
 from twisted.python import log
 from twisted.protocols import basic
 
-from buildbot import pbutil, klog
+from buildbot import pbutil
 from buildbot.util.maildir import MaildirService
 from buildbot.util import json
 from buildbot.util import netstrings
 from buildbot.process.properties import Properties
 from buildbot.schedulers import base
 from buildbot.status.buildset import BuildSetStatus
+import klog
 
 
 class TryBase(base.BaseScheduler):

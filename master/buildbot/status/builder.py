@@ -25,11 +25,12 @@ from twisted.internet import defer, threads
 from zope.interface import implements
 from twisted.python import log, runtime
 from twisted.persisted import styles
-from buildbot import interfaces, util, klog
+from buildbot import interfaces, util
 from buildbot.util.lru import LRUCache
 from buildbot.status.event import Event
 from buildbot.status.build import BuildStatus
 from buildbot.status.buildrequest import BuildRequestStatus
+import klog
 
 # user modules expect these symbols to be present here
 from buildbot.status.results import SUCCESS, WARNINGS, FAILURE, SKIPPED

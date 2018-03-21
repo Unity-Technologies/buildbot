@@ -19,7 +19,7 @@ from twisted.python import log
 from twisted.python.procutils import which
 from twisted.python import runtime
 
-from buildbot import klog
+import klog
 
 def getCommand(name):
     possibles = which(name)

@@ -18,11 +18,12 @@ from buildbot.process.buildstep import BuildStep, SUCCESS, FAILURE, EXCEPTION
 from buildbot.process.properties import Properties, Property
 from twisted.python import log
 from twisted.internet import defer
-from buildbot import config, klog
+from buildbot import config
 from buildbot.status.results import DEPENDENCY_FAILURE, RETRY, WARNINGS, SKIPPED, CANCELED
 from twisted.python.failure import Failure
 from buildbot.schedulers.triggerable import TriggerableSchedulerStopped
 from buildbot.steps.resumebuild import ResumeBuild
+import klog
 
 class Trigger(ResumeBuild):
     name = "Trigger"

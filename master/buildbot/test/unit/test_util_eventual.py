@@ -17,7 +17,7 @@ from twisted.trial import unittest
 from twisted.internet import defer
 from twisted.python import log
 
-from buildbot import klog
+import klog
 from buildbot.util import eventual
 
 class Eventually(unittest.TestCase):

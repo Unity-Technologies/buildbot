@@ -1,8 +1,8 @@
 import datetime
 import json
 import mock
-from buildbot.klog import err_json
-from buildbot.klog import __get_json as get_json
+from klog import err_json
+from klog import __get_json as get_json
 from twisted.python import failure
 from twisted.trial import unittest
 

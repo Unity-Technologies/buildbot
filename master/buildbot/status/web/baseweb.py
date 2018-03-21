@@ -24,7 +24,7 @@ from twisted.web import server, distrib, static, resource
 from twisted.internet import defer
 from twisted.spread import pb
 from twisted.web.util import Redirect
-from buildbot import config, klog
+from buildbot import config
 from buildbot.interfaces import IStatusReceiver
 from buildbot.status.web.base import StaticFile, createJinjaEnv
 from buildbot.status.web.feeds import Rss20StatusResource, \
@@ -49,6 +49,7 @@ from buildbot.status.web.auth import AuthFailResource,AuthzFailResource, LoginRe
 from buildbot.status.web.root import RootPage
 from buildbot.status.web.users import UsersResource
 from buildbot.status.web.change_hook import ChangeHookResource
+import klog
 from twisted.cred.portal import IRealm, Portal
 from twisted.web import resource, guard
 from twisted.cred.checkers import InMemoryUsernamePasswordDatabaseDontUse

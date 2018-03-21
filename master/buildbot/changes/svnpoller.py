@@ -23,8 +23,9 @@ from __future__ import with_statement
 from twisted.python import log
 from twisted.internet import defer, utils
 
-from buildbot import util, klog
+from buildbot import util
 from buildbot.changes import base
+import klog
 
 import xml.dom.minidom
 import os, urllib

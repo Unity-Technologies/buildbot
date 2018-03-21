@@ -31,7 +31,7 @@ from buildbot.util import subscription, epoch2datetime
 from buildbot.status.master import Status
 from buildbot.changes import changes
 from buildbot.changes.manager import ChangeManager
-from buildbot import interfaces, klog
+from buildbot import interfaces
 from buildbot.process.builder import BuilderControl
 from buildbot.db import connector
 from buildbot.schedulers.manager import SchedulerManager
@@ -45,6 +45,7 @@ from buildbot.status.results import SUCCESS, WARNINGS, FAILURE, NOT_REBUILT
 from buildbot.util.eventual import eventually
 from buildbot import monkeypatches
 from buildbot import config
+import klog
 
 ########################################
 

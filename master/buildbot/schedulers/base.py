@@ -20,8 +20,9 @@ from twisted.application import service
 from twisted.internet import defer
 from buildbot.process.properties import Properties
 from buildbot.util import ComparableMixin
-from buildbot import config, interfaces, klog
+from buildbot import config, interfaces
 from buildbot.util.state import StateMixin
+import klog
 
 
 class ScheduleOnMultipleSlavesMixin(object):

@@ -22,7 +22,7 @@ from twisted.spread import pb
 from twisted.application import service, internet
 from twisted.internet import defer
 
-from buildbot import interfaces, config, klog
+from buildbot import interfaces, config
 from buildbot.process.buildrequest import BuildRequest
 from buildbot.status.progress import Expectations
 from buildbot.status.results import RETRY, RESUME, BEGINNING
@@ -31,6 +31,7 @@ from buildbot.process.properties import Properties
 from buildbot.process import buildrequest, slavebuilder
 from buildbot.process.build import Build
 from buildbot.process.slavebuilder import BUILDING
+import klog
 
 
 class Slavepool(object):

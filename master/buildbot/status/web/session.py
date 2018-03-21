@@ -18,7 +18,7 @@
 #    details.
 from cPickle import dump, load
 from twisted.python import log, runtime
-from buildbot import klog
+import klog
 
 try:
     from hashlib import sha1

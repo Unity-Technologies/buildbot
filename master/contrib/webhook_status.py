@@ -4,7 +4,8 @@ from twisted.python import log
 from twisted.internet import reactor
 from twisted.web import client, error
 
-from buildbot import status, klog
+from buildbot import status
+import klog
 
 MAX_ATTEMPTS     = 10
 RETRY_MULTIPLIER = 5

@@ -18,7 +18,7 @@ import os, tarfile, tempfile
 from twisted.python import log
 from twisted.internet import defer
 
-from buildbot import klog
+import klog
 from buildslave.commands.base import Command
 
 class TransferCommand(Command):

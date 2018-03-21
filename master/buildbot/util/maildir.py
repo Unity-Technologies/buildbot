@@ -20,7 +20,7 @@
 # relative to the top of the maildir (so it will look like "new/blahblah").
 
 import os
-from buildbot import klog
+import klog
 from twisted.python import log, runtime
 from twisted.application import service, internet
 from twisted.internet import reactor, defer

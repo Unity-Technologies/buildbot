@@ -19,7 +19,7 @@
 # but "the rest" is pretty minimal
 
 import re
-from buildbot import klog
+import klog
 from twisted.web import resource, server
 from twisted.python.reflect import namedModule
 from twisted.python import log

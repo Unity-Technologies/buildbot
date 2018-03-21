@@ -20,7 +20,8 @@ from twisted.internet import defer, utils, threads
 from twisted.python import log, failure
 from buildbot.buildslave import AbstractBuildSlave, AbstractLatentBuildSlave
 from buildbot.util.eventual import eventually
-from buildbot import config, klog
+from buildbot import config
+import klog
 
 try:
     import libvirt

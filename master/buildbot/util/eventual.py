@@ -15,9 +15,9 @@
 
 
 # copied from foolscap
-from buildbot import klog
 from twisted.internet import reactor, defer
 from twisted.python import log
+import klog
 
 class _SimpleCallQueue(object):
 

@@ -24,8 +24,9 @@ from twisted.internet import defer
 from twisted.web import html
 from buildbot.util import datetime2epoch
 
-from buildbot import interfaces, util, klog
+from buildbot import interfaces, util
 from buildbot.process.properties import Properties
+import klog
 
 class Change:
     """I represent a single change to the source tree. This may involve several

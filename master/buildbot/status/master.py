@@ -22,7 +22,7 @@ from twisted.persisted import styles
 from twisted.internet import defer
 from twisted.application import service
 from zope.interface import implements
-from buildbot import config, interfaces, util, klog
+from buildbot import config, interfaces, util
 from buildbot.status.web.base import getCodebasesArg, _revlinkcfg
 from buildbot.util import bbcollections
 from buildbot.util.eventual import eventually
@@ -30,6 +30,7 @@ from buildbot.changes import changes
 from buildbot.status import buildset, builder, buildrequest
 from buildbot.status.results import RETRY
 from datetime import datetime, timedelta
+import klog
 
 class Status(config.ReconfigurableServiceMixin, service.MultiService):
     implements(interfaces.IStatus)

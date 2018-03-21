@@ -21,7 +21,8 @@ from twisted.internet import defer, utils
 from buildbot.changes import base
 from buildbot.util import epoch2datetime
 from buildbot.util.state import StateMixin
-from buildbot import config, klog
+from buildbot import config
+import klog
 
 class GitPoller(base.PollingChangeSource, StateMixin):
     """This source will poll a remote git repo for changes and submit

@@ -31,7 +31,7 @@ from tempfile import NamedTemporaryFile
 from twisted.python import runtime, log, failure
 from twisted.internet import reactor, defer, protocol, task, error
 
-from buildbot import klog
+import klog
 from buildslave import util
 from buildslave.exceptions import AbandonChain
 

@@ -18,7 +18,7 @@ from twisted.internet import defer
 from twisted.python import log
 from twisted.internet import reactor
 
-from buildbot import klog
+import klog
 
 (ATTACHING, # slave attached, still checking hostinfo/etc
  IDLE, # idle, available for use
