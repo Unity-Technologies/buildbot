@@ -30,6 +30,8 @@ from buildbot.scripts import base
 
 # Note that the terms 'options' and 'config' are used interchangeably here - in
 # fact, they are interchanged several times.  Caveat legator.
+from buildbot.scripts.populatedatabase import MAX_UNIQUE_USER_COUNT
+
 
 def validate_master_option(master):
     """Validate master (-m, --master) command line option.
@@ -676,6 +678,12 @@ class PopulateDatabaseOptions(base.SubcommandOptions):
     subcommandFunction = "buildbot.scripts.populatedatabase.populate_database"
     optFlags = [
         ['quiet', 'q', "Don't display error messages or tracebacks"],
+    ]
+    optParameters = [
+        ["users", "u", 100,
+         "how many users should be created (max %d)" % MAX_UNIQUE_USER_COUNT],
+        ["builds", "b", 1000,
+         "how many builds should be created"],
     ]
 
     def getSynopsis(self):

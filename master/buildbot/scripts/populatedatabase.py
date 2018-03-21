@@ -41,8 +41,15 @@ def populate_database(config):
     db = connector.DBConnector(master, basedir=config['baseDir'])
 
     yield db.setup(check_version=False, verbose=not config['quiet'])
-    users = yield populate_user(db, 100)
-    yield populate_build(db, 50000, master.config.builders, master.config.projects, users)
+    users = yield populate_user(db, int(config['users']), verbose=not config['quiet'])
+    yield populate_build(
+        db,
+        int(config['builds']),
+        master.config.builders,
+        master.config.projects,
+        users,
+        verbose=not config['quiet']
+    )
 
 
 def load_config(config, config_file_name='master.cfg'):
@@ -68,13 +75,14 @@ def load_config(config, config_file_name='master.cfg'):
 
 
 @defer.inlineCallbacks
-def populate_user(db, user_count):
+def populate_user(db, user_count, verbose=True):
     """
     This function create `user_count` number of random user in database
     :param db: a handler to the DBConnection object
     :param user_count: an integer value with number of new users
     """
-    print("Starting creating users")
+    if verbose:
+        print("Starting creating users")
     if user_count > MAX_UNIQUE_USER_COUNT:
         raise ValueError("Can not generate more than %d unique user" % MAX_UNIQUE_USER_COUNT)
 
@@ -101,15 +109,16 @@ def populate_user(db, user_count):
         if result:
             created += 1
         users.append(user)
+        if verbose:
+            print_progress_bar(ind+1, user_count)
 
-        print_progress_bar(ind+1, user_count)
-
-    print("Created %d new users, %d skipped" % (created, user_count - created))
+    if verbose:
+        print("Created %d new users, %d skipped" % (created, user_count - created))
     defer.returnValue(map(lambda x: x['identifier'], users))
 
 
 @defer.inlineCallbacks
-def populate_build(db, build_count, builders_list, projects, user_names):
+def populate_build(db, build_count, builders_list, projects, user_names, verbose=True):
     """
 
     :param db: a handler to the DBConnection object
@@ -118,7 +127,8 @@ def populate_build(db, build_count, builders_list, projects, user_names):
     :param projects: a list of a ProjectConfig objects
     :param user_names: a list of an usernames (identifier) from the database
     """
-    print("Starting creating builds")
+    if verbose:
+        print("Starting creating builds")
     created = 0
     completed_results = [
         results.SUCCESS,
@@ -160,9 +170,12 @@ def populate_build(db, build_count, builders_list, projects, user_names):
         result = yield db.builds.createFullBuildObject(**build)
         if result:
             created += 1
-        print_progress_bar(number+1, build_count)
 
-    print("Created %d new builds, %d skipped" % (created, build_count - created))
+        if verbose:
+            print_progress_bar(number+1, build_count)
+
+    if verbose:
+        print("Created %d new builds, %d skipped" % (created, build_count - created))
 
 
 def print_progress_bar(iteration, total, prefix='', suffix='', decimals=1, length=100, fill=u'█'):
