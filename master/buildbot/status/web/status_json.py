@@ -28,8 +28,10 @@ from twisted.web import html, resource, server
 
 from buildbot.schedulers.forcesched import ForceScheduler
 from buildbot.status.buildrequest import BuildRequestStatus
+from buildbot.status.web.authz import Authz
 from buildbot.status.web.base import AccessorMixin, HtmlResource, path_to_root, map_branches, getCodebasesArg, \
     getRequestCharset, getResultsArg, getCodebases, path_to_comparison
+from buildbot.status.web.mybuilds import MybuildsResource
 
 
 _IS_INT = re.compile(r'^[-+]?\d+$')
@@ -172,6 +174,12 @@ if 'allCompatible' was used then the list will contain build request object for 
     - Example:
     
     - [{"build_request_id": 1}] or with 'allCompatible' [{"build_request_id": 1}, {"build_request_id": 2}]
+
+
+
+    - /json/mybuilds/
+
+    - My builds from last 7 days
 """
 
 
@@ -1371,6 +1379,27 @@ class BuildNumberForRequestJsonResource(JsonResource):
         defer.returnValue(build_number)
 
 
+class MyBuildsJsonResource(JsonResource):
+    help = 'Gives information about my builds from last 7 days'
+    pageTitle = 'My builds from last 7 days'
+
+    @defer.inlineCallbacks
+    def asDict(self, request):
+        authz = Authz()
+        mybuilds = MybuildsResource()
+        master = mybuilds.getBuildmaster(request)
+        if 'user' in request.args and request.args['user'][0]:
+            username = request.args['user'][0]
+        else:
+            username = authz.getUsername(request)
+        user_info = authz.getUserInfo(username)
+        if user_info:
+            builds = yield mybuilds.prepare_builds(master, user_info['uid'])
+            defer.returnValue(builds)
+        else:
+            defer.returnValue(['User "%s" is unknown' % username])
+
+
 class JsonStatusResource(JsonResource):
     """Retrieves all json data."""
     help = """JSON status
@@ -1396,6 +1425,7 @@ For help on any sub directory, use url /child/help
         self.putChild('pending', PendingBuildsJsonResource(status))
         self.putChild('globalstatus', GlobalJsonResource(status))
         self.putChild('build_request', BuildRequestJsonResource(status))
+        self.putChild('mybuilds', MyBuildsJsonResource(status))
         # This needs to be called before the first HelpResource().body call.
         self.hackExamples()
 

@@ -1,6 +1,8 @@
+import datetime
 import mock
 from twisted.trial import unittest
 from buildbot.status.web.mybuilds import MybuildsResource
+
 
 class TestMybuildsResource(unittest.TestCase):
     def setUp(self):
@@ -8,12 +10,22 @@ class TestMybuildsResource(unittest.TestCase):
 
     def test_prepare_builds_by_ssid(self):
         builds =[
-            {'sourcestampsetid': 1, 'brid': 11},
-            {'sourcestampsetid': 2, 'brid': 22},
+            {'sourcestampsetid': 1, 'brid': 11,
+             'submitted_at': datetime.datetime(2018, 1, 1),
+             'complete_at': datetime.datetime(2018, 1, 2),
+            },
+            {'sourcestampsetid': 2, 'brid': 22,
+             'submitted_at': datetime.datetime(2018, 1, 3),
+             'complete_at': datetime.datetime(2018, 1, 4),
+            },
         ]
         expected_builds = {
-            1: {'sourcestampsetid': 1, 'brid': 11, 'sourcestamps': [], 'query_params': []},
-            2: {'sourcestampsetid': 2, 'brid': 22, 'sourcestamps': [], 'query_params': []},
+            1: {'sourcestampsetid': 1, 'brid': 11, 'sourcestamps': [], 'query_params': [],
+                'submitted_at': str(datetime.datetime(2018, 1, 1)),
+                'complete_at': str(datetime.datetime(2018, 1, 2))},
+            2: {'sourcestampsetid': 2, 'brid': 22, 'sourcestamps': [], 'query_params': [],
+                'submitted_at': str(datetime.datetime(2018, 1, 3)),
+                'complete_at': str(datetime.datetime(2018, 1, 4))},
         }
 
         builds_by_ssid = self.mybuilds.prepare_builds_by_ssid(builds)
