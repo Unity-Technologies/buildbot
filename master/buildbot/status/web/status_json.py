@@ -28,8 +28,10 @@ from twisted.web import html, resource, server
 
 from buildbot.schedulers.forcesched import ForceScheduler
 from buildbot.status.buildrequest import BuildRequestStatus
+from buildbot.status.web.authz import Authz
 from buildbot.status.web.base import AccessorMixin, HtmlResource, path_to_root, map_branches, getCodebasesArg, \
     getRequestCharset, getResultsArg, getCodebases, path_to_comparison
+from buildbot.status.web.mybuilds import MybuildsResource
 
 
 _IS_INT = re.compile(r'^[-+]?\d+$')
@@ -1382,23 +1384,18 @@ class MyBuildsJsonResource(JsonResource):
 
     @defer.inlineCallbacks
     def asDict(self, request):
-        from buildbot.status.web.authz import Authz
-        from buildbot.status.web.mybuilds import MybuildsResource
-        from datetime import date, datetime
-
-        def json_serial(obj):
-            """JSON serializer for objects not serializable by default json code"""
-
-            if isinstance(obj, (datetime, date)):
-                return obj.isoformat()
-            raise TypeError("Type %s not serializable" % type(obj))
-
         authz = Authz()
         mybuilds = MybuildsResource()
         master = mybuilds.getBuildmaster(request)
-        username = authz.getUsernameFull(request)
+        if 'user' in request.args and request.args['user'][0]:
+            username = request.args['user'][0]
+        else:
+            username = authz.getUsername(request) # ldap username
+        # TODO:
+        # user_id = get_user_id_for_ldap_username(username)
+        # builds = yield mybuilds.prepare_builds(master, user_id)
         builds = yield mybuilds.prepare_builds(master, username)
-        defer.returnValue(json.loads(json.dumps(builds, default=json_serial)))
+        defer.returnValue(builds)
 
 
 class JsonStatusResource(JsonResource):

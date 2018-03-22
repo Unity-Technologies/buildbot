@@ -5,11 +5,9 @@ from twisted.internet import defer
 from buildbot.status.web.base import HtmlResource
 from buildbot.config import MasterConfig
 
+
 class MybuildsResource(HtmlResource):
     pageTitle = "MyBuilds"
-
-    def __init__(self, *args, **kwargs):
-        super(MybuildsResource, self).__init__(*args, **kwargs)
 
     @defer.inlineCallbacks
     def content(self, req, cxt):
@@ -64,7 +62,11 @@ class MybuildsResource(HtmlResource):
     def prepare_builds_by_ssid(builds):
         builds_by_ssid = {}
         for row in builds:
-            row['sourcestamps'] = []
-            row['query_params'] = []
-            builds_by_ssid[row['sourcestampsetid']] = row
+            builds_by_ssid[row['sourcestampsetid']] = row.copy()
+            builds_by_ssid[row['sourcestampsetid']].update({
+                'submitted_at': str(row['submitted_at']),
+                'complete_at': str(row['complete_at']),
+                'sourcestamps': [],
+                'query_params': [],
+            })
         return builds_by_ssid
