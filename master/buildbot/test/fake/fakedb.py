@@ -260,6 +260,18 @@ class BuildsetProperty(Row):
     required_columns = ( 'buildsetid', )
 
 
+class BuildUser(Row):
+    table = "build_user"
+
+    defaults = dict(
+        buildid=None,
+        userid=None,
+        finish_time=None,
+    )
+
+    required_columns = ('buildid', 'userid')
+
+
 class Object(Row):
     table = "objects"
 
@@ -1310,6 +1322,18 @@ class FakeMastersConfigComponent(FakeDBComponent):
         return defer.succeed(dict(id=row.id, buildbotURL=row.buildbotURL, objectid=row.objectid))
 
 
+class FakeBuildUserComponent(FakeDBComponent):
+
+    def setUp(self):
+        self.build_user = {}
+
+    def insertTestData(self, rows):
+        for row in rows:
+            if isinstance(row, BuildUser):
+                key = "{}:{}".format(row.values['buildid'], row.values['userid'])
+                self.build_user[key] = row.values.copy()
+
+
 class FakeUsersComponent(FakeDBComponent):
 
     def setUp(self):
@@ -1451,6 +1475,8 @@ class FakeDBConnector(object):
         self.buildrequests = comp = FakeBuildRequestsComponent(self, testcase)
         self._components.append(comp)
         self.builds = comp = FakeBuildsComponent(self, testcase)
+        self._components.append(comp)
+        self.build_user = comp = FakeBuildUserComponent(self, testcase)
         self._components.append(comp)
         self.users = comp = FakeUsersComponent(self, testcase)
         self._components.append(comp)

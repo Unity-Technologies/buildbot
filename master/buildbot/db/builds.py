@@ -270,14 +270,13 @@ class BuildsConnectorComponent(base.DBConnectorComponent):
 
         return self.db.pool.do(thd)
 
-    def getLastBuildsOwnedBy(self, owner, botmaster, day_count):
-        if not (isinstance(owner, str) or isinstance(owner, unicode)):
-            raise ValueError("Expected owner to be string which is fullname")
-
+    def getLastBuildsOwnedBy(self, user_id, botmaster, day_count):
         def thd(conn):
             buildrequests_tbl = self.db.model.buildrequests
             buildsets_tbl = self.db.model.buildsets
             builds_tbl = self.db.model.builds
+            builduser_tbl = self.db.model.build_user
+
             from_time = datetime2epoch(datetime.now() - timedelta(days=day_count))
 
             from_clause = buildsets_tbl.join(
@@ -286,13 +285,16 @@ class BuildsConnectorComponent(base.DBConnectorComponent):
             ).join(
                 builds_tbl,
                 builds_tbl.c.brid == buildrequests_tbl.c.id
+            ).join(
+                builduser_tbl,
+                builduser_tbl.c.buildid == builds_tbl.c.id
             )
 
             q = (
                 sa.select([buildrequests_tbl, builds_tbl, buildsets_tbl], use_labels=True)
                 .select_from(from_clause)
                 .where(builds_tbl.c.finish_time >= from_time)
-                .where(buildsets_tbl.c.reason.like('%{}%'.format(owner)))
+                .where(builduser_tbl.c.userid == user_id)
                 .order_by(sa.desc(builds_tbl.c.start_time))
             )
 

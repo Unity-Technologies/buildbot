@@ -3,7 +3,7 @@ from operator import itemgetter
 from twisted.internet import defer
 
 from buildbot.status.web.base import HtmlResource
-from buildbot.config import MasterConfig
+
 
 class MybuildsResource(HtmlResource):
     pageTitle = "MyBuilds"
@@ -12,11 +12,10 @@ class MybuildsResource(HtmlResource):
     def content(self, req, cxt):
         master = self.getBuildmaster(req)
         status = master.getStatus()
-        username = cxt['authz'].getUsernameFull(req)
         display_repositories = self.prepare_display_repositories(status)
 
         builds = yield master.db.builds.getLastBuildsOwnedBy(
-            username,
+            cxt['authz'].getUserInfo(cxt['authz'].getUsername(req))['uid'],
             master.status.botmaster,
             master.config.myBuildDaysCount,
         )

@@ -209,16 +209,21 @@ class BuildStatus(styles.Versioned, properties.PropertiesMixin):
 
     def createBuildUserStatus(self, step):
         @defer.inlineCallbacks
-        def thd(buildId):
+        def thd(build_id):
             for owner in self.owners:
-                identifier = owner.split()[0]
-                userid = yield self.master.db.users.identifierToUid(identifier)
-                yield self.master.db.builds.createBuildUser(buildId, userid, self.finished)
+                user_id = yield self.master.db.users.identifierToUid(owner)
+                if not user_id:
+                    log.msg("Can not find user in database %s" % owner)
+                    log.err()
+                yield self.master.db.builds.createBuildUser(build_id, user_id, self.finished)
 
-        if self.finished and self.savedStatus == False:
+        if self.finished and self.savedStatus is False:
             self.savedStatus = True
-            buildIdDefer = self.master.db.builds.getBuildIDForRequest(self.buildChainID, self.number)
-            buildIdDefer.addCallback(thd)
+            build_id_defer = self.master.db.builds.getBuildIDForRequest(
+                self.buildChainID,
+                self.number,
+            )
+            build_id_defer.addCallback(thd)
 
         return step
 

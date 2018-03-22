@@ -406,7 +406,7 @@ class TestGetLastBuildsOwnedBy(
 
     def setUp(self):
         d = self.setUpConnectorComponent(
-            table_names=['builds', 'buildrequests', 'buildsets', 'sourcestamps', 'sourcestampsets', 'patches', 'buildset_properties']
+            table_names=['builds', 'build_user', 'buildrequests', 'buildsets', 'sourcestamps', 'sourcestampsets', 'patches', 'buildset_properties']
         )
         self.master = fakemaster.make_master(wantDb=True, testcase='Tests for getTopBuildUrl method')
 
@@ -428,6 +428,7 @@ class TestGetLastBuildsOwnedBy(
     def test_results_are_correctly_limited_by_builds_completed_time(self):
         today_time = 1519115900
         day_count = 7
+        user_id = 1
         expired_time = today_time - (day_count * 24 * 60 * 60) # 7 days = 24hours * 60minuts * 60seconds
         example_data = [
             fakedb.Buildset(id=2, sourcestampsetid=2, reason='[ first_user ]'),
@@ -435,26 +436,39 @@ class TestGetLastBuildsOwnedBy(
         ] + [
             # Should be included in result
             fakedb.Build(id=1, number=3, brid=3, slavename='slave-02', finish_time=1519115855),
+            fakedb.BuildUser(buildid=1, userid=user_id, finish_time=1519115855),
             fakedb.Build(id=2, number=4, brid=3, slavename='slave-02', finish_time=1519115865),
+            fakedb.BuildUser(buildid=2, userid=user_id, finish_time=1519115865),
             fakedb.Build(id=3, number=5, brid=3, slavename='slave-02', finish_time=1519115875),
+            fakedb.BuildUser(buildid=3, userid=user_id, finish_time=1519115875),
             fakedb.Build(id=4, number=6, brid=3, slavename='slave-02', finish_time=1519115885),
+            fakedb.BuildUser(buildid=4, userid=user_id, finish_time=1519115885),
             fakedb.Build(id=5, number=7, brid=3, slavename='slave-02', finish_time=1519115895),
+            fakedb.BuildUser(buildid=5, userid=user_id, finish_time=1519115895),
         ] + [
             # Shouldn't be included in result
             fakedb.Build(id=6, number=8, brid=3, slavename='slave-02', finish_time=expired_time - 30),
+            fakedb.BuildUser(buildid=6, userid=user_id, finish_time=expired_time - 30),
             fakedb.Build(id=7, number=9, brid=3, slavename='slave-02', finish_time=expired_time - 40),
+            fakedb.BuildUser(buildid=7, userid=user_id, finish_time=expired_time - 40),
             fakedb.Build(id=8, number=10, brid=3, slavename='slave-02', finish_time=expired_time - 50),
+            fakedb.BuildUser(buildid=8, userid=user_id, finish_time=expired_time - 50),
             fakedb.Build(id=9, number=11, brid=3, slavename='slave-02', finish_time=expired_time - 60),
+            fakedb.BuildUser(buildid=9, userid=user_id, finish_time=expired_time - 60),
             fakedb.Build(id=10, number=12, brid=3, slavename='slave-02', finish_time=expired_time - 70),
+            fakedb.BuildUser(buildid=10, userid=user_id, finish_time=expired_time - 70),
             fakedb.Build(id=11, number=13, brid=3, slavename='slave-02', finish_time=expired_time - 80),
+            fakedb.BuildUser(buildid=11, userid=user_id, finish_time=expired_time - 80),
             fakedb.Build(id=12, number=14, brid=3, slavename='slave-02', finish_time=expired_time - 90),
+            fakedb.BuildUser(buildid=12, userid=user_id, finish_time=expired_time - 90),
             fakedb.Build(id=13, number=15, brid=3, slavename='slave-02', finish_time=expired_time - 100),
+            fakedb.BuildUser(buildid=13, userid=user_id, finish_time=expired_time - 100),
         ]
         yield self.insertTestData(example_data)
 
         with freeze_time("2018-02-20 8:38:00"):
             first_user_builds = yield self.db.builds.getLastBuildsOwnedBy(
-                "first_user",
+                user_id,
                 FakeBotMaster(self.master),
                 day_count,
             )
@@ -466,6 +480,8 @@ class TestGetLastBuildsOwnedBy(
         day_count = 7
         first_user_builds_count = 15
         second_user_builds_count = 30
+        first_user_id = 1
+        second_user_id = 2
         second_user_max_build_id = first_user_builds_count + second_user_builds_count
 
         example_data = [
@@ -473,12 +489,18 @@ class TestGetLastBuildsOwnedBy(
             fakedb.Buildset(id=3, sourcestampsetid=2, reason='[ second_user ]'),
 
             fakedb.BuildRequest(id=3, buildsetid=2, buildername="builder2", complete=1, results=7),
-            fakedb.BuildRequest(id=4, buildsetid=3, buildername="builder3", complete=1, results=7),
+            fakedb.BuildRequest(id=4, buildsetid=3, buildername="buillder3", complete=1, results=7),
         ] + [
             fakedb.Build(id=i, number=i+2, brid=3, slavename='slave-02', finish_time=(1519115855 - 50 * i))
             for i in xrange(first_user_builds_count)
         ] + [
             fakedb.Build(id=i, number=i + 2, brid=4, slavename='slave-02', finish_time=(1519115855 - 50 * i))
+            for i in xrange(first_user_builds_count, second_user_max_build_id)
+        ] + [
+            fakedb.BuildUser(buildid=i, userid=first_user_id, finish_time=(1519115855 - 50 * i))
+            for i in xrange(first_user_builds_count)
+        ] + [
+            fakedb.BuildUser(buildid=i, userid=second_user_id, finish_time=(1519115855 - 50 * i))
             for i in xrange(first_user_builds_count, second_user_max_build_id)
         ]
 
@@ -486,7 +508,7 @@ class TestGetLastBuildsOwnedBy(
 
         with freeze_time("2018-02-20 8:38:00"):
             second_user_builds = yield self.db.builds.getLastBuildsOwnedBy(
-                "second_user",
+                second_user_id,
                 FakeBotMaster(self.master),
                 day_count,
             )
