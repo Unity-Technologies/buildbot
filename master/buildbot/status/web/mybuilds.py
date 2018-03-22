@@ -5,14 +5,24 @@ from twisted.internet import defer
 from buildbot.status.web.base import HtmlResource
 from buildbot.config import MasterConfig
 
+
 class MybuildsResource(HtmlResource):
     pageTitle = "MyBuilds"
 
     @defer.inlineCallbacks
     def content(self, req, cxt):
         master = self.getBuildmaster(req)
-        status = master.getStatus()
         username = cxt['authz'].getUsernameFull(req)
+
+        cxt['builds'] = yield self.prepare_builds(master, username)
+        cxt['days_count'] = master.config.myBuildDaysCount
+        template = req.site.buildbot_service.templates.get_template("mybuilds.html")
+        template.autoescape = True
+        defer.returnValue(template.render(**cxt))
+
+    @defer.inlineCallbacks
+    def prepare_builds(self, master, username):
+        status = master.getStatus()
         display_repositories = self.prepare_display_repositories(status)
 
         builds = yield master.db.builds.getLastBuildsOwnedBy(
@@ -34,11 +44,8 @@ class MybuildsResource(HtmlResource):
 
             build['sourcestamps'].append(row)
 
-        cxt['builds'] = sorted(builds_by_ssid.values(), key=itemgetter('builds_id'), reverse=True)
-        cxt['days_count'] = master.config.myBuildDaysCount
-        template = req.site.buildbot_service.templates.get_template("mybuilds.html")
-        template.autoescape = True
-        defer.returnValue(template.render(**cxt))
+        builds = sorted(builds_by_ssid.values(), key=itemgetter('builds_id'), reverse=True)
+        defer.returnValue(builds)
 
     @staticmethod
     def prepare_display_repositories(status):
@@ -55,7 +62,11 @@ class MybuildsResource(HtmlResource):
     def prepare_builds_by_ssid(builds):
         builds_by_ssid = {}
         for row in builds:
-            row['sourcestamps'] = []
-            row['query_params'] = []
-            builds_by_ssid[row['sourcestampsetid']] = row
+            builds_by_ssid[row['sourcestampsetid']] = row.copy()
+            builds_by_ssid[row['sourcestampsetid']].update({
+                'submitted_at': str(row['submitted_at']),
+                'complete_at': str(row['complete_at']),
+                'sourcestamps': [],
+                'query_params': [],
+            })
         return builds_by_ssid
