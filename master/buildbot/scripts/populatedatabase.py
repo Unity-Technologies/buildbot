@@ -22,6 +22,7 @@ from time import time
 
 import datetime
 import names
+from progress_bar import InitBar
 from twisted.internet import defer
 
 from buildbot import config as config_module
@@ -29,7 +30,8 @@ from buildbot.db import connector
 from buildbot.master import BuildMaster
 from buildbot.util import in_reactor
 from buildbot.util import datetime2epoch
-from buildbot.status import results
+from buildbot.status.results import COMPLETED_RESULTS
+
 
 MAX_UNIQUE_USER_COUNT = 5494
 
@@ -95,6 +97,8 @@ def populate_user(db, user_count, verbose=True):
 
     users = []
     created = 0
+    progress_bar = InitBar(size=user_count, stream=sys.stdout)
+
     unique_identifier = set()
     for ind in range(user_count):
         # generate random identifier
@@ -117,38 +121,37 @@ def populate_user(db, user_count, verbose=True):
             created += 1
         users.append(user)
         if verbose:
-            print_progress_bar(ind+1, user_count)
+            progress_bar(ind+1)
 
     if verbose:
+        print()
         print("Created %d new users, %d skipped" % (created, user_count - created))
+
     defer.returnValue(map(lambda x: x['identifier'], users))
 
 
 @defer.inlineCallbacks
 def populate_build(db, build_count, builders_list, projects, user_names, verbose=True):
     """
-
     :param db: a handler to the DBConnection object
     :param build_count: an integer value with number of new builds
     :param builders_list: a list of builders. The builder is a BuilderConfig object
     :param projects: a list of a ProjectConfig objects
     :param user_names: a list of an usernames (identifier) from the database
+    :param verbose: a boolean value indicate to print all information to std output
     """
+
+    def handler(result, counter, *args):
+        result[counter] += 1
+
+    progress_bar = InitBar(size=build_count, stream=sys.stdout)
+
     if verbose:
         print("Starting creating builds")
-    created = 0
-    completed_results = [
-        results.SUCCESS,
-        results.WARNINGS,
-        results.FAILURE,
-        results.SKIPPED,
-        results.EXCEPTION,
-        results.CANCELED,
-        results.NOT_REBUILT,
-        results.DEPENDENCY_FAILURE,
-        results.MERGED,
-        results.INTERRUPTED,
-    ]
+    res = {
+        'created': 0,
+        'skipped': 0,
+    }
 
     for number in range(build_count):
         builder = random.choice(builders_list)
@@ -172,35 +175,16 @@ def populate_build(db, build_count, builders_list, projects, user_names, verbose
             'slavepool': None,
             'number': number,
             'slavename': random.choice(builder.slavenames),
-            'results': random.choice(completed_results),
+            'results': random.choice(COMPLETED_RESULTS),
         }
-        result = yield db.builds.createFullBuildObject(**build)
-        if result:
-            created += 1
+        promise = db.builds.createFullBuildObject(**build)
+        promise.addCallback(lambda *args: handler(res, 'created'))
+        promise.addErrback(lambda *args: handler(res, 'skipped'))
+        yield promise
 
         if verbose:
-            print_progress_bar(number+1, build_count)
+            progress_bar(number+1)
 
     if verbose:
-        print("Created %d new builds, %d skipped" % (created, build_count - created))
-
-
-def print_progress_bar(iteration, total, prefix='', suffix='', decimals=1, length=100, fill=u'█'):
-    """
-    Call in a loop to create terminal progress bar
-    @params:
-        iteration   - Required  : current iteration (Int)
-        total       - Required  : total iterations (Int)
-        prefix      - Optional  : prefix string (Str)
-        suffix      - Optional  : suffix string (Str)
-        decimals    - Optional  : positive number of decimals in percent complete (Int)
-        length      - Optional  : character length of bar (Int)
-        fill        - Optional  : bar fill character (Str)
-    """
-    percent = ("{0:." + str(decimals) + "f}").format(100 * (iteration / float(total)))
-    filled_length = int(length * iteration // total)
-    bar = fill * filled_length + '-' * (length - filled_length)
-    print('\r%s |%s| %s%% %s' % (prefix, bar, percent, suffix), end='\r')
-    # Print New Line on Complete
-    if iteration == total:
         print()
+        print("Created %d new builds, %d skipped" % (res['created'], res['skipped']))

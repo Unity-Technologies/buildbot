@@ -24,6 +24,7 @@ install:
   - if [ "$TEST_TARGET" != "javascript" ]; then pip install -v pyflakes; fi
   - if [ "$TEST_TARGET" != "javascript" ]; then pip install -v coveralls; fi
   - if [ "$TEST_TARGET" = "master" ]; then pip install service_identity; fi
+  - if [ "$TEST_TARGET" = "master" ]; then pip install -r master/requirements-dev.txt; fi
   - if [ "$TEST_TARGET" = "javascript" ]; then cd www/; fi
   - if [ "$TEST_TARGET" = "javascript" ]; then npm install; fi
 

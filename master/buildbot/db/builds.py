@@ -346,11 +346,10 @@ class BuildsConnectorComponent(base.DBConnectorComponent):
                     'finish_time': complete_at,
                 })
                 transaction.commit()
-                return True
             except Exception as e:
                 print("Exception occurs during create new build", e)
                 transaction.rollback()
-                return False
+                raise
 
         return self.db.pool.do(thd)
 
