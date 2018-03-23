@@ -27,7 +27,7 @@ class MybuildsResource(HtmlResource):
 
         builds = yield master.db.builds.getLastBuildsOwnedBy(
             user_id,
-            master.status.botmaster,
+            status.botmaster,
             master.config.myBuildDaysCount,
         )
         builds_by_ssid = MybuildsResource.prepare_builds_by_ssid(builds)

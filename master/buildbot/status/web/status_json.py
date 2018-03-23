@@ -68,16 +68,19 @@ FLAGS = """\
       results=0&results=7
       will only return the build where the result is either 0 or 7.
   - Slave Filters
-    build_steps
-    Show or hide the build steps set to 1 to show
-    build_props
-    Show or hide the build properties set to 1 to show
-  - Build Filters
-    steps
-    Show or hide the build steps set to 1 to show
-    props
-    Show or hide the build properties set to 1 to show
 
+    - build_steps - Show or hide the build steps set to 1 to show
+
+    - build_props - Show or hide the build properties set to 1 to show
+  - Build Filters
+
+    - steps - Show or hide the build steps set to 1 to show
+
+    - props - Show or hide the build properties set to 1 to show
+  - MyBuilds Filters
+
+    - user - show MyBuilds page for another user by his LDAP login. For example:
+      ?user=joe
 """
 
 EXAMPLES = """\
@@ -1386,14 +1389,13 @@ class MyBuildsJsonResource(JsonResource):
     @defer.inlineCallbacks
     def asDict(self, request):
         authz = request.site.buildbot_service.authz
-        master = MybuildsResource.getBuildmaster(request)
         if 'user' in request.args and request.args['user'][0]:
             username = request.args['user'][0]
         else:
             username = authz.getUsername(request)
         user_info = authz.getUserInfo(username)
         if user_info:
-            builds = yield MybuildsResource.prepare_builds(master, user_info['uid'])
+            builds = yield MybuildsResource.prepare_builds(self.status.master, user_info['uid'])
             defer.returnValue(builds)
         else:
             defer.returnValue(['User "%s" is unknown' % username])
