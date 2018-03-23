@@ -1385,16 +1385,15 @@ class MyBuildsJsonResource(JsonResource):
 
     @defer.inlineCallbacks
     def asDict(self, request):
-        authz = Authz()
-        mybuilds = MybuildsResource()
-        master = mybuilds.getBuildmaster(request)
+        authz = request.site.buildbot_service.authz
+        master = MybuildsResource.getBuildmaster(request)
         if 'user' in request.args and request.args['user'][0]:
             username = request.args['user'][0]
         else:
             username = authz.getUsername(request)
         user_info = authz.getUserInfo(username)
         if user_info:
-            builds = yield mybuilds.prepare_builds(master, user_info['uid'])
+            builds = yield MybuildsResource.prepare_builds(master, user_info['uid'])
             defer.returnValue(builds)
         else:
             defer.returnValue(['User "%s" is unknown' % username])

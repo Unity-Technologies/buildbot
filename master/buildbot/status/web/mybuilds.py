@@ -1,7 +1,7 @@
 from itertools import chain
 from operator import itemgetter
 from twisted.internet import defer
-
+from twisted.web.server import Request
 from buildbot.status.web.base import HtmlResource
 
 
@@ -19,20 +19,27 @@ class MybuildsResource(HtmlResource):
         template.autoescape = True
         defer.returnValue(template.render(**cxt))
 
+    @staticmethod
     @defer.inlineCallbacks
-    def prepare_builds(self, master, user_id):
+    def prepare_builds(master, user_id):
         status = master.getStatus()
-        display_repositories = self.prepare_display_repositories(status)
+        display_repositories = MybuildsResource.prepare_display_repositories(status)
 
         builds = yield master.db.builds.getLastBuildsOwnedBy(
             user_id,
             master.status.botmaster,
             master.config.myBuildDaysCount,
         )
-
-        builds_by_ssid = self.prepare_builds_by_ssid(builds)
+        builds_by_ssid = MybuildsResource.prepare_builds_by_ssid(builds)
         sourcestamps = yield master.db.sourcestamps.getSourceStampsForManyIds(builds_by_ssid.keys())
 
+        builds = MybuildsResource.merge_sourcestamps_to_build(builds_by_ssid, display_repositories,
+                                                              sourcestamps, status)
+        defer.returnValue(builds)
+
+    @staticmethod
+    def merge_sourcestamps_to_build(builds_by_ssid, display_repositories,
+                                    sourcestamps, status):
         for row in sourcestamps:
             build = builds_by_ssid[row['sourcestampsetid']]
             query_param = "%s_branch=%s" % (row['codebase'], row['branch'])
@@ -43,8 +50,7 @@ class MybuildsResource(HtmlResource):
 
             build['sourcestamps'].append(row)
 
-        builds = sorted(builds_by_ssid.values(), key=itemgetter('builds_id'), reverse=True)
-        defer.returnValue(builds)
+        return sorted(builds_by_ssid.values(), key=itemgetter('builds_id'), reverse=True)
 
     @staticmethod
     def prepare_display_repositories(status):
