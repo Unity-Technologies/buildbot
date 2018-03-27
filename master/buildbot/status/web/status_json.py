@@ -28,10 +28,9 @@ from twisted.web import html, resource, server
 
 from buildbot.schedulers.forcesched import ForceScheduler
 from buildbot.status.buildrequest import BuildRequestStatus
-from buildbot.status.web.authz import Authz
 from buildbot.status.web.base import AccessorMixin, HtmlResource, path_to_root, map_branches, getCodebasesArg, \
     getRequestCharset, getResultsArg, getCodebases, path_to_comparison
-from buildbot.status.web.mybuilds import MybuildsResource
+from buildbot.util.build import prepare_mybuilds
 
 
 _IS_INT = re.compile(r'^[-+]?\d+$')
@@ -1395,10 +1394,10 @@ class MyBuildsJsonResource(JsonResource):
             username = authz.getUsername(request)
         user_info = authz.getUserInfo(username)
         if user_info:
-            builds = yield MybuildsResource.prepare_builds(self.status.master, user_info['uid'])
+            builds = yield prepare_mybuilds(self.status.master, user_info['uid'])
             defer.returnValue(builds)
         else:
-            defer.returnValue(['User "%s" is unknown' % username])
+            defer.returnValue({'error': 'User "%s" is unknown' % username})
 
 
 class JsonStatusResource(JsonResource):

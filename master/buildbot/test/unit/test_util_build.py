@@ -1,12 +1,11 @@
 import datetime
 import mock
 from twisted.trial import unittest
-from buildbot.status.web.mybuilds import MybuildsResource
+from buildbot.util.build import merge_sourcestamps_to_build, prepare_builds_by_ssid, \
+    prepare_display_repositories
 
 
-class TestMybuildsResource(unittest.TestCase):
-    def setUp(self):
-        self.mybuilds = MybuildsResource()
+class TestUtilBuild(unittest.TestCase):
 
     def get_mocked_status(self):
         config1 = mock.Mock()
@@ -84,8 +83,8 @@ class TestMybuildsResource(unittest.TestCase):
             'submitted_at': '2018-03-22 13:07:11+00:00'
         }]
 
-        builds = self.mybuilds.merge_sourcestamps_to_build(builds_by_ssid, display_repositories,
-                                                           sourcestamps, status)
+        builds = merge_sourcestamps_to_build(builds_by_ssid, display_repositories,
+                                             sourcestamps, status)
 
         self.assertEqual(builds, expected_data)
 
@@ -110,22 +109,19 @@ class TestMybuildsResource(unittest.TestCase):
                 'complete_at': str(datetime.datetime(2018, 1, 4))},
         }
 
-        builds_by_ssid = self.mybuilds.prepare_builds_by_ssid(builds)
+        builds_by_ssid = prepare_builds_by_ssid(builds)
 
-        self.assertEqual(sorted(builds_by_ssid.keys()), [1, 2])
-        for value in builds_by_ssid.values():
-            self.assertIn(value, expected_builds.values())
+        for key in builds_by_ssid:
+            self.assertEqual(builds_by_ssid[key], expected_builds[key])
 
     def test_prepare_display_repositories(self):
         status = self.get_mocked_status()
-        display_repositories = self.mybuilds.prepare_display_repositories(status)
-
         expected_properties = {
             'https://github.com/stxunityproject/second-test-repository.git': 'https://ono.unity3d.com/unity-extra/fmod',
             'https://github.com/stxunityproject/second-test-repository2.git': 'https://ono.unity3d.com/unity-extra/documentation',
             'https://github.com/stxunityproject/second-test-repository3.git': 'https://github.com/stxunityproject/second-test-repository3.git',
         }
+
+        display_repositories = prepare_display_repositories(status)
+
         self.assertEqual(display_repositories, expected_properties)
-
-
-

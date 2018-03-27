@@ -17,7 +17,6 @@ import json
 from StringIO import StringIO
 
 import mock
-from buildbot.status.web.mybuilds import MybuildsResource
 
 from twisted.internet import defer
 from twisted.trial import unittest
@@ -1039,39 +1038,32 @@ class MyBuildsJsonResource(unittest.TestCase):
         }
         return data.get(username)
 
-    @mock.patch.object(MybuildsResource, "prepare_builds")
-    @mock.patch.object(MybuildsResource, "getBuildmaster")
+    @mock.patch('buildbot.status.web.status_json.prepare_mybuilds')
     @defer.inlineCallbacks
-    def test_asDict_for_user_from_query_param(self, getBuildmaster, prepare_builds):
-        prepare_builds.side_effect = self.mocked_prepare_builds
-        getBuildmaster.return_value = None
+    def test_asDict_for_user_from_query_param(self, prepare_mybuilds):
+        prepare_mybuilds.side_effect = self.mocked_prepare_builds
 
         self.request.args = {'user': ['fox']}
         builds = yield self.my_builds_json_resource.asDict(self.request)
 
         self.assertEqual(builds, "builds for fox")
 
-    @mock.patch.object(MybuildsResource, "prepare_builds")
-    @mock.patch.object(MybuildsResource, "getBuildmaster")
+    @mock.patch('buildbot.status.web.status_json.prepare_mybuilds')
     @defer.inlineCallbacks
-    def test_asDict_for_logged_user(self, getBuildmaster, prepare_builds):
-        prepare_builds.side_effect = self.mocked_prepare_builds
-        getBuildmaster.return_value = None
+    def test_asDict_for_logged_user(self, prepare_mybuilds):
+        prepare_mybuilds.side_effect = self.mocked_prepare_builds
 
         self.request.args = {}
         builds = yield self.my_builds_json_resource.asDict(self.request)
 
         self.assertEqual(builds, "builds for pyflakes")
 
-    @mock.patch.object(MybuildsResource, "prepare_builds")
-    @mock.patch.object(MybuildsResource, "getBuildmaster")
+    @mock.patch('buildbot.status.web.status_json.prepare_mybuilds')
     @defer.inlineCallbacks
-    def test_asDict_for_unknown_user(self, getBuildmaster, prepare_builds):
-        prepare_builds.side_effect = self.mocked_prepare_builds
-        getBuildmaster.return_value = None
+    def test_asDict_for_unknown_user(self, prepare_mybuilds):
+        prepare_mybuilds.side_effect = self.mocked_prepare_builds
 
         self.request.args = {'user': ['wolf']}
         builds = yield self.my_builds_json_resource.asDict(self.request)
 
-        self.assertEqual(builds, ['User "wolf" is unknown'])
-
+        self.assertEqual(builds, {'error': 'User "wolf" is unknown'})
