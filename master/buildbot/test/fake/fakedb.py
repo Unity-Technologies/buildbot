@@ -1448,6 +1448,13 @@ class FakeUsersComponent(FakeDBComponent):
                 return defer.succeed(uid)
         return defer.succeed(None)
 
+    def getUidByLdapUsername(self, username):
+        for uid in self.users:
+            if self.users[uid]['identifier'].startswith(username):
+                return defer.succeed(uid)
+        return defer.succeed(None)
+
+
 class FakeDBConnector(object):
     """
     A stand-in for C{master.db} that operates without an actual database

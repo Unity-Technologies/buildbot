@@ -20,10 +20,12 @@ from buildbot.status import builder, master
 from buildbot.test.fake import fakemaster
 from buildbot.test.fake.fakedb import FakeBuildsComponent, FakeUsersComponent, User
 
+
 class FakeDBConnector():
     def __init__(self):
         self.builds = FakeBuildsComponent(self, [])
-        self.users = FakeUsersComponent(self, [User(uid=1, identifier='soap'),])
+        self.users = FakeUsersComponent(self, "test_status_builder_cache")
+        self.users.insertTestData([User(uid=1, identifier='soap')])
 
 
 class TestBuildStatus(unittest.TestCase):
