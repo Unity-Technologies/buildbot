@@ -312,3 +312,16 @@ class UsersConnectorComponent(base.DBConnectorComponent):
             return row.uid
         d = self.db.pool.do(thd)
         return d
+
+    def getUidByLdapUsername(self, username):
+        def thd(conn):
+            tbl = self.db.model.users
+
+            q = tbl.select(whereclause=(tbl.c.identifier.like('{} <%'.format(username))))
+            row = conn.execute(q).fetchone()
+            if not row:
+                return None
+            return row.uid
+
+        d = self.db.pool.do(thd)
+        return d
