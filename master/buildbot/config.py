@@ -56,6 +56,16 @@ def error(error):
     else:
         raise ConfigErrors([error])
 
+
+TAG_AS_BRANCH_REGEX = r'^(20[0-9][0-9].[0-9]|[0-9].[0-9]|trunk)$'
+REGEX_BRANCHES = [
+    r'^(trunk)',                  # Trunk
+    r'^(20[0-9][0-9].[0-9])\/',   # 2017.1/
+    r'^([0-9].[0-9])\/',          # 5.0/
+    r'^release\/([0-9].[0-9])/'   # release/4.6
+]
+
+
 class MasterConfig(object):
 
     def __init__(self):
@@ -121,13 +131,8 @@ class MasterConfig(object):
         self.revlink = default_revlink_matcher
         self.projects = {}
         self.globalFactory = dict(initialSteps=[], lastSteps=[])
-        self.regex_branches = [
-            r'^(trunk)',                  # Trunk
-            r'^(20[0-9][0-9].[0-9])\/',   # 2017.1/
-            r'^([0-9].[0-9])\/',          # 5.0/
-            r'^release\/([0-9].[0-9])/'   # release/4.6
-        ]
-        self.tag_as_branch_regex = r'^(20[0-9][0-9].[0-9]|[0-9].[0-9]|trunk)$'
+        self.regex_branches = REGEX_BRANCHES
+        self.tag_as_branch_regex = TAG_AS_BRANCH_REGEX
 
     _known_config_keys = set([
         "buildbotURL", "buildCacheSize", "builders", "buildHorizon", "caches",
