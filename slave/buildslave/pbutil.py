@@ -26,6 +26,7 @@ from twisted.cred import error
 
 import klog
 
+
 class ReconnectingPBClientFactory(PBClientFactory,
                                   protocol.ReconnectingClientFactory):
     """Reconnecting client factory for PB brokers.

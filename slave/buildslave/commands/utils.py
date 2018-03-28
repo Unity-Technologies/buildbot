@@ -21,6 +21,7 @@ from twisted.python import runtime
 
 import klog
 
+
 def getCommand(name):
     possibles = which(name)
     if not possibles:

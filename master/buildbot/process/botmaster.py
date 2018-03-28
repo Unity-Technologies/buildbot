@@ -27,6 +27,7 @@ from buildbot.process.buildrequest import BuildRequest, BuildRequestControl
 from buildbot.process.buildrequestdistributor import KatanaBuildRequestDistributor
 import klog
 
+
 class BotMaster(config.ReconfigurableServiceMixin, service.MultiService):
 
     """This is the master-side service which manages remote buildbot slaves.

@@ -33,6 +33,7 @@ from buildbot.util.eventual import eventually
 from buildbot.interfaces import BuildSlaveTooOldError
 import klog
 
+
 class BuildStepFailed(Exception):
     pass
 

@@ -96,7 +96,6 @@ Maintainer/author: gary.poster@canonical.com
 """
 
 try:
-    import klog
     import buildbot.util
     import buildbot.changes.base
     import buildbot.changes.changes
@@ -104,6 +103,7 @@ except ImportError:
     DEFINE_POLLER = False
 else:
     DEFINE_POLLER = True
+import klog
 import bzrlib.branch
 import bzrlib.errors
 import bzrlib.trace

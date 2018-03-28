@@ -1,5 +1,6 @@
 import datetime
 import json
+import uuid
 
 
 def __get_json(failure_, why):
@@ -9,6 +10,7 @@ def __get_json(failure_, why):
         'msg': str(failure_),
         'datetime': str(datetime.datetime.now()),
         'header': why,
+        'error_hash': str(uuid.uuid4()),
     }
     if failure_.frames:
         failure_dict.update({

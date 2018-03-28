@@ -9,7 +9,7 @@ from twisted.trial import unittest
 
 class TestKlog(unittest.TestCase):
     def check_failure(self, fail_dict, method_name):
-        expected_failure = {
+        similar_to_failure = {
             'type': "<type 'exceptions.ZeroDivisionError'>",
             'value': 'integer division or modulo by zero',
             'msg': '[list of exceptions]',
@@ -18,43 +18,53 @@ class TestKlog(unittest.TestCase):
             'file': 'test_klog.py',
             'line': 23,
             'header': None,
+            'error_hash': 'string with uuid4'
         }
-        self.assertEqual(fail_dict['type'], expected_failure['type'])
-        self.assertEqual(fail_dict['value'], expected_failure['value'])
-        self.assertSubstring(fail_dict['msg'][0], "[")
-        self.assertSubstring(fail_dict['msg'][-1], "]")
-        self.assertEqual(fail_dict['method'], expected_failure['method'])
-        self.assertIn(expected_failure['file'], fail_dict['file'])
-        self.assertGreater(fail_dict['line'], 20)
-        self.assertEqual(len(fail_dict), len(expected_failure))
+        self.assertEqual(fail_dict['type'], similar_to_failure['type'])
+        self.assertEqual(fail_dict['value'], similar_to_failure['value'])
+        self.assertEqual(fail_dict['method'], similar_to_failure['method'])
+        self.assertIn(similar_to_failure['file'], fail_dict['file'])
+        self.assertIn('msg', fail_dict)
+        self.assertIn('datetime', fail_dict)
+        self.assertIn('line', fail_dict)
+        self.assertIn('header', fail_dict)
+        self.assertIn('error_hash', fail_dict)
+        self.assertEqual(len(fail_dict), len(similar_to_failure))
 
     def check_exception(self, fail_dict):
-        expected_failure = {
+        similar_to_failure = {
             'type': "<type 'exceptions.ZeroDivisionError'>",
             'value': 'integer division or modulo by zero',
             'msg': '[list of exceptions]',
             'datetime': datetime.datetime.now(),
             'header': None,
+            'error_hash': 'string with uuid4'
         }
-        self.assertEqual(fail_dict['type'], expected_failure['type'])
-        self.assertEqual(fail_dict['value'], expected_failure['value'])
-        self.assertSubstring(fail_dict['msg'][0], "[")
-        self.assertSubstring(fail_dict['msg'][-1], "]")
-        self.assertEqual(len(fail_dict), len(expected_failure))
+        self.assertEqual(fail_dict['type'], similar_to_failure['type'])
+        self.assertEqual(fail_dict['value'], similar_to_failure['value'])
+        self.assertIn('msg', fail_dict)
+        self.assertIn('datetime', fail_dict)
+        self.assertIn('header', fail_dict)
+        self.assertIn('error_hash', fail_dict)
+        self.assertEqual(len(fail_dict), len(similar_to_failure))
 
     def check_exception_with_why(self, fail_dict):
-        expected_failure = {
+        similar_to_failure = {
             'type': "<type 'exceptions.ZeroDivisionError'>",
             'value': 'integer division or modulo by zero',
             'msg': '[list of exceptions]',
             'datetime': datetime.datetime.now(),
             'header': "Very ugly exception",
+            'error_hash': 'string with uuid4'
         }
-        self.assertEqual(fail_dict['type'], expected_failure['type'])
-        self.assertEqual(fail_dict['value'], expected_failure['value'])
-        self.assertSubstring(fail_dict['msg'][0], "[")
-        self.assertSubstring(fail_dict['msg'][-1], "]")
-        self.assertEqual(len(fail_dict), len(expected_failure))
+        self.assertEqual(fail_dict['type'], similar_to_failure['type'])
+        self.assertEqual(fail_dict['value'], similar_to_failure['value'])
+        self.assertIn('msg', fail_dict)
+        self.assertIn('datetime', fail_dict)
+        self.assertIn('header', fail_dict)
+        self.assertIn('error_hash', fail_dict)
+        self.assertEqual(fail_dict['header'], similar_to_failure['header'])
+        self.assertEqual(len(fail_dict), len(similar_to_failure))
 
     def test_get_json_for_failure(self):
         fail_dict = {}

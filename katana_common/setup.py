@@ -3,6 +3,7 @@ from distutils.core import setup
 
 setup_args = {
     'name': "katana_common",
+    'version': '1.0.0',
     'description': "Katana log tools",
     'long_description': "Katana log tools",
     'package_dir': {'klog': ''},

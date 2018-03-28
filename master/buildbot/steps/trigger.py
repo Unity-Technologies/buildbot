@@ -25,6 +25,7 @@ from buildbot.schedulers.triggerable import TriggerableSchedulerStopped
 from buildbot.steps.resumebuild import ResumeBuild
 import klog
 
+
 class Trigger(ResumeBuild):
     name = "Trigger"
 

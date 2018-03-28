@@ -25,6 +25,7 @@ from twisted.python import log
 
 import klog
 
+
 class NewCredPerspective(pb.Avatar):
     def attached(self, mind):
         return self

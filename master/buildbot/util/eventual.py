@@ -19,6 +19,7 @@ from twisted.internet import reactor, defer
 from twisted.python import log
 import klog
 
+
 class _SimpleCallQueue(object):
 
     _reactor = reactor
