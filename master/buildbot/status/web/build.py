@@ -299,7 +299,7 @@ class StatusResourceBuild(HtmlResource):
 
             cxt['steps'].append(step)
 
-            s.prepare_trigger_links()
+            yield s.prepare_trigger_links()
 
             urls = []
             for k,v in s.getURLs().items():
