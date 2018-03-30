@@ -6,7 +6,7 @@
 {% set bodyId = 'id="builddetail_page"' %}
 
 {% block submenu %}
-{{submenu.buildsubmenu(active_page=build_number, pathNum=5, buildersPath=path_to_builders, codebasesPath=path_to_codebases, builderName=builder_name, builderPath=path_to_builder, buildNumber=build_number, stepName='', selectedProject=selectedproject)}}
+{{submenu.buildsubmenu(active_page=build_number, pathNum=5, buildersPath=path_to_builders, codebasesPath=path_to_codebases, builderName=builder_friendly_name, builderPath=path_to_builder, buildNumber=build_number, stepName='', selectedProject=selected_project)}}
 {% endblock %}
 
 {% block content %}
@@ -33,23 +33,21 @@
                 {% endif %}
             </dl>
 
-            {% if b.isResuming() %}
+            {% if build_status.isResuming() %}
                 <div class="divider"></div>
                 <h2 class="head-2">
                         Stop Build
                 </h2>
-                    {{ forms.stop_build(build_url+"/cancel"+codebases_arg, authz, on_all=False, short=False, label='This Build')
-                    }}
+                    {{ forms.stop_build(build_url+"/cancel"+codebases_arg, authz, on_all=False, short=False, label='This Build') }}
                 <div class="divider"></div>
 
-            {% elif not b.isFinished() %}
+            {% elif not build_status.isFinished() %}
                 <div class="divider"></div>
                 {% if authz.advertiseAction('stopBuild', request) %}
                     <h2 class="head-2">
                         Stop Build
                     </h2>
-                    {{ forms.stop_build(build_url+"/stop"+codebases_arg, authz, on_all=False, short=False, label='This Build', chained_build=chained_build)
-                    }}
+                    {{ forms.stop_build(build_url+"/stop"+codebases_arg, authz, on_all=False, short=False, label='This Build', chained_build=chained_build) }}
                     <div class="divider"></div>
                 {% endif %}
 
@@ -59,18 +57,17 @@
                     <div class="divider"></div>
                 {% else %}
                     <div class="divider"></div>
-                    {% if b.getTestResults() %}
+                    {% if build_status.getTestResults() %}
                     <h3><a href="{{ tests_link }}"/></h3>
                     {% endif %}
                 {% endif %}
 
-            {% elif authz.advertiseAction('forceBuild', request) and b.isFinished() %}
+            {% elif authz.advertiseAction('forceBuild', request) and build_status.isFinished() %}
                 <div class="divider"></div>
                 <h2 class="head-2">
                     Resubmit Build
                 </h2>
-                {{ forms.rebuild_build(authz, sourcestamps[0], builder.name, b.number,
-                path_to_builder) }}
+                {{ forms.rebuild_build(authz, sourcestamps[0], builder_name, build_status.number, path_to_builder) }}
                 <div class="divider"></div>
             {% endif %}
 
@@ -79,9 +76,9 @@
             </h2>
 
             {% if slave_url %}
-            <a class="small-head" href="{{ slave_url|e }}">{{ slave_friendly_name|e }}</a>
+                <a class="small-head" href="{{ slave_url|e }}">{{ slave_friendly_name|e }}</a>
             {% else %}
-            {{ slave_friendly_name|e }}
+                {{ slave_friendly_name|e }}
             {% endif %}
             <div class="divider"></div>
 
@@ -90,7 +87,7 @@
             </h2>
 
             <p>
-                {{ b.getReason()|e }}
+                {{ build_status.getReason()|e }}
             </p>
 
             <div class="divider"></div>
@@ -110,14 +107,14 @@
                         </td>
                     </tr>
                     {% if end %}
-                    <tr>
-                        <td>
-                            End
-                        </td>
-                        <td class="end-time-js">
-                            {{ end }}
-                        </td>
-                    </tr>
+                        <tr>
+                            <td>
+                                End
+                            </td>
+                            <td class="end-time-js">
+                                {{ end }}
+                            </td>
+                        </tr>
                     {% endif %}
                     <tr>
                         <td>
@@ -134,134 +131,134 @@
 
             <h2 class="head-2">
                 {% if sourcestamps|count == 1 %}
-                SourceStamp
+                    SourceStamp
                 {% else %}
-                SourceStamps
+                    SourceStamps
                 {% endif %}
             </h2>
 
             {% for ss in sourcestamps %}
-            <h3>{{ ss.codebase }}</h3>
+                <h3>{{ ss.codebase }}</h3>
 
-            <div class="dataTables_wrapper">
-                <table class="table table-katana table-stripes m-bottom">
+                <div class="dataTables_wrapper">
+                    <table class="table table-katana table-stripes m-bottom">
 
 
-                    {% if ss.project %}
-                    <tr>
-                        <td>
-                            Project
-                        </td>
-                        <td>
-                            {{ ss.project|projectlink }}
-                        </td>
-                    </tr>
-                    {% endif %}
+                        {% if ss.project %}
+                        <tr>
+                            <td>
+                                Project
+                            </td>
+                            <td>
+                                {{ ss.project|projectlink }}
+                            </td>
+                        </tr>
+                        {% endif %}
 
-                    {% if ss.repository %}
-                    <tr>
-                        <td>Repository</td>
-                        <td>{{ ss.repository|repolink }}</td>
-                    </tr>
-                    {% endif %}
+                        {% if ss.repository %}
+                        <tr>
+                            <td>Repository</td>
+                            <td>{{ ss.repository|repolink }}</td>
+                        </tr>
+                        {% endif %}
 
-                    {% if ss.branch %}
-                    <tr>
-                        <td>Branch</td>
-                        <td>{{ ss.branch|e }}</td>
-                    </tr>
-                    {% endif %}
+                        {% if ss.branch %}
+                        <tr>
+                            <td>Branch</td>
+                            <td>{{ ss.branch|e }}</td>
+                        </tr>
+                        {% endif %}
 
-                    {% if ss.revision %}
-                    <tr>
-                        <td>Revision</td>
-                        <td>{{ ss.revision|revlink(ss.repository) }}</td>
-                    </tr>
-                    {% endif %}
+                        {% if ss.revision %}
+                        <tr>
+                            <td>Revision</td>
+                            <td>{{ ss.revision|revlink(ss.repository) }}</td>
+                        </tr>
+                        {% endif %}
 
-                    {% if got_revisions[ss.codebase] %}
-                    <tr>
-                        <td>Got Revision</td>
-                        <td>{{ got_revisions[ss.codebase]|revlink(ss.repository) }}</td>
-                    </tr>
-                    {% endif %}
+                        {% if got_revisions[ss.codebase] %}
+                        <tr>
+                            <td>Got Revision</td>
+                            <td>{{ got_revisions[ss.codebase]|revlink(ss.repository) }}</td>
+                        </tr>
+                        {% endif %}
 
-                    {% if ss.patch %}
-                    <tr>
-                        <td>Patch</td>
-                        <td>YES</td>
-                    </tr>
-                    {% endif %}
+                        {% if ss.patch %}
+                        <tr>
+                            <td>Patch</td>
+                            <td>YES</td>
+                        </tr>
+                        {% endif %}
 
-                    {% if ss.changes %}
-                    <tr>
-                        <td>Changes</td>
-                        <td><a href="#changes-{{ ss.codebase }}">{{ ss.changes|count }} change{{ 's' if ss.changes|count
-                            > 1 else '' }}</a></td>
-                    </tr>
-                    {% endif %}
+                        {% if ss.changes %}
+                        <tr>
+                            <td>Changes</td>
+                            <td><a href="#changes-{{ ss.codebase }}">{{ ss.changes|count }} change{{ 's' if ss.changes|count
+                                > 1 else '' }}</a></td>
+                        </tr>
+                        {% endif %}
 
-                    {% if not ss.branch and not ss.revision and not ss.patch and not ss.changes %}
-                    <tr>
-                        <td colspan="2">Build of most recent revision</td>
-                    </tr>
-                    {% endif %}
-                </table>
-            </div>
+                        {% if not ss.branch and not ss.revision and not ss.patch and not ss.changes %}
+                        <tr>
+                            <td colspan="2">Build of most recent revision</td>
+                        </tr>
+                        {% endif %}
+                    </table>
+                </div>
             {% endfor %}
 
             {% if resume %}
-            <div class="divider"></div>
-            <h2 class="head-2">
-                Build Resume Information
-            </h2>
+                <div class="divider"></div>
+                <h2 class="head-2">
+                    Build Resume Information
+                </h2>
 
-            {% for rb in resume %}
-            <div class="dataTables_wrapper">
-                <table class="table table-katana table-stripes m-bottom">
-                    <tr>
-                        <td>
-                            Start
-                        </td>
-                        <td class="start-time-js">
-                            {{ rb.startTime }}
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            End
-                        </td>
-                        <td class="end-time-js">
-                            {{ rb.finishedTime }}
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            BuildSlave
-                        </td>
-                        <td >
-                            {{ rb.slavename }}
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            Last Step
-                        </td>
-                        <td > {{ rb.lastStepName }}
-                        </td>
-                    </tr>
-                    {% if rb.elapsed %}
-                    <tr>
-                        <td>
-                            Elapsed
-                        </td>
-                        <td> {{ rb.elapsed}}
-                        </td>
-                    </tr>
-                    {% endif %}
-                </table>
-            </div>
-            {% endfor %}
+                {% for rb in resume %}
+                    <div class="dataTables_wrapper">
+                        <table class="table table-katana table-stripes m-bottom">
+                            <tr>
+                                <td>
+                                    Start
+                                </td>
+                                <td class="start-time-js">
+                                    {{ rb.startTime }}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    End
+                                </td>
+                                <td class="end-time-js">
+                                    {{ rb.finishedTime }}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    BuildSlave
+                                </td>
+                                <td >
+                                    {{ rb.slavename }}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    Last Step
+                                </td>
+                                <td > {{ rb.lastStepName }}
+                                </td>
+                            </tr>
+                            {% if rb.elapsed %}
+                            <tr>
+                                <td>
+                                    Elapsed
+                                </td>
+                                <td> {{ rb.elapsed}}
+                                </td>
+                            </tr>
+                            {% endif %}
+                        </table>
+                    </div>
+                {% endfor %}
             {% endif %}
 
             {#
@@ -380,7 +377,7 @@
             </div>
             {% endif %}
 
-            {% for link in customBuildUrls %}
+            {% for link in custom_build_urls %}
             <div>
                 <a class="small-head" target="_blank" href='{{ link.url }}'>
                     {{ link.name }}
