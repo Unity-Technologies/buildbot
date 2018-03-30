@@ -17,9 +17,7 @@
 <div class="row vertical-line">
     <div class="rounded-container m-bottom20">
         <div class="col-md-6">
-            <div id="buildResult">
-
-            </div>
+            <div id="buildResult"></div>
 
             <dl class="child-table">
                 {% if top_build_url %}
@@ -33,7 +31,7 @@
                 {% endif %}
             </dl>
 
-            {% if build_status.isResuming() %}
+            {% if build_is_resuming %}
                 <div class="divider"></div>
                 <h2 class="head-2">
                         Stop Build
@@ -41,7 +39,7 @@
                     {{ forms.stop_build(build_url+"/cancel"+codebases_arg, authz, on_all=False, short=False, label='This Build') }}
                 <div class="divider"></div>
 
-            {% elif not build_status.isFinished() %}
+            {% elif not build_is_finished %}
                 <div class="divider"></div>
                 {% if authz.advertiseAction('stopBuild', request) %}
                     <h2 class="head-2">
@@ -57,17 +55,17 @@
                     <div class="divider"></div>
                 {% else %}
                     <div class="divider"></div>
-                    {% if build_status.getTestResults() %}
-                    <h3><a href="{{ tests_link }}"/></h3>
+                    {% if tests_link %}
+                        <h3><a href="{{ tests_link }}"/></h3>
                     {% endif %}
                 {% endif %}
 
-            {% elif authz.advertiseAction('forceBuild', request) and build_status.isFinished() %}
+            {% elif authz.advertiseAction('forceBuild', request) and build_is_finished %}
                 <div class="divider"></div>
                 <h2 class="head-2">
                     Resubmit Build
                 </h2>
-                {{ forms.rebuild_build(authz, sourcestamps[0], builder_name, build_status.number, path_to_builder) }}
+                {{ forms.rebuild_build(authz, source_stamps[0], builder_name, build_number, path_to_builder) }}
                 <div class="divider"></div>
             {% endif %}
 
@@ -87,7 +85,7 @@
             </h2>
 
             <p>
-                {{ build_status.getReason()|e }}
+                {{ build_reason|e }}
             </p>
 
             <div class="divider"></div>
@@ -130,14 +128,14 @@
             <div class="divider"></div>
 
             <h2 class="head-2">
-                {% if sourcestamps|count == 1 %}
+                {% if source_stamps|count == 1 %}
                     SourceStamp
                 {% else %}
                     SourceStamps
                 {% endif %}
             </h2>
 
-            {% for ss in sourcestamps %}
+            {% for ss in source_stamps %}
                 <h3>{{ ss.codebase }}</h3>
 
                 <div class="dataTables_wrapper">
@@ -385,7 +383,7 @@
             </div>
             {% endfor %}
 
-            {% if result_css is defined and result_css == "failure" and slave_debug_url %}
+            {% if result_css == "failure" and slave_debug_url %}
             <div>
                 <a class="small-head" target="_blank" href={{ slave_debug_url }}>
                     Build Failure? Only Happens on Katana?

@@ -19,20 +19,20 @@ from twisted.web import html
 from twisted.internet import defer, reactor
 from twisted.web.util import Redirect, DeferredResource
 
-import urllib, time
+import time
 from twisted.python import log
 from buildbot.status.web.base import HtmlResource, \
     css_classes, path_to_build, path_to_builder, path_to_slave, \
-    path_to_codebases, path_to_builders, path_to_step, getCodebasesArg, \
-    getAndCheckProperties, ActionResource, path_to_authzfail, \
+    path_to_codebases, path_to_builders, getCodebasesArg, \
+    ActionResource, path_to_authzfail, \
     getRequestCharset, path_to_json_build, path_to_build_by_params
 from buildbot.schedulers.forcesched import ForceScheduler, TextParameter
 from buildbot.status.web.status_json import BuildJsonResource
 from buildbot.status.web.step import StepsResource
 from buildbot.status.web.tests import TestsResource
-from buildbot.status.build import BuildStatus
 from buildbot import util, interfaces
-from buildbot.status.results import RESUME, EXCEPTION
+from buildbot.util.steps import get_steps
+from buildbot.status.results import RESUME
 
 
 class CancelBuildActionResource(ActionResource):
@@ -210,116 +210,36 @@ class StatusResourceBuild(HtmlResource):
     @defer.inlineCallbacks
     def content(self, req, cxt):
         status = self.getStatus(req)
-        cxt = self.prepare_context(req, cxt)
+        cxt = self.__prepare_context(req, cxt)
         codebases_arg = getCodebasesArg(req)
+        slave_obj = None
 
-        if not self.build_status.isFinished():
-            cxt['stop_build_chain'] = False
-            step = self.build_status.getCurrentStep()
-            if not step:
-                cxt['current_step'] = "[waiting for build slave]"
-            else:
-                if step.isWaitingForLocks():
-                    cxt['current_step'] = "%s [waiting for build slave]" % step.getName()
-                else:
-                    cxt['current_step'] = step.getName()
-            when = self.build_status.getETA()
-            if when is not None:
-                cxt['when'] = util.formatInterval(when)
-                cxt['when_time'] = time.strftime("%H:%M:%S", time.localtime(time.time() + when))
-
-        else:
+        is_finished_build = self.build_status.isFinished()
+        if is_finished_build:
             cxt['result_css'] = css_classes[self.build_status.getResults()]
-            if self.build_status.getTestResults():
-                cxt['tests_link'] = req.childLink("tests")
 
-        ssList = self.build_status.getSourceStamps()
-        sourcestamps = cxt['sourcestamps'] = ssList
-
-        all_got_revisions = self.build_status.getAllGotRevisions()
-        cxt['got_revisions'] = all_got_revisions
+        if is_finished_build and self.build_status.getTestResults():
+            cxt['tests_link'] = req.childLink("tests")
 
         try:
             slave_obj = status.getSlave(self.build_status.getSlavename())
-
-            if slave_obj is not None:
-                cxt['slave_friendly_name'] = slave_obj.getFriendlyName()
-                cxt['slave_url'] = path_to_slave(req, slave_obj)
-            else:
-                cxt['slave_friendly_name'] = self.build_status.getSlavename()
-                cxt['slave_url'] = ""
-
         except KeyError:
             pass
+
+        if slave_obj:
+            cxt['slave_friendly_name'] = slave_obj.getFriendlyName()
+            cxt['slave_url'] = path_to_slave(req, slave_obj)
 
         if self.build_status.resume:
             cxt['resume'] = self.build_status.resume
 
-        cxt['steps'] = []
+        cxt['steps'] = yield get_steps(
+            self.build_status.getSteps(),
+            codebases_arg,
+            req,
+        )
 
-        for s in self.build_status.getSteps():
-            step = {'name': s.getName()}
-
-            if s.isFinished():
-                if s.isHidden():
-                    continue
-
-                step['css_class'] = css_classes[s.getResults()[0]]
-                start, end = s.getTimes()
-                step['time_to_run'] = util.formatInterval(end - start)
-            elif s.isStarted():
-                if s.isWaitingForLocks():
-                    step['css_class'] = "waiting"
-                    step['time_to_run'] = "waiting for locks"
-                else:
-                    step['css_class'] = "running"
-                    step['time_to_run'] = "running"
-            else:
-                step['css_class'] = "not-started"
-                step['time_to_run'] = ""
-
-            step['link'] = path_to_step(req, s)
-            step['text'] = " ".join(s.getText())
-
-            cxt['steps'].append(step)
-
-            yield s.prepare_trigger_links()
-
-            urls = []
-            for k,v in s.getURLs().items():
-                if isinstance(v, dict):
-                    if 'results' in v.keys() and v['results'] in css_classes:
-                        url_dict = dict(logname=k, url=v['url'] + codebases_arg, results=css_classes[v['results']])
-                    else:
-                        url_dict = dict(logname=k, url=v['url'] + codebases_arg)
-                else:
-                    url_dict = dict(logname=k, url=v + codebases_arg)
-                urls.append(url_dict)
-
-            step['urls'] = urls
-
-            step['logs'] = []
-            for l in s.getLogs():
-                logname = l.getName()
-                link = "steps/{}/logs/{}{}".format(
-                    urllib.quote(s.getName(), safe=''),
-                    urllib.quote(logname, safe=''),
-                    codebases_arg,
-                )
-                step['logs'].append(
-                    {
-                        'link': req.childLink(link),
-                        'name': logname
-                    }
-                )
-
-        scheduler = self.build_status.getProperty("scheduler", None)
-        parameters = {}
-        master = self.getBuildmaster(req)
-        for sch in master.allSchedulers():
-            if isinstance(sch, ForceScheduler) and scheduler == sch.name:
-                for p in sch.all_fields:
-                    parameters[p.name] = p
+        parameters = self.__get_force_scheduler_parameters(req)
 
         ps = cxt['properties'] = []
         for name, value, source in self.build_status.getProperties().asList():
@@ -354,7 +274,7 @@ class StatusResourceBuild(HtmlResource):
             cxt['elapsed'] = util.formatInterval(now - start)
 
         has_changes = False
-        for ss in sourcestamps:
+        for ss in self.build_status.getSourceStamps():
             has_changes = has_changes or ss.changes
         cxt['has_changes'] = has_changes
         cxt['authz'] = self.getAuthz(req)
@@ -470,7 +390,14 @@ class StatusResourceBuild(HtmlResource):
 
         return HtmlResource.getChild(self, path, req)
 
-    def prepare_context(self, request, cxt=None):
+    def __prepare_context(self, request, cxt=None):
+        """ This method prepares context for templates
+
+        :param request: http request object
+        :param cxt: default context variable
+        :type cxt: dictionary
+        :return: dictionary with variables for template
+        """
         if not cxt:
             context = {}
         else:
@@ -480,20 +407,51 @@ class StatusResourceBuild(HtmlResource):
 
         context['builder_name'] = builder.name
         context['builder_friendly_name'] = builder.getFriendlyName()
-        context['build_number'] = self.build_status.getNumber()
-        context['build_status'] = self.build_status
         context['selected_project'] = builder.getProject()
+
+        context['build_number'] = self.build_status.getNumber()
+        context['custom_build_urls'] = self.build_status.getCustomUrls()
+        context['source_stamps'] = self.build_status.getSourceStamps()
+        context['got_revisions'] = self.build_status.getAllGotRevisions()
+        context['slave_friendly_name'] = self.build_status.getSlavename()
+        context['build_reason'] = self.build_status.getReason()
+        context['build_is_resuming'] = self.build_status.isResuming()
+        context['build_is_finished'] = self.build_status.isFinished()
+
         context['path_to_builder'] = path_to_builder(request, self.build_status.getBuilder())
         context['path_to_builders'] = path_to_builders(request, builder.getProject())
         context['path_to_codebases'] = path_to_codebases(request, builder.getProject())
         context['build_url'] = path_to_build(request, self.build_status, False)
         context['slave_debug_url'] = self.getBuildmaster(request).config.slave_debug_url
-        context['custom_build_urls'] = self.build_status.getCustomUrls()
         context['codebases_arg'] = getCodebasesArg(request=request)
         context['parent_build_url'] = None
         context['top_build_url'] = None
 
+        context['tests_link'] = None
+        context['resume'] = None
+        context['result_css'] = ""
+        context['slave_url'] = ""
+        context['steps'] = []
+
         return context
+
+    def __get_force_scheduler_parameters(self, request):
+        scheduler_name = self.build_status.getProperty("scheduler", None)
+        parameters = {}
+        scheduler = next(
+            ifilter(
+                lambda s: s.name == scheduler_name and isinstance(s, ForceScheduler),
+                self.getBuildmaster(request).allSchedulers(),
+            ),
+            None
+        )
+        if not scheduler:
+            return {}
+
+        for p in scheduler.all_fields:
+            parameters[p.name] = p
+
+        return parameters
 
 
 # /builders/$builder/builds
