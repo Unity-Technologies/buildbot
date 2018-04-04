@@ -22,14 +22,21 @@ from buildbot.status.web.base import path_to_step
 
 
 @defer.inlineCallbacks
-def get_steps(steps_list, codebases_arg, req):
+def get_steps(steps_list, codebases_arg, request):
+    """ This function return steps list with full description
+
+    :param steps_list: list of steps in build
+    :param codebases_arg: additional parameters for url
+    :param request: http request object
+    :return:
+    """
     steps = []
     for step in steps_list:
         step_obj = {
             'name': step.getName(),
             'css_class': 'not-started',
             'time_to_run': '',
-            'link': path_to_step(req, step),
+            'link': path_to_step(request, step),
             'text': ' '.join(step.getText()),
             'urls': [],
             'logs': [],
@@ -50,13 +57,13 @@ def get_steps(steps_list, codebases_arg, req):
         yield step.prepare_trigger_links()
 
         step_obj['urls'] = __prepare_url_object(step, codebases_arg)
-        step_obj['logs'] = get_logs_for_step(step, codebases_arg, req)
+        step_obj['logs'] = __get_logs_for_step(step, codebases_arg, request)
 
         steps.append(step_obj)
     yield steps
 
 
-def get_logs_for_step(step, codebases_arg, request):
+def __get_logs_for_step(step, codebases_arg, request):
     logs = []
     for log in step.getLogs():
         log_name = log.getName()

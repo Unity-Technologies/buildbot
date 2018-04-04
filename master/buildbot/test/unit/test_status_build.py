@@ -20,6 +20,8 @@ from buildbot.status import build
 from buildbot import interfaces
 from buildbot.test.fake import fakemaster
 from buildbot import util
+from buildbot.util.urls import get_url_and_name_build_in_chain
+
 
 class FakeBuilderStatus:
     implements(interfaces.IBuilderStatus)
@@ -152,3 +154,46 @@ class TestBuildGetSourcestamps(unittest.TestCase):
                                  FakeSource('lib2', 'aaaaaaa'),
                                  FakeSource('lib3', '0000000')]
         self.assertEqual(sourcestamps, expected_sourcestamps)
+
+
+class TestBuildStatusUtils(unittest.TestCase):
+    @mock.patch('buildbot.status.web.base.path_to_build_by_params')
+    def test_get_url_and_name_build_in_chain_with_selected_build_in_chain(self, path_mock):
+        path_mock.return_value = "http://example.com/example/url"
+
+        chained_builds = [
+            {'id': 1, 'buildername': 'Test Builder', 'number': 13},
+            {'id': 2, 'buildername': 'Test Builder', 'number': 14},
+            {'id': 3, 'buildername': 'Another Builder', 'number': 15},
+            {'id': 4, 'buildername': 'Another Builder', 'number': 16},
+        ]
+        build_id = 3
+
+        build_url, build_name = get_url_and_name_build_in_chain(
+            build_id,
+            chained_builds,
+            None,
+            None,
+        )
+
+        self.assertEqual(build_url, "http://example.com/example/url")
+        self.assertEqual(build_name, "Another Builder #15")
+
+    def test_get_url_and_name_build_in_chain_with_selected_build_not_in_chain(self):
+        chained_builds = [
+            {'id': 1, 'buildername': 'Test Builder', 'number': 13},
+            {'id': 2, 'buildername': 'Test Builder', 'number': 14},
+            {'id': 3, 'buildername': 'Another Builder', 'number': 15},
+            {'id': 4, 'buildername': 'Another Builder', 'number': 16},
+        ]
+        build_id = 5
+
+        build_url, build_name = get_url_and_name_build_in_chain(
+            build_id,
+            chained_builds,
+            None,
+            None,
+        )
+
+        self.assertEqual(build_url, None)
+        self.assertEqual(build_name, None)
