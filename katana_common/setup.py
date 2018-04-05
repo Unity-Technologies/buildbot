@@ -6,7 +6,7 @@ setup_args = {
     'version': '1.0.0',
     'description': "Katana log tools",
     'long_description': "Katana log tools",
-    'package_dir': {'klog': ''},
+    'package_dir': {'klog': 'klog'},
     'packages': ["klog"],
     # This makes it include all files from MANIFEST.in
     # It also needs a newer version of setuptools than 17.1
