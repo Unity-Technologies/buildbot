@@ -16,20 +16,20 @@ import urllib
 
 from twisted.internet import defer
 
-from buildbot import util
-from buildbot.status.web.base import css_classes
-from buildbot.status.web.base import path_to_step
+from buildbot.status.web.base import css_classes, path_to_step
+from buildbot.util import formatInterval
 
 
 @defer.inlineCallbacks
 def get_steps(steps_list, codebases_arg, request):
     """ This function return steps list with full description
 
-    :param steps_list: list of steps in build
+    :param steps_list: list of steps in build (object must implement IBuildStepStatus)
     :param codebases_arg: additional parameters for url
     :param request: http request object
     :return:
     """
+
     steps = []
     for step in steps_list:
         step_obj = {
@@ -41,13 +41,13 @@ def get_steps(steps_list, codebases_arg, request):
             'urls': [],
             'logs': [],
         }
-        if step.isFinished and step.isHidden():
+        if step.isFinished() and step.isHidden():
             continue
 
         if step.isFinished():
             start, end = step.getTimes()
             step_obj['css_class'] = css_classes[step.getResults()[0]]
-            step_obj['time_to_run'] = util.formatInterval(end - start)
+            step_obj['time_to_run'] = formatInterval(end - start)
         elif step.isStarted():
             is_waiting = step.isWaitingForLocks()
             step_obj['css_class'] = 'waiting' if is_waiting else 'running'
@@ -60,7 +60,7 @@ def get_steps(steps_list, codebases_arg, request):
         step_obj['logs'] = __get_logs_for_step(step, codebases_arg, request)
 
         steps.append(step_obj)
-    yield steps
+    defer.returnValue(steps)
 
 
 def __get_logs_for_step(step, codebases_arg, request):
@@ -80,6 +80,8 @@ def __get_logs_for_step(step, codebases_arg, request):
 
 
 def __prepare_url_object(step, codebases_arg):
+    """ @TODO refactor """
+
     urls = []
     for k, v in step.getURLs().items():
         if isinstance(v, dict):

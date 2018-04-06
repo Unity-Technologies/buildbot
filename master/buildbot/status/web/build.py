@@ -416,9 +416,12 @@ class StatusResourceBuild(HtmlResource):
             if name == 'submittedTime':
                 cxt_value = time.ctime(value)
 
-            prop = {'name': name, 'value': cxt_value, 'source': source}
-            if len(cxt_value) > 500:
-                prop['short_value'] = cxt_value[:500]
+            prop = {
+                'name': name,
+                'value': cxt_value,
+                'short_value': cxt_value[:500],
+                'source': source,
+            }
 
             if name in parameters:
                 param = parameters[name]
