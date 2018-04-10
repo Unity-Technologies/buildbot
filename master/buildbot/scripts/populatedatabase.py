@@ -21,8 +21,6 @@ import traceback
 from time import time
 
 import datetime
-import names
-from progress_bar import InitBar
 from twisted.internet import defer
 
 from buildbot import config as config_module
@@ -90,6 +88,9 @@ def populate_user(db, user_count, verbose=True):
     :param db: a handler to the DBConnection object
     :param user_count: an integer value with number of new users
     """
+    import names
+    from progress_bar import InitBar
+
     if verbose:
         print("Starting creating users")
     if user_count > MAX_UNIQUE_USER_COUNT:
@@ -140,6 +141,7 @@ def populate_build(db, build_count, builders_list, projects, user_names, verbose
     :param user_names: a list of an usernames (identifier) from the database
     :param verbose: a boolean value indicate to print all information to std output
     """
+    from progress_bar import InitBar
 
     def handler(result, counter, *args):
         result[counter] += 1
