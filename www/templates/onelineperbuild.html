@@ -19,7 +19,7 @@
 {% if num_building > 0 %}
   {% if authz.advertiseAction('stopBuild', request) %}
     <h2>Stop All Builds</h2>
-    {{ forms.stop_build("builders/_all/stopall", authz, on_all=True, label='All Builds') }}
+    {{ forms.stop_build("builders/_all/stopall", on_all=True, label='All Builds') }}
   {% endif %}
 {% endif %}
   

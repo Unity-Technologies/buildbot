@@ -14,7 +14,13 @@ define(function (require) {
     var rtBuildDetail,
         isLoaded = false,
         noMoreReloads = false,
-        debug = qs.parse(location.search).debug === "true";
+        debug = qs.parse(location.search).debug === "true",
+        messages = {
+            ONE_BUILD: "This will cancel this build.\n\nAre you sure you want to cancel this build?",
+            CHAINED_BUILD: "This will cancel all builds in this chain, which may take a little while.\n" +
+                           "These build will also be affected: \n\n" +
+                           "{0}\n\nAre you sure you want to cancel those builds?"
+        };
 
     rtBuildDetail = {
         init: function () {
@@ -44,17 +50,9 @@ define(function (require) {
             // Setup dialog for stop entire chain
             $("form[data-stop-chain]").ajaxForm({
                 beforeSubmit: function beforeSubmit(data, $form) {
-                    var chainBuild = $form.data("chain").toString().split(';');
-                    var deleteMsg = '';
-                    if(chainBuild.length > 1) {
-                        deleteMsg = 'This will cancel all builds in this chain, which may take a little while.' +
-                                  '\nThese builds will also be affected: \n\n' + chainBuild.join('\n') +
-                                  '\n\nAre you sure you want to cancel those builds?';
-                    } else {
-                        deleteMsg = 'This will cancel this build.' +
-                                    '\n\nAre you sure you want to cancel those builds?';
-                    }
-                    return confirm(deleteMsg);
+                    var chainBuild = $form.data("chain").toString();
+                    var deleteMsgKey = $form.data('msg-label') || 'ONE_BUILD';
+                    return confirm(messages[deleteMsgKey].format(chainBuild));
 
                 }
             });

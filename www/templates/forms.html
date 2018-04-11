@@ -43,13 +43,12 @@
   {% endif %}
 {% endmacro %}
 
-{% macro stop_build(stop_url, authz, on_all=False, on_selected=False, builders=[], short=False, label="Build", chained_build=[]) %}
-  {% if not short %}
+{% macro stop_build(stop_url, on_all=False, on_selected=False, builders=[], label="Build", chained_build=[], msg_label='') %}
     <form method="post" name="stop_build" action="{{ stop_url }}" class='command stopbuild'
-              data-stop-chain="stopchain"
-              data-chain="{{ chained_build|map(attribute='full_name')|join(';') }}"
-               {{ 'style="display:inline"' if short else '' }}>
-      {% if not short %}
+          data-stop-chain="stopchain"
+          data-chain="{{ chained_build|map(attribute='full_name')|join('\n') }}"
+          data-msg-label="{{ msg_label }}">
+
         {% if on_all %}
           <p>To stop all builds, push the <i>Stop {{ label }}</i> button</p>
         {% elif on_selected %}
@@ -64,17 +63,13 @@
           {% endfor %}
           </table>        
         {% endif %}
-      {% endif %}
 
-      {% if not short %}
         <div class="row">
           <input class="full-name-js" type="hidden" name="comments"/>
         </div>
-      {% endif %}
 
       <input class="grey-btn" type="submit" value="Stop {{ label }}" />
     </form>
-  {% endif %}
 {% endmacro %}
 
 {% macro force_build_scheduler_parameter(f, authz, request, sch, default_props) %}

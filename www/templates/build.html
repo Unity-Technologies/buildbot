@@ -19,45 +19,41 @@
         <div class="col-md-6">
             <div id="buildResult"></div>
 
-            <dl class="child-table">
-                {% if top_build_url %}
-                    <dt>Top build in chain:</dt>
-                    <dd><a href="{{ top_build_url }}">{{ top_build_name }}</a></dd>
-                {% endif %}
+            {% if top_build_url or parent_build_url %}
+                <div class="divider"></div>
+                <dl class="child-table">
+                    {% if top_build_url %}
+                        <dt>Top build in chain:</dt>
+                        <dd><a href="{{ top_build_url }}">{{ top_build_name }}</a></dd>
+                    {% endif %}
 
-                {% if parent_build_url %}
-                    <dt>This build is child build of:</dt>
-                    <dd><a href="{{ parent_build_url }}">{{ parent_build_name }}</a></dd>
-                {% endif %}
-            </dl>
+                    {% if parent_build_url %}
+                        <dt>This build is child build of:</dt>
+                        <dd><a href="{{ parent_build_url }}">{{ parent_build_name }}</a></dd>
+                    {% endif %}
+                </dl>
+            {% endif %}
 
             {% if build_is_resuming %}
                 <div class="divider"></div>
-                <h2 class="head-2">
-                        Stop Build
-                </h2>
-                    {{ forms.stop_build(build_url+"/cancel"+codebases_arg, authz, on_all=False, short=False, label='This Build') }}
-                <div class="divider"></div>
+                <h2 class="head-2">Stop Build</h2>
+                {{ forms.stop_build(build_url+"/cancel"+codebases_arg, on_all=False, label='This Build') }}
 
             {% elif not build_is_finished %}
                 <div class="divider"></div>
                 {% if authz.advertiseAction('stopBuild', request) %}
-                    <h2 class="head-2">
-                        Stop Build
-                    </h2>
-                    {{ forms.stop_build(build_url+"/stop"+codebases_arg, authz, on_all=False, short=False, label='This Build', chained_build=chained_build) }}
-                    <div class="divider"></div>
+                    <h2 class="head-2">Stop Build</h2>
+                    {{ forms.stop_build(build_url+"/stop"+codebases_arg, on_all=False, label='This Build', msg_label='ONE_BUILD') }}
                 {% endif %}
 
-                {% if authz.advertiseAction('stopAllBuilds', request) %}
+                {% if authz.advertiseAction('stopAllBuilds', request) and chained_build|length > 1 %}
+                    <div class="divider"></div>
                     <h2 class="head-2">Stop Entire Build Chain</h2>
-                    {{ forms.stop_build(build_url+"/stopchain"+codebases_arg, authz, on_all=True, label='Entire Build Chain', short=False, chained_build=chained_build) }}
+                    {{ forms.stop_build(build_url+"/stopchain"+codebases_arg, on_all=True, label='Entire Build Chain', chained_build=chained_build, msg_label='CHAINED_BUILD') }}
+                {% endif %}
+                {% if tests_link %}
                     <div class="divider"></div>
-                {% else %}
-                    <div class="divider"></div>
-                    {% if tests_link %}
-                        <h3><a href="{{ tests_link }}"/></h3>
-                    {% endif %}
+                    <h3><a href="{{ tests_link }}"/></h3>
                 {% endif %}
 
             {% elif authz.advertiseAction('forceBuild', request) and build_is_finished %}
@@ -65,9 +61,10 @@
                 <h2 class="head-2">
                     Resubmit Build
                 </h2>
-                {{ forms.rebuild_build(authz, source_stamps[0], builder_name, build_number, path_to_builder) }}
-                <div class="divider"></div>
+                {{ forms.rebuild_build(authz, sourcestamps[0], builder.name, b.number, path_to_builder) }}
             {% endif %}
+
+            <div class="divider"></div>
 
             <h2 class="head-2">
                 BuildSlave
@@ -78,6 +75,7 @@
             {% else %}
                 {{ slave_friendly_name|e }}
             {% endif %}
+
             <div class="divider"></div>
 
             <h2 class="head-2">
