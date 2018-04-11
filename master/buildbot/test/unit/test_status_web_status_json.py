@@ -1005,3 +1005,65 @@ class TestStartBuildJsonResource(unittest.TestCase):
 
         self.assertEqual(self.request.responseCode, 400)
         self.assertDictEqual(response, {'error': 'invalid json payload'})
+
+
+class MyBuildsJsonResource(unittest.TestCase):
+    def setUp(self):
+        self.project = setUpProject()
+
+        self.master = setUpFakeMasterWithProjects(self.project, self)
+
+        self.master_status = setUpFakeMasterStatus(self.master)
+        self.master.status = self.master_status
+
+        self.my_builds_json_resource = status_json.MyBuildsJsonResource(self.master_status)
+        authz = mock.Mock()
+        authz.getUsername = lambda req: "pyflakes"
+        authz.getUserInfo = self.mocked_getUserInfo
+
+        self.request = mock.Mock()
+        self.request.site.buildbot_service.authz = authz
+
+    def mocked_prepare_builds(self, master, uid):
+        data = {
+            1: "builds for pyflakes",
+            2: "builds for fox"
+        }
+        return defer.succeed(data.get(uid))
+
+    def mocked_getUserInfo(self, username):
+        data = {
+            "pyflakes": {'uid': 1},
+            "fox": {'uid': 2},
+        }
+        return data.get(username)
+
+    @mock.patch('buildbot.status.web.status_json.prepare_mybuilds')
+    @defer.inlineCallbacks
+    def test_asDict_for_user_from_query_param(self, prepare_mybuilds):
+        prepare_mybuilds.side_effect = self.mocked_prepare_builds
+
+        self.request.args = {'user': ['fox']}
+        builds = yield self.my_builds_json_resource.asDict(self.request)
+
+        self.assertEqual(builds, "builds for fox")
+
+    @mock.patch('buildbot.status.web.status_json.prepare_mybuilds')
+    @defer.inlineCallbacks
+    def test_asDict_for_logged_user(self, prepare_mybuilds):
+        prepare_mybuilds.side_effect = self.mocked_prepare_builds
+
+        self.request.args = {}
+        builds = yield self.my_builds_json_resource.asDict(self.request)
+
+        self.assertEqual(builds, "builds for pyflakes")
+
+    @mock.patch('buildbot.status.web.status_json.prepare_mybuilds')
+    @defer.inlineCallbacks
+    def test_asDict_for_unknown_user(self, prepare_mybuilds):
+        prepare_mybuilds.side_effect = self.mocked_prepare_builds
+
+        self.request.args = {'user': ['wolf']}
+        builds = yield self.my_builds_json_resource.asDict(self.request)
+
+        self.assertEqual(builds, {'error': 'User "wolf" is unknown'})
