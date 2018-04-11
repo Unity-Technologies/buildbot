@@ -20,6 +20,7 @@
 # relative to the top of the maildir (so it will look like "new/blahblah").
 
 import os
+import klog
 from twisted.python import log, runtime
 from twisted.application import service, internet
 from twisted.internet import reactor, defer
@@ -115,9 +116,9 @@ class MaildirService(service.MultiService):
                 try:
                     yield self.messageReceived(n)
                 except:
-                    log.err(None, "while reading '%s' from maildir '%s':" % (n, self.basedir))
+                    klog.err_json(None, "while reading '%s' from maildir '%s':" % (n, self.basedir))
         except Exception:
-            log.err(None, "while polling maildir '%s':" % (self.basedir,))
+            klog.err_json(None, "while polling maildir '%s':" % (self.basedir,))
 
     def moveToCurDir(self, filename):
         if runtime.platformType == "posix":

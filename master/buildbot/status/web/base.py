@@ -13,10 +13,10 @@
 #
 # Copyright Buildbot Team Members
 import json
-
 import urlparse, urllib, time, re
 import os, cgi, sys, locale
 import jinja2
+from itertools import product
 from zope.interface import Interface
 from twisted.internet import defer
 from twisted.web import resource, static, server
@@ -401,6 +401,61 @@ def path_to_json_past_builds(request, builderName, number, filter_data=False):
         url += "steps=0"
 
     return url
+
+
+def get_query_branches_for_codebases(tags, codebases, regex_branches):
+    branches = map(lambda s: s.lower(), codebases.values())
+    codebase_keys = map(lambda s: s.lower(), codebases.keys())
+    query_branches = set()
+
+    for branch, pattern in product(branches, regex_branches):
+        match = re.match(pattern, branch)
+        if match:
+            query_branches.add(match.group(1))
+
+    if not query_branches:
+        if 'unity' in codebase_keys:
+            query_branches = {'trunk'}
+        else:
+            return set()
+
+    if not filter(lambda tag: tag.split("-")[0].lower() in query_branches, tags):
+        query_branches = {'trunk'}
+
+    return query_branches
+
+
+def filter_tags_by_codebases(tags, codebases, tag_as_branch_regex, regex_branches):
+    """
+    Return list of tags filtered by branches from query params.
+
+    @param tags: list of builder-tags
+    @param codebases: dict with codebases from query, ex. {'unity': 'trunk', ...}
+    @param tag_as_branch_regex: regex for check if tag has branch format
+    @param regex_branches: list of regex to fit query params as a branch
+    """
+    if not codebases:
+        return sorted(tags)
+
+    tag_as_branch_pattern = re.compile(tag_as_branch_regex)
+
+    query_branches = get_query_branches_for_codebases(tags, codebases, regex_branches)
+    if not query_branches:
+        return sorted(tags)
+
+    filtered_tags = set()
+    for full_tag in tags:
+        tag_parts = full_tag.split("-")
+        branch = tag_parts[0]
+        tag_as_branch = tag_as_branch_pattern.match(branch.lower())
+
+        if len(tag_parts) == 1 and (not tag_as_branch or branch.lower() == 'unstable'):
+            filtered_tags.add(branch)
+        elif len(tag_parts) > 1 and branch.lower() in query_branches:
+            tag = "-".join(tag_parts[1:])
+            filtered_tags.add(tag)
+
+    return sorted(filtered_tags)
 
 
 class Box:

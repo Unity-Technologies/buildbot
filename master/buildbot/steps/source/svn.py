@@ -19,6 +19,7 @@ import xml.parsers.expat
 from twisted.python import log
 from twisted.internet import defer
 
+import klog
 from buildbot.process import buildstep
 from buildbot.steps.source.base import Source
 from buildbot.interfaces import BuildSlaveTooOldError
@@ -339,7 +340,7 @@ class SVN(Source):
         try:
             result_xml = xml.dom.minidom.parseString(xmlStr)
         except xml.parsers.expat.ExpatError:
-            log.err("Corrupted xml, aborting step")
+            klog.err_json("Corrupted xml, aborting step")
             raise buildstep.BuildStepFailed()
 
         for entry in result_xml.getElementsByTagName('entry'):

@@ -30,6 +30,7 @@ from buildbot.sourcestamp import SourceStamp
 from buildbot.status import base
 from buildbot.status.results import SUCCESS, WARNINGS, FAILURE, EXCEPTION, RETRY
 from buildbot.process.properties import Properties
+import klog
 
 # twisted.internet.ssl requires PyOpenSSL, so be resilient if it's missing
 try:
@@ -819,7 +820,7 @@ class IRCContact(base.StatusReceiver):
                 self.send(str(f.value))
             @d.addErrback
             def logErr(f):
-                log.err(f)
+                klog.err_json(f)
                 self.send("Something bad happened (see logs)")
             d.addErrback(log.err)
             return d

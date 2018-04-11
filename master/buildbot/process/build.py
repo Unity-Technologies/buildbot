@@ -28,6 +28,7 @@ from buildbot.status.builder import Results
 from buildbot.status.progress import BuildProgress
 from buildbot.process import metrics, properties
 from buildbot.util.eventual import eventually
+import klog
 
 
 class Build(properties.PropertiesMixin):
@@ -257,7 +258,7 @@ class Build(properties.PropertiesMixin):
             # self.build_status.buildStarted() from within the exception
             # handler
             log.msg("Build.setupBuild failed")
-            log.err(Failure())
+            klog.err_json(Failure())
             self.builder.builder_status.addPointEvent(["setupBuild",
                                                        "exception"])
             self.finished = True
@@ -607,13 +608,13 @@ class Build(properties.PropertiesMixin):
 
     def buildException(self, why):
         log.msg("%s.buildException" % self)
-        log.err(why)
+        klog.err_json(why)
         # try to finish the build, but since we've already faced an exception,
         # this may not work well.
         try:
             self.buildFinished(["Build Caught Exception"], DEPENDENCY_FAILURE)
         except:
-            log.err(Failure(), 'while finishing a build with an exception')
+            klog.err_json(Failure(), 'while finishing a build with an exception')
 
     def buildFinished(self, text, results):
         """This method must be called when the last Step has completed. It

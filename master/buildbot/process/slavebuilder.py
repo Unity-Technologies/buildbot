@@ -18,6 +18,8 @@ from twisted.internet import defer
 from twisted.python import log
 from twisted.internet import reactor
 
+import klog
+
 (ATTACHING, # slave attached, still checking hostinfo/etc
  IDLE, # idle, available for use
  PINGING, # build about to start, making sure it is still alive
@@ -207,7 +209,7 @@ class Ping:
 
 
         except Exception, ex:
-            log.err("Exception raise '%s' while pinging slave %s" % (ex, self.slavename))
+            klog.err_json("Exception raise '%s' while pinging slave %s" % (ex, self.slavename))
             remote.broker.transport.loseConnection()
             self.d.callback(False)
 

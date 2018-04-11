@@ -123,6 +123,15 @@ define(function (require) {
     }
 
     describe("Builder tags", function () {
+        // Mock data from buildbot.config
+        rtBuilders.regex_branches = [
+            /^(trunk)/,                 // Trunk
+            /^(20[0-9][0-9].[0-9])\//,  // 2017.1/
+            /^([0-9].[0-9])\//,         // 5.0/
+            /^release\/([0-9].[0-9])/   // release/4.6
+        ];
+        rtBuilders.tagAsBranchRegex = /^(20[0-9][0-9].[0-9]|[0-9].[0-9]|trunk)$/i;
+
         beforeEach(function() {
             jasmine.addMatchers(customMatchers);
         });

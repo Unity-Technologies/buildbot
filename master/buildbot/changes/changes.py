@@ -26,6 +26,7 @@ from buildbot.util import datetime2epoch
 
 from buildbot import interfaces, util
 from buildbot.process.properties import Properties
+import klog
 
 class Change:
     """I represent a single change to the source tree. This may involve several
@@ -244,7 +245,7 @@ class ChangeMaster: # pragma: no cover
             os.rename(tmpfilename, filename)
         except Exception:
             log.msg("unable to save changes")
-            log.err()
+            klog.err_json()
 
     # This method is used by contrib/fix_changes_pickle_encoding.py to recode all
     # bytestrings in an old changes.pck into unicode strings

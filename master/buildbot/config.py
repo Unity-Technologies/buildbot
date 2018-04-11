@@ -25,6 +25,7 @@ from buildbot.util import safeTranslate
 from buildbot import interfaces
 from buildbot import locks
 from buildbot.revlinks import default_revlink_matcher
+import klog
 from twisted.python import log, failure
 from twisted.internet import defer
 from twisted.application import service
@@ -55,6 +56,16 @@ def error(error):
         _errors.addError(error)
     else:
         raise ConfigErrors([error])
+
+
+TAG_AS_BRANCH_REGEX = r'^(20[0-9][0-9].[0-9]|[0-9].[0-9]|trunk)$'
+REGEX_BRANCHES = [
+    r'^(trunk)',                  # Trunk
+    r'^(20[0-9][0-9].[0-9])\/',   # 2017.1/
+    r'^([0-9].[0-9])\/',          # 5.0/
+    r'^release\/([0-9].[0-9])/'   # release/4.6
+]
+
 
 class MasterConfig(object):
 
@@ -121,6 +132,8 @@ class MasterConfig(object):
         self.revlink = default_revlink_matcher
         self.projects = {}
         self.globalFactory = dict(initialSteps=[], lastSteps=[])
+        self.regex_branches = REGEX_BRANCHES
+        self.tag_as_branch_regex = TAG_AS_BRANCH_REGEX
 
     _known_config_keys = set([
         "buildbotURL", "buildCacheSize", "builders", "buildHorizon", "caches",
@@ -178,7 +191,7 @@ class MasterConfig(object):
                     error(err)
                 raise errors
             except:
-                log.err(failure.Failure(), 'error while parsing config file:')
+                klog.err_json(failure.Failure(), 'error while parsing config file:')
                 error("error while parsing config file: %s (traceback in logfile)" %
                         (sys.exc_info()[1],),
                 )

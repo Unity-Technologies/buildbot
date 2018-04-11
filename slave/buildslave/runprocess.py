@@ -31,6 +31,7 @@ from tempfile import NamedTemporaryFile
 from twisted.python import runtime, log, failure
 from twisted.internet import reactor, defer, protocol, task, error
 
+import klog
 from buildslave import util
 from buildslave.exceptions import AbandonChain
 
@@ -108,7 +109,7 @@ class LogFileWatcher:
         self.poller.start(self.POLL_INTERVAL).addErrback(self._cleanupPoll)
 
     def _cleanupPoll(self, err):
-        log.err(err, msg="Polling error")
+        klog.err_json(err, msg="Polling error")
         self.poller = None
 
     def stop(self):
@@ -117,7 +118,7 @@ class LogFileWatcher:
             if self.poller is not None:
                 self.poller.stop()
         except:
-            log.err(failure.Failure(), 'LogFileWatcher failed to stop poller')
+            klog.err_json(failure.Failure(), 'LogFileWatcher failed to stop poller')
 
         if self.started:
             self.f.close()
@@ -417,7 +418,7 @@ class RunProcess:
             self._startCommand()
         except:
             log.msg("error in RunProcess._startCommand")
-            log.err()
+            klog.err_json()
             self._addToBuffers('stderr', "error in RunProcess._startCommand\n")
             self._addToBuffers('stderr', traceback.format_exc())
             self._sendBuffers()
@@ -873,7 +874,7 @@ class RunProcess:
                 log.msg(" signal %s sent successfully" % (self.interruptSignal,))
                 hit = 1
             except OSError:
-                log.err("from process.signalProcess:")
+                klog.err_json("from process.signalProcess:")
                 # could be no-such-process, because they finished very recently
                 pass
             except error.ProcessExitedAlready:

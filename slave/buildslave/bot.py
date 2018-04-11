@@ -24,6 +24,7 @@ from twisted.internet import error, reactor, task, defer
 from twisted.application import service, internet
 from twisted.cred import credentials
 
+import klog
 import buildslave
 from buildslave.pbutil import ReconnectingPBClientFactory
 from buildslave.commands import registry, base
@@ -219,14 +220,14 @@ class SlaveBuilder(pb.Referenceable, service.Service):
 
     def _ackFailed(self, why, where):
         log.msg("SlaveBuilder._ackFailed:", where)
-        log.err(why) # we don't really care
+        klog.err_json(why) # we don't really care
 
 
     # this is fired by the Deferred attached to each Command
     def commandComplete(self, failure):
         if failure:
             log.msg("SlaveBuilder.commandFailed", self.command)
-            log.err(failure)
+            klog.err_json(failure)
             # failure, if present, is a failure.Failure. To send it across
             # the wire, we must turn it into a pb.CopyableFailure.
             failure = pb.CopyableFailure(failure)
@@ -269,7 +270,7 @@ class BuildLogFile(LogFile):
             json.dump(message, self)
             self.write(os.linesep)
         except:
-            log.err(failure.Failure(), "Failed to serialize message to json: " + str(message))
+            klog.err_json(failure.Failure(), "Failed to serialize message to json: " + str(message))
 
     def write(self, data):
         """
@@ -288,7 +289,7 @@ class BuildLogFile(LogFile):
                 self.flush()
                 self.rotate()
             except:
-                log.err(failure.Failure(), 'Rotate build log file failed')
+                klog.err_json(failure.Failure(), 'Rotate build log file failed')
                 self._checkFileIsOpen()
 
 
@@ -633,7 +634,7 @@ class BuildSlave(service.MultiService):
                 log.msg("Master does not support slave initiated shutdown.  Upgrade master to 0.8.3 or later to use this feature.")
             else:
                 log.msg('callRemote("shutdown") failed')
-                log.err(err)
+                klog.err_json(err)
 
         d.addErrback(_shutdownfailed)
         return d

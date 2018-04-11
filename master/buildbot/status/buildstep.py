@@ -47,7 +47,7 @@ class BuildStepStatus(styles.Versioned):
     # corresponding BuildStep has started.
     implements(interfaces.IBuildStepStatus, interfaces.IStatusEvent)
 
-    persistenceVersion = 4
+    persistenceVersion = 5
     persistenceForgets = ( 'wasUpgraded', )
 
     started = None
@@ -372,6 +372,11 @@ class BuildStepStatus(styles.Versioned):
     def upgradeToVersion4(self):
         if not hasattr(self, "hidden"):
             self.hidden = False
+        self.wasUpgraded = True
+
+    def upgradeToVersion5(self):
+        if not hasattr(self, "step_type_obj"):
+            self.step_type_obj = None
         self.wasUpgraded = True
 
     @defer.inlineCallbacks

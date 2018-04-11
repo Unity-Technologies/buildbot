@@ -19,12 +19,14 @@ before_script:
 
 install:
   - if [ "$TEST_TARGET" != "javascript" ]; then pip install -e www; fi
+  - if [ "$TEST_TARGET" != "javascript" ]; then pip install -e katana_common; fi
   - if [ "$TEST_TARGET" != "javascript" ]; then pip install -e $TEST_TARGET --process-dependency-links; fi
   - if [ "$TEST_TARGET" != "javascript" ]; then pip install -v mock; fi
   - if [ "$TEST_TARGET" != "javascript" ]; then pip install -v pyflakes; fi
   - if [ "$TEST_TARGET" != "javascript" ]; then pip install -v coveralls; fi
   - if [ "$TEST_TARGET" != "javascript" ]; then pip install -v freezegun; fi
   - if [ "$TEST_TARGET" = "master" ]; then pip install service_identity; fi
+  - if [ "$TEST_TARGET" = "master" ]; then pip install -r master/requirements-dev.txt; fi
   - if [ "$TEST_TARGET" = "javascript" ]; then cd www/; fi
   - if [ "$TEST_TARGET" = "javascript" ]; then npm install; fi
 

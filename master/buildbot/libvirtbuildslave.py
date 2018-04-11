@@ -21,6 +21,7 @@ from twisted.python import log, failure
 from buildbot.buildslave import AbstractBuildSlave, AbstractLatentBuildSlave
 from buildbot.util.eventual import eventually
 from buildbot import config
+import klog
 
 try:
     import libvirt
@@ -255,7 +256,7 @@ class LibVirtSlave(AbstractLatentBuildSlave):
                 self.domain = yield self.connection.lookupByName(self.name)
                 yield self.domain.create()
         except:
-            log.err(failure.Failure(),
+            klog.err_json(failure.Failure(),
                     "Cannot start a VM (%s), failing gracefully and triggering"
                     "a new build check" % self.name)
             self.domain = None

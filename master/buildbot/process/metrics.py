@@ -41,6 +41,7 @@ from twisted.internet import reactor
 from twisted.application import service
 from buildbot import util, config
 from collections import defaultdict
+import klog
 
 import gc, os, sys
 # Make use of the resource module if we can
@@ -365,7 +366,7 @@ def periodicCheck(_reactor=reactor):
             MetricTimeEvent.log("reactorDelay", delay)
         _reactor.callLater(dt, cb)
     except Exception:
-        log.err(None, "while collecting VM metrics")
+        klog.err_json(None, "while collecting VM metrics")
 
 class MetricLogObserver(config.ReconfigurableServiceMixin,
                         service.MultiService):
@@ -491,4 +492,4 @@ class MetricLogObserver(config.ReconfigurableServiceMixin,
                 for line in report.split("\n"):
                     log.msg(line)
         except:
-            log.err(None, "generating metric report")
+            klog.err_json(None, "generating metric report")

@@ -319,7 +319,6 @@ class TestSingleProjectJsonResource(unittest.TestCase):
         self.project = setUpProject()
 
         self.master = setUpFakeMasterWithProjects(self.project, self)
-
         self.master_status = setUpFakeMasterStatus(self.master)
         self.master.status = self.master_status
 
@@ -367,7 +366,9 @@ class TestSingleProjectJsonResource(unittest.TestCase):
         return {
             'comparisonURL': '../../projects/Katana/comparison?builders0=katana-buildbot%3Dkatana',
             'builders': builders,
-            'latestRevisions': latestRevisions
+            'latestRevisions': latestRevisions,
+            'regex_branches': self.master.config.regex_branches,
+            'tag_as_branch_regex': self.master.config.tag_as_branch_regex,
         }
 
     @defer.inlineCallbacks
@@ -518,7 +519,13 @@ class TestSingleProjectJsonResource(unittest.TestCase):
                    'friendly_name': 'builder-01', 'startSlavenames ': [],
                    'project': 'Katana', 'state': 'offline', 'slaves': ['build-slave-01'],
                    'currentBuilds': [], 'pendingBuilds': 0}],
-             'latestRevisions': {}}
+             'latestRevisions': {},
+             'regex_branches': ['^(trunk)',
+                                '^(20[0-9][0-9].[0-9])\\/',
+                                '^([0-9].[0-9])\\/',
+                                '^release\\/([0-9].[0-9])/'],
+             'tag_as_branch_regex': '^(20[0-9][0-9].[0-9]|[0-9].[0-9]|trunk)$',
+             }
 
         self.assertEqual(project_dict, expected_project_dict)
 
