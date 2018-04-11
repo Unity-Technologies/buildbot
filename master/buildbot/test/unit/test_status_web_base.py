@@ -61,6 +61,14 @@ class ActionResource(unittest.TestCase):
 
 class Functions(unittest.TestCase):
 
+    def setUp(self):
+        from buildbot.config import MasterConfig
+        master = MasterConfig()
+        self.regex_branches = master.regex_branches
+        self.tag_as_branch_regex = master.tag_as_branch_regex
+
+    ### getRequestCharset ###
+
     def do_test_getRequestCharset(self, hdr, exp):
         req = mock.Mock()
         req.getHeader.return_value = hdr

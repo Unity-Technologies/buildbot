@@ -39,7 +39,7 @@
 
       <div class="form-group">
         {% for tag in instant_json.project.tags %}
-            <span class="label label-info">{{ tag }}</span>
+            <span class="label label-info {% if 'unstable' in tag|lower %}label-warning{% endif %}">{{ tag }}</span>
         {% endfor %}
       </div>
     {% endif %}

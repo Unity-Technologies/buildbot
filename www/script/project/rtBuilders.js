@@ -16,7 +16,6 @@ define(function (require) {
         latestRevDict = {},
         tags = new MiniSet(),
         branch_tags = new MiniSet(),// All of the tags that only contain a branch i.e 4.6, Trunk
-        tagAsBranchRegex = /^(20[0-9][0-9].[0-9]|[0-9].[0-9]|trunk)$/i, // Regex for finding tags that are named the same as branches
         savedTags = [],
         $tagsSelect,
         NO_TAG = "No Tag",
@@ -48,6 +47,11 @@ define(function (require) {
             helpers.tooltip($("[data-title]"));
         },
         realtimeFunctionsProcessBuilders: function (data) {
+            // List of regex which match a query param to correct branch format
+            rtBuilders.regex_branches = data.regex_branches.map(function(reg){ return new RegExp(reg); });
+            // Regex for finding tags that are named the same as branches.
+            rtBuilders.tagAsBranchRegex = new RegExp(data.tag_as_branch_regex);
+
             if (initializedCodebaseOverview === false) {
                 initializedCodebaseOverview = true;
 
@@ -125,7 +129,7 @@ define(function (require) {
 
                 $.each(builder.tags, function eachBuilderTag(i, tag) {
                     // If we found a branch tag then add it
-                    if (tagAsBranchRegex.exec(tag)) {
+                    if (rtBuilders.tagAsBranchRegex.exec(tag)) {
                         branch_tags.add(tag.toLowerCase());
                     }
                 });
@@ -216,15 +220,8 @@ define(function (require) {
         },
         getBranchType: function getBranchType() {
             var branches = helpers.codebasesFromURL({}),
-                regex = [
-                    /^(trunk)/,                 // Trunk
-                    /^(20[0-9][0-9].[0-9])\//,  // 2017.1/
-                    /^([0-9].[0-9])\//,         // 5.0/
-                    /^release\/([0-9].[0-9])/   // release/4.6
-                ],
                 branch_type = undefined;
-
-            $.each(regex, function eachRegex(i, r) {
+            $.each(rtBuilders.regex_branches, function eachRegex(i, r) {
                 $.each(branches, function eachBranch(repo, b) {
                     b = decodeURIComponent(b);
                     var matches = r.exec(b);
@@ -285,7 +282,7 @@ define(function (require) {
             if (tag.indexOf("-") > -1) {
                 return tag.toLowerCase().indexOf(branch_type.toLowerCase()) > -1;
             }
-            return !tagAsBranchRegex.exec(tag);
+            return !rtBuilders.tagAsBranchRegex.exec(tag);
         },
         setHideUnstable: function setHideUnstable(hidden) {
             hideUnstable = hidden;
