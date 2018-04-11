@@ -49,6 +49,7 @@ from buildbot.status.web.auth import AuthFailResource,AuthzFailResource, LoginRe
 from buildbot.status.web.root import RootPage
 from buildbot.status.web.users import UsersResource
 from buildbot.status.web.change_hook import ChangeHookResource
+import klog
 from twisted.cred.portal import IRealm, Portal
 from twisted.web import resource, guard
 from twisted.cred.checkers import InMemoryUsernamePasswordDatabaseDontUse
@@ -569,7 +570,7 @@ class WebStatus(service.MultiService):
             except:
                 log.msg("WebStatus.stopService: error while disconnecting"
                         " leftover clients")
-                log.err()
+                klog.err_json()
         yield service.MultiService.stopService(self)
 
         # having shut them down, now remove our child services so they don't

@@ -19,13 +19,14 @@ import mock
 
 from twisted.trial import unittest
 from twisted.internet import defer, reactor, task
-from twisted.python import failure, log
+from twisted.python import failure
 
 from buildslave.test.util import command, compat
 from buildslave.test.fake.remote import FakeRemote
 from buildslave.test.fake.runprocess import Expect
 import buildslave
 from buildslave import bot
+import klog
 
 class TestBot(unittest.TestCase):
 
@@ -316,8 +317,8 @@ class TestSlaveBuilder(command.CommandTestMixin, unittest.TestCase):
         # set up a fake step to receive updates
         st = FakeStep()
 
-        # patch the log.err, otherwise trial will think something *actually* failed
-        self.patch(log, "err", lambda f : None)
+        # patch the klog.err_json, otherwise trial will think something *actually* failed
+        self.patch(klog, "err_json", lambda f : None)
 
         d = defer.succeed(None)
         def do_start(_):

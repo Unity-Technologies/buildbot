@@ -19,6 +19,7 @@ before_script:
 
 install:
   - if [ "$TEST_TARGET" != "javascript" ]; then pip install -e www; fi
+  - if [ "$TEST_TARGET" != "javascript" ]; then pip install -e katana_common; fi
   - if [ "$TEST_TARGET" != "javascript" ]; then pip install -e $TEST_TARGET --process-dependency-links; fi
   - if [ "$TEST_TARGET" != "javascript" ]; then pip install -v mock; fi
   - if [ "$TEST_TARGET" != "javascript" ]; then pip install -v pyflakes; fi

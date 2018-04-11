@@ -23,6 +23,7 @@ from buildbot.status.results import SUCCESS, WARNINGS, FAILURE
 from buildbot.status.logfile import STDOUT, STDERR
 from buildbot import config
 from buildbot.util import flatten
+import klog
 
 # for existing configurations that import WithProperties from here.  We like
 # to move this class around just to keep our readers guessing.
@@ -221,7 +222,7 @@ class ShellCommand(buildstep.LoggingBuildStep):
             return desc
 
         except:
-            log.err(failure.Failure(), "Error describing step")
+            klog.err_json(failure.Failure(), "Error describing step")
             return ["???"]
 
     def setupEnvironment(self, cmd):

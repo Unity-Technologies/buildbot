@@ -26,6 +26,7 @@ from twisted.python import log
 from twisted.internet import defer
 from twisted.web import html, resource, server
 
+import klog
 from buildbot.schedulers.forcesched import ForceScheduler
 from buildbot.status.buildrequest import BuildRequestStatus
 from buildbot.status.web.base import AccessorMixin, HtmlResource, path_to_root, map_branches, getCodebasesArg, \
@@ -546,7 +547,7 @@ class StartBuildJsonResource(AccessorMixin, resource.Resource):
             request.finish()
 
         def request_failed(f):
-            log.err(f, 'Connection from {} lost'.format(request.client.host))
+            klog.err_json(f, 'Connection from {} lost'.format(request.client.host))
 
         d.addCallback(request_succeed)
         request.notifyFinish().addErrback(request_failed)

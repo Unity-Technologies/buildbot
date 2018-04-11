@@ -45,6 +45,7 @@ from buildbot.status.base import StatusReceiverMultiService
 from buildbot.status.persistent_queue import DiskQueue, IndexedQueue, \
         MemoryQueue, PersistentQueue
 from buildbot.status.web.status_json import FilterOut
+import klog
 from twisted.internet import defer, reactor
 from twisted.python import log
 from twisted.web import client
@@ -187,7 +188,7 @@ class StatusPush(StatusReceiverMultiService):
             # delay should never be 0.  That can cause Buildbot to spin tightly
             # trying to push events that may not be received well by a status
             # listener.
-            log.err('Did not expect delay to be 0, but it is.')
+            klog.err_json('Did not expect delay to be 0, but it is.')
             return
 
     def stopService(self):

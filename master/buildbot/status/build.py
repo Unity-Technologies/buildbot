@@ -26,6 +26,7 @@ from buildbot.process import properties
 from buildbot.process.buildtag import BuildTag
 from buildbot.status.buildstep import BuildStepStatus
 from buildbot.status.results import SUCCESS, NOT_REBUILT, SKIPPED, RESUME, CANCELED, RETRY, MERGED
+import klog
 import time
 
 # Avoid doing an import since it creates circular reference
@@ -569,7 +570,7 @@ class BuildStatus(styles.Versioned, properties.PropertiesMixin):
         except:
             log.msg("unable to save build %s-#%d" % (self.builder.name,
                                                      self.number))
-            log.err()
+            klog.err_json()
 
     def currentStepDict(self, dict):
         if self.getCurrentStep():

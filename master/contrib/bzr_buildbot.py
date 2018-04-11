@@ -103,6 +103,7 @@ except ImportError:
     DEFINE_POLLER = False
 else:
     DEFINE_POLLER = True
+import klog
 import bzrlib.branch
 import bzrlib.errors
 import bzrlib.trace
@@ -255,7 +256,7 @@ if DEFINE_POLLER:
                 raise
             except:
                 # we'll try again next poll.  Meanwhile, let's report.
-                twisted.python.log.err()
+                klog.err_json()
             else:
                 for change in changes:
                     yield self.addChange(

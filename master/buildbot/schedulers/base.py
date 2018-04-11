@@ -22,6 +22,7 @@ from buildbot.process.properties import Properties
 from buildbot.util import ComparableMixin
 from buildbot import config, interfaces
 from buildbot.util.state import StateMixin
+import klog
 
 
 class ScheduleOnMultipleSlavesMixin(object):
@@ -250,7 +251,7 @@ class BaseScheduler(service.MultiService, ComparableMixin, StateMixin, ScheduleO
                     if not important and onlyImportant:
                         return
                 except:
-                    log.err(failure.Failure(),
+                    klog.err_json(failure.Failure(),
                             'in fileIsImportant check for %s' % change)
                     return
             else:

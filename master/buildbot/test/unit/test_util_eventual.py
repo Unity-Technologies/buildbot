@@ -17,6 +17,7 @@ from twisted.trial import unittest
 from twisted.internet import defer
 from twisted.python import log
 
+import klog
 from buildbot.util import eventual
 
 class Eventually(unittest.TestCase):
@@ -24,11 +25,11 @@ class Eventually(unittest.TestCase):
     def setUp(self):
         # reset the queue to its base state
         eventual._theSimpleQueue = eventual._SimpleCallQueue()
-        self.old_log_err = log.err
+        self.old_log_err = klog.err_json
         self.results = []
 
     def tearDown(self):
-        log.err = self.old_log_err
+        klog.err_json = self.old_log_err
         return eventual.flushEventualQueue()
 
     # utility callback
@@ -56,8 +57,8 @@ class Eventually(unittest.TestCase):
         return self.assertResults([(1, 2, dict(a='a'))])
 
     def test_eventually_err(self):
-        # monkey-patch log.err; this is restored by tearDown
-        log.err = lambda : self.results.append("err")
+        # monkey-patch klog.err_json; this is restored by tearDown
+        klog.err_json = lambda : self.results.append("err")
         def cb_fails():
             raise RuntimeError("should not cause test failure")
         eventual.eventually(cb_fails)

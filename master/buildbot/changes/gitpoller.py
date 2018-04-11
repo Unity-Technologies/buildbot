@@ -22,6 +22,7 @@ from buildbot.changes import base
 from buildbot.util import epoch2datetime
 from buildbot.util.state import StateMixin
 from buildbot import config
+import klog
 
 class GitPoller(base.PollingChangeSource, StateMixin):
     """This source will poll a remote git repo for changes and submit
@@ -115,7 +116,7 @@ class GitPoller(base.PollingChangeSource, StateMixin):
                         [self._localBranch(branch)], path=self.workdir)
                 yield self._process_changes(rev, branch)
             except:
-                log.err(_why="trying to poll branch %s of %s"
+                klog.err_json(_why="trying to poll branch %s of %s"
                                 % (branch, self.repourl))
 
         self.lastRev.update(revs)

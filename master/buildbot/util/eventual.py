@@ -15,9 +15,10 @@
 
 
 # copied from foolscap
-
 from twisted.internet import reactor, defer
 from twisted.python import log
+import klog
+
 
 class _SimpleCallQueue(object):
 
@@ -45,7 +46,7 @@ class _SimpleCallQueue(object):
             try:
                 cb(*args, **kwargs)
             except:
-                log.err()
+                klog.err_json()
         self._in_turn = False
         if self._events and not self._timer:
             self._timer = self._reactor.callLater(0, self._turn)

@@ -40,6 +40,7 @@ from twisted.cred import credentials
 from twisted.internet import reactor
 from twisted.python import log
 
+import klog
 
 def done(*args):
     reactor.stop()
@@ -76,7 +77,7 @@ def send_change(remote):
 f = pb.PBClientFactory()
 d = f.login(credentials.UsernamePassword("change", "changepw"))
 reactor.connectTCP("localhost", 8007, f)
-err = lambda f: (log.err(), reactor.stop())
+err = lambda f: (klog.err_json(), reactor.stop())
 d.addCallback(send_change).addErrback(err)
 
 reactor.run()
