@@ -422,13 +422,35 @@ class KatanaBuildChooser(BasicBuildChooser):
 
     def removeBuildRequest(self, breq):
         # reset the checkMerges in case the breq still in the master cache
+
+        def remove_dict(brdicts, breq):
+            old_len_brdicts = len(brdicts)
+            brdicts = [brdict for brdict in brdicts if brdict['brid'] != breq.brdict['brid']]
+            is_removed = old_len_brdicts != len(brdicts)
+            return {
+                'brdicts': brdicts,
+                'is_removed': is_removed
+            }
+
         breq.checkMerges = True
         breq.retries = 0
         breq.hasBeenMerged = False
-        if self.unclaimedBrdicts and breq.brdict and breq.brdict in self.unclaimedBrdicts:
-            self.unclaimedBrdicts.remove(breq.brdict)
-        if self.resumeBrdicts and breq.brdict and breq.brdict in self.resumeBrdicts:
-            self.resumeBrdicts.remove(breq.brdict)
+        is_removed = False
+
+        if self.unclaimedBrdicts and breq.brdict:
+            unclaimed_data = remove_dict(self.unclaimedBrdicts, breq)
+            self.unclaimedBrdicts = unclaimed_data['brdicts']
+            is_removed |= unclaimed_data['is_removed']
+
+        if self.resumeBrdicts and breq.brdict:
+            resume_data = remove_dict(self.resumeBrdicts, breq)
+            self.resumeBrdicts = resume_data['brdicts']
+            is_removed |= resume_data['is_removed']
+
+        msg = "removeBuildRequest does not remove anything. breq.brid: %s" % breq.brdict['brid']
+        if not is_removed:
+            klog.err_json(msg)
+
         self.breqCache.remove(breq.id)
 
     def removeBuildRequests(self, breqs):
@@ -1169,7 +1191,6 @@ class KatanaBuildRequestDistributor(service.Service):
         """
         if not self.running or not self.master.config.builders:
             return
-
         d = self._maybeStartOrResumeBuildsOn(new_builders)
         self._pendingMSBOCalls.append(d)
         @d.addBoth

@@ -444,7 +444,6 @@ class TestKatanaBuildRequestDistributorMaybeStartBuildsOn(KatanaBuildRequestDist
         self.quiet_deferred.addCallback(self.checkMerges, [('slave-01', mergesBrids + previousMergesBrids)])
         self.quiet_deferred.addCallback(lambda _: self.master.db.buildrequests.getBuildRequests(brids=[31, 40]))
         self.quiet_deferred.addCallback(checkMergedBrid, brid=1)
-
         return self.quiet_deferred
 
     @defer.inlineCallbacks
@@ -814,6 +813,58 @@ class TestKatanaBuildChooser(KatanaBuildRequestDistributorTestSetup, unittest.Te
         slave, breq = yield self.brd.katanaBuildChooser.popNextBuildToResume()
 
         self.assertEquals((slave.name, breq.id), ('slave-02', 1))
+
+    def __check_breq_status(self, breq):
+        self.assertEqual(breq.checkMerges, True)
+        self.assertEqual(breq.retries, 0)
+        self.assertEqual(breq.hasBeenMerged, False)
+
+    def test_removeBuildRequest_for_resumeBrdict(self):
+        chooser = self.brd.katanaBuildChooser
+        chooser.unclaimedBrdicts = [{'brid': 1}, {'brid': 2}]
+        chooser.resumeBrdicts = [{'brid': 3}, {'brid': 4}]
+        breq = mock.Mock()
+        breq.brdict = {'brid': 3}
+        expected_unclaimed = [{'brid': 1}, {'brid': 2}]
+        expected_resume = [{'brid': 4}]
+
+        chooser.removeBuildRequest(breq)
+
+        self.assertEqual(chooser.unclaimedBrdicts, expected_unclaimed)
+        self.assertEqual(chooser.resumeBrdicts, expected_resume)
+        self.__check_breq_status(breq)
+
+    def test_removeBuildRequest_for_unclaimedBrdict(self):
+        chooser = self.brd.katanaBuildChooser
+        chooser.unclaimedBrdicts = [{'brid': 1}, {'brid': 2}]
+        chooser.resumeBrdicts = [{'brid': 3}, {'brid': 4}]
+        breq = mock.Mock()
+        breq.brdict = {'brid': 1}
+        expected_unclaimed = [{'brid': 2}]
+        expected_resume = [{'brid': 3}, {'brid': 4}]
+
+        chooser.removeBuildRequest(breq)
+
+        self.assertEqual(chooser.unclaimedBrdicts, expected_unclaimed)
+        self.assertEqual(chooser.resumeBrdicts, expected_resume)
+        self.__check_breq_status(breq)
+
+    @mock.patch('klog.err_json')
+    def test_removeBuildRequest_for_uknownBreq(self, err_json):
+        chooser = self.brd.katanaBuildChooser
+        chooser.unclaimedBrdicts = [{'brid': 1}, {'brid': 2}]
+        chooser.resumeBrdicts = [{'brid': 3}, {'brid': 4}]
+        breq = mock.Mock()
+        breq.brdict = {'brid': 5}
+        expected_unclaimed = [{'brid': 1}, {'brid': 2}]
+        expected_resume = [{'brid': 3}, {'brid': 4}]
+
+        chooser.removeBuildRequest(breq)
+
+        self.assertEqual(err_json.called, True)
+        self.assertEqual(chooser.unclaimedBrdicts, expected_unclaimed)
+        self.assertEqual(chooser.resumeBrdicts, expected_resume)
+        self.__check_breq_status(breq)
 
 
 class TestKatanaMaybeStartBuildsOnBuilder(KatanaBuildRequestDistributorTestSetup, unittest.TestCase):
