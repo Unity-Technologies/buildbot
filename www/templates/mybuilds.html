@@ -14,7 +14,7 @@
         <th style="width:10%">Project</th>
         <th style="width:15%">Revision</th>
         <th style="width:10%">Builder name</th>
-        <th style="width:10%">Completed</th>
+        <th style="width:10%">Status</th>
         <th style="width:10%">Build number</th>
         <th style="width:10%">Build slave</th>
         <th style="width:10%">Submitted at</th>
@@ -42,19 +42,13 @@
                     <a href="{{ sourcestamp.revision_url or '' }}">{{ sourcestamp.short_revision }}</a>
                 </li>
                 {% endfor %}
-            <ul/>
+            </ul>
         </td>
         <td>
             {{ build.buildername }}
         </td>
-        <td
-                {% if build.complete %}
-                class="success"
-                {% else %}
-                class="failure"
-                {% endif %}
-        >
-            {{ build.complete }}
+        <td class="{{ build.result_css_class }} initialism" title="{{ build.result_name }} ({{ build.results }})">
+            {{ build.result_name }}
         </td>
         <td>
             {{ build.builds_number }}

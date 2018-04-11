@@ -51,6 +51,3 @@ class TestMybuildsResource(unittest.TestCase):
             'https://github.com/stxunityproject/second-test-repository3.git': 'https://github.com/stxunityproject/second-test-repository3.git',
         }
         self.assertEqual(display_repositories, expected_properties)
-
-
-

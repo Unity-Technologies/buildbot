@@ -21,6 +21,22 @@ Results = ["success", "warnings", "failure", "skipped", "exception", "retry", "c
 
 BEGINNING = -1
 
+RESULT_TO_CSS = {
+    BEGINNING: "running",
+    SUCCESS: "success",
+    WARNINGS: "warnings",
+    FAILURE: "failure",
+    SKIPPED: "skipped",
+    EXCEPTION: "exception",
+    RETRY: "retry",
+    CANCELED: "canceled",
+    NOT_REBUILT: "not-rebuilt",
+    DEPENDENCY_FAILURE: "dependency-failure",
+    RESUME: "waiting-for-dependency",
+    MERGED: "not-started",
+    INTERRUPTED: "interrupted",
+}
+
 def worst_status(a, b):
     # SUCCESS > WARNINGS > FAILURE > EXCEPTION > RETRY
     # Retry needs to be considered the worst so that conusmers don't have to

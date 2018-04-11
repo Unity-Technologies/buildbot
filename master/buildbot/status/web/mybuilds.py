@@ -3,7 +3,8 @@ from operator import itemgetter
 from twisted.internet import defer
 
 from buildbot.status.web.base import HtmlResource
-from buildbot.config import MasterConfig
+from buildbot.util.build import add_css_classes_to_results
+
 
 class MybuildsResource(HtmlResource):
     pageTitle = "MyBuilds"
@@ -21,6 +22,7 @@ class MybuildsResource(HtmlResource):
             master.config.myBuildDaysCount,
         )
 
+        builds = add_css_classes_to_results(builds)
         builds_by_ssid = self.prepare_builds_by_ssid(builds)
         sourcestamps = yield master.db.sourcestamps.getSourceStampsForManyIds(builds_by_ssid.keys())
 
