@@ -31,6 +31,7 @@ from buildbot.schedulers.forcesched import ForceScheduler
 from buildbot.status.buildrequest import BuildRequestStatus
 from buildbot.status.web.base import AccessorMixin, HtmlResource, path_to_root, map_branches, getCodebasesArg, \
     getRequestCharset, getResultsArg, getCodebases, path_to_comparison
+from buildbot.util.build import prepare_mybuilds
 
 
 _IS_INT = re.compile(r'^[-+]?\d+$')
@@ -67,16 +68,19 @@ FLAGS = """\
       results=0&results=7
       will only return the build where the result is either 0 or 7.
   - Slave Filters
-    build_steps
-    Show or hide the build steps set to 1 to show
-    build_props
-    Show or hide the build properties set to 1 to show
-  - Build Filters
-    steps
-    Show or hide the build steps set to 1 to show
-    props
-    Show or hide the build properties set to 1 to show
 
+    - build_steps - Show or hide the build steps set to 1 to show
+
+    - build_props - Show or hide the build properties set to 1 to show
+  - Build Filters
+
+    - steps - Show or hide the build steps set to 1 to show
+
+    - props - Show or hide the build properties set to 1 to show
+  - MyBuilds Filters
+
+    - user - show MyBuilds page for another user by his LDAP login. For example:
+      ?user=joe
 """
 
 EXAMPLES = """\
@@ -173,6 +177,12 @@ if 'allCompatible' was used then the list will contain build request object for 
     - Example:
     
     - [{"build_request_id": 1}] or with 'allCompatible' [{"build_request_id": 1}, {"build_request_id": 2}]
+
+
+
+    - /json/mybuilds/
+
+    - My builds from last 7 days
 """
 
 
@@ -1377,6 +1387,25 @@ class BuildNumberForRequestJsonResource(JsonResource):
         defer.returnValue(build_number)
 
 
+class MyBuildsJsonResource(JsonResource):
+    help = 'Gives information about my builds from last 7 days'
+    pageTitle = 'My builds from last 7 days'
+
+    @defer.inlineCallbacks
+    def asDict(self, request):
+        authz = request.site.buildbot_service.authz
+        if 'user' in request.args and request.args['user'][0]:
+            username = request.args['user'][0]
+        else:
+            username = authz.getUsername(request)
+        user_info = authz.getUserInfo(username)
+        if user_info:
+            builds = yield prepare_mybuilds(self.status.master, user_info['uid'])
+            defer.returnValue(builds)
+        else:
+            defer.returnValue({'error': 'User "%s" is unknown' % username})
+
+
 class JsonStatusResource(JsonResource):
     """Retrieves all json data."""
     help = """JSON status
@@ -1402,6 +1431,7 @@ For help on any sub directory, use url /child/help
         self.putChild('pending', PendingBuildsJsonResource(status))
         self.putChild('globalstatus', GlobalJsonResource(status))
         self.putChild('build_request', BuildRequestJsonResource(status))
+        self.putChild('mybuilds', MyBuildsJsonResource(status))
         # This needs to be called before the first HelpResource().body call.
         self.hackExamples()
 

@@ -18,6 +18,15 @@ from mock import Mock
 from twisted.trial import unittest
 from buildbot.status import builder, master
 from buildbot.test.fake import fakemaster
+from buildbot.test.fake.fakedb import FakeBuildsComponent, FakeUsersComponent, User
+
+
+class FakeDBConnector():
+    def __init__(self):
+        self.builds = FakeBuildsComponent(self, [])
+        self.users = FakeUsersComponent(self, "test_status_builder_cache")
+        self.users.insertTestData([User(uid=1, identifier='soap')])
+
 
 class TestBuildStatus(unittest.TestCase):
 
@@ -26,6 +35,7 @@ class TestBuildStatus(unittest.TestCase):
 
     def setupBuilder(self, buildername, category=None, description=None):
         m = fakemaster.make_master()
+        m.db = FakeDBConnector()
         b = builder.BuilderStatus(buildername=buildername, category=category,
                                     master=m, description=description)
         # Awkwardly, Status sets this member variable.
@@ -51,6 +61,7 @@ class TestBuildStatus(unittest.TestCase):
         builds = []
         for i in xrange(5):
             build = b.newBuild()
+            build.setOwners(['soap soap@localhost'])
             build.setProperty('propkey', 'propval%d' % i, 'test')
             builds.append(build)
             build.buildStarted(build)

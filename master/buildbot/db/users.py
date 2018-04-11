@@ -314,6 +314,19 @@ class UsersConnectorComponent(base.DBConnectorComponent):
         d = self.db.pool.do(thd)
         return d
 
+    def getUidByLdapUsername(self, username):
+        def thd(conn):
+            tbl = self.db.model.users
+
+            q = tbl.select(whereclause=(tbl.c.identifier.like('{} <%'.format(username))))
+            row = conn.execute(q).fetchone()
+            if not row:
+                return None
+            return row.uid
+
+        d = self.db.pool.do(thd)
+        return d
+
     def createUser(self, user):
         """ This method creates users in a database.
             :param user: user, if the user exists in the database, it will skip it
@@ -321,6 +334,7 @@ class UsersConnectorComponent(base.DBConnectorComponent):
 
             :return: defer
         """
+
         def thd(conn):
             tbl = self.db.model.users
             q = tbl.insert()
