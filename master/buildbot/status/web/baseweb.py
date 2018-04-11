@@ -30,7 +30,7 @@ from buildbot.status.web.base import StaticFile, createJinjaEnv
 from buildbot.status.web.feeds import Rss20StatusResource, \
      Atom10StatusResource
 from buildbot.status.web.forms import FormsKatanaResource
-from buildbot.status.web.mybuilds import MybuildsResource
+from buildbot.status.web.mybuilds import MyBuildsResource
 from buildbot.status.web.pngstatus import PngStatusResource
 from buildbot.status.web.waterfall import WaterfallStatusResource
 from buildbot.status.web.console import ConsoleStatusResource
@@ -436,7 +436,7 @@ class WebStatus(service.MultiService):
         self.putChild("logout", LogoutKatanaResource())
         self.putChild("login", LoginKatanaResource())
         self.putChild("forms", FormsKatanaResource())
-        self.putChild("mybuilds", MybuildsResource())
+        self.putChild("mybuilds", MyBuildsResource())
 
     def __repr__(self):
         if self.http_port is None:

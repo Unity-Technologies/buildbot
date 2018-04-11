@@ -4,7 +4,7 @@ from buildbot.util.build import prepare_mybuilds
 from buildbot.status.web.base import HtmlResource
 
 
-class MybuildsResource(HtmlResource):
+class MyBuildsResource(HtmlResource):
     pageTitle = "MyBuilds"
 
     @defer.inlineCallbacks
