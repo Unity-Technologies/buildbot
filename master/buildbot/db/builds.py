@@ -13,8 +13,8 @@
 #
 # Copyright Buildbot Team Members
 from datetime import datetime, timedelta
+from twisted.internet import defer
 
-from sqlalchemy.orm import aliased
 from twisted.internet import reactor
 from buildbot.db import base
 from buildbot.util import epoch2datetime, datetime2epoch
@@ -274,6 +274,83 @@ class BuildsConnectorComponent(base.DBConnectorComponent):
             res = conn.execute(q)
 
             return [self._minimal_bdict(row, botmaster) for row in res.fetchall()]
+        return self.db.pool.do(thd)
+
+    def createFullBuildObject(self, branch, revision, repository, project, reason, submitted_at,
+                              complete_at, buildername, slavepool, number, slavename, results, codebase):
+        """ This method creates a new build object with all required associated objects
+
+        :param branch: a string value with branch name (on this branch code was built)
+        :param revision: a string value with revision (on this revision code was built)
+        :param repository: a string value with path to repository
+        :param project: a string value with project name
+        :param reason: a string value described why build was executed
+        :param submitted_at: an integer value described when build was executed
+        :param complete_at: an integer value describe when build was completed or None when is still in progress
+        :param buildername: an string value with builder name, this name must exists in master.cfg
+        :param slavepool: a string value with slave pool name
+        :param number: an integer value with build number. Must be unique with build request id
+        :param slavename: a string value with slave name
+        :param results: an integer value with results status. See available options: master.buildbot.status.results
+        :param codebase: a string value with codebase of repository
+        :return: defer value
+        """
+        def thd(conn):
+            transaction = conn.begin()
+            try:
+                # Create sourcestampsets
+                r = conn.execute(self.db.model.sourcestampsets.insert(), dict())
+                sourcestampsset_id = r.inserted_primary_key[0]
+
+                # Create sourcestamps
+                conn.execute(self.db.model.sourcestamps.insert(), {
+                    'branch': branch,
+                    'revision': revision,
+                    'patchid': None,
+                    'repository': repository,
+                    'codebase': codebase,
+                    'project': project,
+                    'sourcestampsetid': sourcestampsset_id,
+                })
+
+                # Create buildsets
+                res = conn.execute(self.db.model.buildsets.insert(), {
+                    'reason': reason,
+                    'sourcestampsetid': sourcestampsset_id,
+                    'submitted_at': submitted_at,
+                    'complete': bool(complete_at),
+                    'complete_at': complete_at,
+                    'results': results,
+                })
+                buildset_id = res.inserted_primary_key[0]
+
+                # Create buildrequests
+                res = conn.execute(self.db.model.buildrequests.insert(), {
+                    'buildsetid': buildset_id,
+                    'buildername': buildername,
+                    'proiority': 50,
+                    'complete': bool(complete_at),
+                    'results': results,
+                    'submitted_at': submitted_at,
+                    'complete_at': complete_at,
+                    'slavepool': slavepool,
+                })
+                buildrequest_id = res.inserted_primary_key[0]
+
+                # Create builds
+                conn.execute(self.db.model.builds.insert(), {
+                    'number': number,
+                    'brid': buildrequest_id,
+                    'slavename': slavename,
+                    'start_time': submitted_at,
+                    'finish_time': complete_at,
+                })
+                transaction.commit()
+            except Exception as e:
+                print("Exception occurs during create new build", e)
+                transaction.rollback()
+                raise
+
         return self.db.pool.do(thd)
 
     def _bdictFromRow(self, row):

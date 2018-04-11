@@ -13,13 +13,18 @@
 #
 # Copyright Buildbot Team Members
 
-SUCCESS, WARNINGS, FAILURE, SKIPPED, EXCEPTION, RETRY, CANCELED, NOT_REBUILT, DEPENDENCY_FAILURE, RESUME, \
-MERGED, INTERRUPTED = range(12)
+BEGINNING, SUCCESS, WARNINGS, FAILURE, SKIPPED, EXCEPTION, \
+RETRY, CANCELED, NOT_REBUILT, DEPENDENCY_FAILURE, RESUME, \
+MERGED, INTERRUPTED = range(-1, 12)
 
 Results = ["success", "warnings", "failure", "skipped", "exception", "retry", "canceled", "not-rebuilt",
            "dependency-failure", "resume", "merged", "interrupted"]
 
-BEGINNING = -1
+COMPLETED_RESULTS = [
+    SUCCESS, WARNINGS, FAILURE, SKIPPED, EXCEPTION, CANCELED,
+    NOT_REBUILT, DEPENDENCY_FAILURE, MERGED, INTERRUPTED,
+]
+
 
 RESULT_TO_CSS = {
     BEGINNING: "running",
