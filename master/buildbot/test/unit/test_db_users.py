@@ -14,6 +14,7 @@
 # Copyright Buildbot Team Members
 
 import sqlalchemy as sa
+from twisted.internet import defer
 from twisted.trial import unittest
 from buildbot.db import users
 from buildbot.test.util import connector_component
@@ -52,6 +53,11 @@ class TestUsersConnectorComponent(connector_component.ConnectorComponentMixin,
                     bb_password='cancer')
     ]
 
+    user4_rows = [
+        fakedb.User(uid=4, identifier=u'pyflakes <pyflakes@unity3d.com>', bb_username=None,
+                    bb_password=None)
+    ]
+
     user1_dict = {
         'uid': 1,
         'identifier': u'soap',
@@ -74,6 +80,13 @@ class TestUsersConnectorComponent(connector_component.ConnectorComponentMixin,
         'identifier': u'marla',
         'bb_username': u'marla',
         'bb_password': u'cancer',
+    }
+
+    user4_dict = {
+        'uid': 4,
+        'identifier': u'pyflakes <pyflakes@unity3d.com>',
+        'bb_username': None,
+        'bb_password': None,
     }
 
     # tests
@@ -470,3 +483,21 @@ class TestUsersConnectorComponent(connector_component.ConnectorComponentMixin,
             self.assertEqual(res, 1)
         d.addCallback(check)
         return d
+
+    @defer.inlineCallbacks
+    def test_getUidByLdapUsername_correct_username(self):
+        yield self.insertTestData(self.user4_rows)
+        username = 'pyflakes'
+
+        uid = yield self.db.users.getUidByLdapUsername(username)
+
+        self.assertEqual(uid, self.user4_dict['uid'])
+
+    @defer.inlineCallbacks
+    def test_getUidByLdapUsername_wrong_username(self):
+        yield self.insertTestData(self.user4_rows)
+        username = 'pyflakes2'
+
+        uid = yield self.db.users.getUidByLdapUsername(username)
+
+        self.assertEqual(uid, None)

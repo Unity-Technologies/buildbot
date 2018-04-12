@@ -19,6 +19,9 @@ from twisted.python import log
 from twisted.python.procutils import which
 from twisted.python import runtime
 
+import klog
+
+
 def getCommand(name):
     possibles = which(name)
     if not possibles:
@@ -63,7 +66,7 @@ if runtime.platformType  == 'win32':
             try:
                 dir = unicode(dir, "utf-8")
             except:
-                log.err("rmdirRecursive: decoding from UTF-8 failed (ignoring)")
+                klog.err_json("rmdirRecursive: decoding from UTF-8 failed (ignoring)")
 
         try:
             list = os.listdir(dir)

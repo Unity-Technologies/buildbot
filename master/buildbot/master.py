@@ -45,6 +45,7 @@ from buildbot.status.results import SUCCESS, WARNINGS, FAILURE, NOT_REBUILT
 from buildbot.util.eventual import eventually
 from buildbot import monkeypatches
 from buildbot import config
+import klog
 
 ########################################
 
@@ -193,7 +194,7 @@ class BuildMaster(config.ReconfigurableServiceMixin, service.MultiService):
                 _reactor.stop()
                 return
             except:
-                log.err(failure.Failure(), 'while starting BuildMaster')
+                klog.err_json(failure.Failure(), 'while starting BuildMaster')
                 _reactor.stop()
                 return
 
@@ -226,7 +227,7 @@ class BuildMaster(config.ReconfigurableServiceMixin, service.MultiService):
 
         except:
             f = failure.Failure()
-            log.err(f, 'while starting BuildMaster')
+            klog.err_json(f, 'while starting BuildMaster')
             _reactor.stop()
 
         log.msg("BuildMaster is running")
@@ -304,7 +305,7 @@ class BuildMaster(config.ReconfigurableServiceMixin, service.MultiService):
             failed = True
 
         except:
-            log.err(failure.Failure(), 'during reconfig:')
+            klog.err_json(failure.Failure(), 'during reconfig:')
             failed = True
 
         if failed:

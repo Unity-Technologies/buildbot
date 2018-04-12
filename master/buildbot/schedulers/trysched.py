@@ -26,6 +26,7 @@ from buildbot.util import netstrings
 from buildbot.process.properties import Properties
 from buildbot.schedulers import base
 from buildbot.status.buildset import BuildSetStatus
+import klog
 
 
 class TryBase(base.BaseScheduler):
@@ -165,7 +166,7 @@ class Try_Jobdir(TryBase):
             builderNames = parsed_job['builderNames']
         except BadJobfile:
             log.msg("%s reports a bad jobfile in %s" % (self, filename))
-            log.err()
+            klog.err_json()
             return defer.succeed(None)
 
         # Validate/fixup the builder names.

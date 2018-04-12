@@ -30,6 +30,8 @@ from buildbot.changes import changes
 from buildbot.status import buildset, builder, buildrequest
 from buildbot.status.results import RETRY
 from datetime import datetime, timedelta
+import klog
+
 
 class Status(config.ReconfigurableServiceMixin, service.MultiService):
     implements(interfaces.IStatus)
@@ -488,7 +490,7 @@ class Status(config.ReconfigurableServiceMixin, service.MultiService):
         except:
             log.msg("error while loading status pickle, creating a new one")
             log.msg("error follows:")
-            log.err()
+            klog.err_json()
         if not builder_status:
             builder_status = builder.BuilderStatus(name, category, self.master, friendly_name,
                                                    description, project=project)

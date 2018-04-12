@@ -13,8 +13,8 @@
 #
 # Copyright Buildbot Team Members
 from datetime import datetime, timedelta
+from twisted.internet import defer
 
-from sqlalchemy.orm import aliased
 from twisted.internet import reactor
 from buildbot.db import base
 from buildbot.util import epoch2datetime, datetime2epoch
@@ -71,6 +71,22 @@ class BuildsConnectorComponent(base.DBConnectorComponent):
             return None
         return self.db.pool.do(thd)
 
+    def getBuildIDForRequest(self, brid, build_number):
+        def thd(conn):
+            tbl = self.db.model.builds
+            q = sa.select([tbl.c.id]) \
+                .where(tbl.c.brid == brid) \
+                .where(tbl.c.number == build_number)
+            res = conn.execute(q)
+            row = res.fetchone()
+
+            if not row:
+                return None
+
+            return row.id
+
+        return self.db.pool.do(thd)
+
     def getBuildNumbersForRequests(self, brids):
         def thd(conn):
             tbl = self.db.model.builds
@@ -112,6 +128,15 @@ class BuildsConnectorComponent(base.DBConnectorComponent):
                 conn.execute(q, finish_time=now)
 
             transaction.commit()
+        return self.db.pool.do(thd)
+
+    def createBuildUser(self, buildid, userid, finish_time):
+        def thd(conn):
+            tbl = self.db.model.build_user
+
+            q = tbl.insert()
+            conn.execute(q, dict(buildid=buildid, userid=userid, finish_time=finish_time))
+
         return self.db.pool.do(thd)
 
     def finishedMergedBuilds(self, brids, number):
@@ -245,14 +270,13 @@ class BuildsConnectorComponent(base.DBConnectorComponent):
 
         return self.db.pool.do(thd)
 
-    def getLastBuildsOwnedBy(self, owner, botmaster, day_count):
-        if not (isinstance(owner, str) or isinstance(owner, unicode)):
-            raise ValueError("Expected owner to be string which is fullname")
-
+    def getLastBuildsOwnedBy(self, user_id, botmaster, day_count):
         def thd(conn):
             buildrequests_tbl = self.db.model.buildrequests
             buildsets_tbl = self.db.model.buildsets
             builds_tbl = self.db.model.builds
+            builduser_tbl = self.db.model.build_user
+
             from_time = datetime2epoch(datetime.now() - timedelta(days=day_count))
 
             from_clause = buildsets_tbl.join(
@@ -261,19 +285,99 @@ class BuildsConnectorComponent(base.DBConnectorComponent):
             ).join(
                 builds_tbl,
                 builds_tbl.c.brid == buildrequests_tbl.c.id
+            ).join(
+                builduser_tbl,
+                builduser_tbl.c.buildid == builds_tbl.c.id
             )
 
             q = (
                 sa.select([buildrequests_tbl, builds_tbl, buildsets_tbl], use_labels=True)
                 .select_from(from_clause)
                 .where(builds_tbl.c.finish_time >= from_time)
-                .where(buildsets_tbl.c.reason.like('%{}%'.format(owner)))
+                .where(builduser_tbl.c.userid == user_id)
                 .order_by(sa.desc(builds_tbl.c.start_time))
             )
 
             res = conn.execute(q)
 
             return [self._minimal_bdict(row, botmaster) for row in res.fetchall()]
+        return self.db.pool.do(thd)
+
+    def createFullBuildObject(self, branch, revision, repository, project, reason, submitted_at,
+                              complete_at, buildername, slavepool, number, slavename, results, codebase):
+        """ This method creates a new build object with all required associated objects
+
+        :param branch: a string value with branch name (on this branch code was built)
+        :param revision: a string value with revision (on this revision code was built)
+        :param repository: a string value with path to repository
+        :param project: a string value with project name
+        :param reason: a string value described why build was executed
+        :param submitted_at: an integer value described when build was executed
+        :param complete_at: an integer value describe when build was completed or None when is still in progress
+        :param buildername: an string value with builder name, this name must exists in master.cfg
+        :param slavepool: a string value with slave pool name
+        :param number: an integer value with build number. Must be unique with build request id
+        :param slavename: a string value with slave name
+        :param results: an integer value with results status. See available options: master.buildbot.status.results
+        :param codebase: a string value with codebase of repository
+        :return: defer value
+        """
+        def thd(conn):
+            transaction = conn.begin()
+            try:
+                # Create sourcestampsets
+                r = conn.execute(self.db.model.sourcestampsets.insert(), dict())
+                sourcestampsset_id = r.inserted_primary_key[0]
+
+                # Create sourcestamps
+                conn.execute(self.db.model.sourcestamps.insert(), {
+                    'branch': branch,
+                    'revision': revision,
+                    'patchid': None,
+                    'repository': repository,
+                    'codebase': codebase,
+                    'project': project,
+                    'sourcestampsetid': sourcestampsset_id,
+                })
+
+                # Create buildsets
+                res = conn.execute(self.db.model.buildsets.insert(), {
+                    'reason': reason,
+                    'sourcestampsetid': sourcestampsset_id,
+                    'submitted_at': submitted_at,
+                    'complete': bool(complete_at),
+                    'complete_at': complete_at,
+                    'results': results,
+                })
+                buildset_id = res.inserted_primary_key[0]
+
+                # Create buildrequests
+                res = conn.execute(self.db.model.buildrequests.insert(), {
+                    'buildsetid': buildset_id,
+                    'buildername': buildername,
+                    'proiority': 50,
+                    'complete': bool(complete_at),
+                    'results': results,
+                    'submitted_at': submitted_at,
+                    'complete_at': complete_at,
+                    'slavepool': slavepool,
+                })
+                buildrequest_id = res.inserted_primary_key[0]
+
+                # Create builds
+                conn.execute(self.db.model.builds.insert(), {
+                    'number': number,
+                    'brid': buildrequest_id,
+                    'slavename': slavename,
+                    'start_time': submitted_at,
+                    'finish_time': complete_at,
+                })
+                transaction.commit()
+            except Exception as e:
+                print("Exception occurs during create new build", e)
+                transaction.rollback()
+                raise
+
         return self.db.pool.do(thd)
 
     def _bdictFromRow(self, row):
@@ -304,4 +408,5 @@ class BuildsConnectorComponent(base.DBConnectorComponent):
             submitted_at=mkdt(row.buildrequests_submitted_at),
             complete_at=mkdt(row.buildrequests_complete_at),
             sourcestampsetid=row.buildsets_sourcestampsetid,
+            results=row.buildrequests_results,
         )

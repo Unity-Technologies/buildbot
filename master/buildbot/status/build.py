@@ -26,6 +26,7 @@ from buildbot.process import properties
 from buildbot.process.buildtag import BuildTag
 from buildbot.status.buildstep import BuildStepStatus
 from buildbot.status.results import SUCCESS, NOT_REBUILT, SKIPPED, RESUME, CANCELED, RETRY, MERGED
+import klog
 import time
 
 # Avoid doing an import since it creates circular reference
@@ -86,6 +87,7 @@ class BuildStatus(styles.Versioned, properties.PropertiesMixin):
         self.testResults = {}
         self.resume = []
         self.resumeSlavepool = None
+        self.savedStatus = False
         self.properties = properties.Properties()
 
     def __repr__(self):
@@ -202,8 +204,33 @@ class BuildStatus(styles.Versioned, properties.PropertiesMixin):
             d = defer.succeed(self)
         else:
             d = defer.Deferred()
+            d.addCallback(self.createBuildUserStatus)
             self.finishedWatchers.append(d)
         return d
+
+    def createBuildUserStatus(self, step):
+        @defer.inlineCallbacks
+        def thd(build_id):
+            for owner in self.owners:
+                # TODO: Change in future to uid from session!
+                # "pyflakes pyflakes@unity3d.com" -> "pyflakes"
+                username = " ".join(owner.split()[:-1])
+                user_id = yield self.master.db.users.getUidByLdapUsername(username)
+                if not user_id:
+                    log.msg("Can not find user in database %s" % owner)
+                    log.err()
+                yield self.master.db.builds.createBuildUser(build_id, user_id, self.finished)
+
+        if self.finished and self.savedStatus is False:
+            self.savedStatus = True
+            build_id_defer = self.master.db.builds.getBuildIDForRequest(
+                self.buildChainID,
+                self.number,
+            )
+            build_id_defer.addCallback(thd)
+
+        return step
+
 
     # while the build is running, the following methods make sense.
     # Afterwards they return None
@@ -515,7 +542,7 @@ class BuildStatus(styles.Versioned, properties.PropertiesMixin):
             self.sources = [self.source]
             del self.source
         self.wasUpgraded = True
-        
+
     def checkLogfiles(self):
         # check that all logfiles exist, and remove references to any that
         # have been deleted (e.g., by purge())
@@ -569,7 +596,7 @@ class BuildStatus(styles.Versioned, properties.PropertiesMixin):
         except:
             log.msg("unable to save build %s-#%d" % (self.builder.name,
                                                      self.number))
-            log.err()
+            klog.err_json()
 
     def currentStepDict(self, dict):
         if self.getCurrentStep():

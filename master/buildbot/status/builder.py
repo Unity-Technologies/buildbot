@@ -30,6 +30,7 @@ from buildbot.util.lru import LRUCache
 from buildbot.status.event import Event
 from buildbot.status.build import BuildStatus
 from buildbot.status.buildrequest import BuildRequestStatus
+import klog
 
 # user modules expect these symbols to be present here
 from buildbot.status.results import SUCCESS, WARNINGS, FAILURE, SKIPPED
@@ -237,7 +238,7 @@ class BuilderStatus(styles.Versioned):
             os.rename(tmpfilename, filename)
         except:
             log.msg("unable to save builder %s" % self.name)
-            log.err()
+            klog.err_json()
 
     # build cache management
 
@@ -269,7 +270,7 @@ class BuilderStatus(styles.Versioned):
                     build = load(f)
                 except ImportError as err:
                     log.msg("ImportError loading builder %s's build %d from disk pickle" % (self.name, number))
-                    log.msg(str(err))
+                    klog.err_json(err)
                     return None
 
             build.setProcessObjects(self, self.master)
@@ -843,7 +844,7 @@ class BuilderStatus(styles.Versioned):
                 w.builderChangedState(self.name, state)
             except:
                 log.msg("Exception caught publishing state to %r" % w)
-                log.err()
+                klog.err_json()
 
     def newBuild(self):
         """The Builder has decided to start a build, but the Build object is
@@ -884,7 +885,7 @@ class BuilderStatus(styles.Versioned):
                     d.addCallback(lambda s: s.unsubscribe(receiver))
             except:
                 log.msg("Exception caught notifying %r of buildStarted event" % w)
-                log.err()
+                klog.err_json()
 
     @defer.inlineCallbacks
     def _buildFinished(self, s):
@@ -899,7 +900,7 @@ class BuilderStatus(styles.Versioned):
                 w.buildFinished(name, s, results)
             except:
                 log.msg("Exception caught notifying %r of buildFinished event" % w)
-                log.err()
+                klog.err_json()
 
         self.saveLatestBuild(s)
         yield threads.deferToThread(self.prune) # conserve disk

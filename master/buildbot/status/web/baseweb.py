@@ -30,7 +30,7 @@ from buildbot.status.web.base import StaticFile, createJinjaEnv
 from buildbot.status.web.feeds import Rss20StatusResource, \
      Atom10StatusResource
 from buildbot.status.web.forms import FormsKatanaResource
-from buildbot.status.web.mybuilds import MybuildsResource
+from buildbot.status.web.mybuilds import MyBuildsResource
 from buildbot.status.web.pngstatus import PngStatusResource
 from buildbot.status.web.waterfall import WaterfallStatusResource
 from buildbot.status.web.console import ConsoleStatusResource
@@ -49,6 +49,7 @@ from buildbot.status.web.auth import AuthFailResource,AuthzFailResource, LoginRe
 from buildbot.status.web.root import RootPage
 from buildbot.status.web.users import UsersResource
 from buildbot.status.web.change_hook import ChangeHookResource
+import klog
 from twisted.cred.portal import IRealm, Portal
 from twisted.web import resource, guard
 from twisted.cred.checkers import InMemoryUsernamePasswordDatabaseDontUse
@@ -436,7 +437,7 @@ class WebStatus(service.MultiService):
         self.putChild("logout", LogoutKatanaResource())
         self.putChild("login", LoginKatanaResource())
         self.putChild("forms", FormsKatanaResource())
-        self.putChild("mybuilds", MybuildsResource())
+        self.putChild("mybuilds", MyBuildsResource())
 
     def __repr__(self):
         if self.http_port is None:
@@ -569,7 +570,7 @@ class WebStatus(service.MultiService):
             except:
                 log.msg("WebStatus.stopService: error while disconnecting"
                         " leftover clients")
-                log.err()
+                klog.err_json()
         yield service.MultiService.stopService(self)
 
         # having shut them down, now remove our child services so they don't

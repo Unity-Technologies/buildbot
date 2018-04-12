@@ -14,6 +14,7 @@
 # Copyright Buildbot Team Members
 
 import sqlalchemy as sa
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.sql.expression import and_
 
 from buildbot.db import base
@@ -312,3 +313,38 @@ class UsersConnectorComponent(base.DBConnectorComponent):
             return row.uid
         d = self.db.pool.do(thd)
         return d
+
+    def getUidByLdapUsername(self, username):
+        def thd(conn):
+            tbl = self.db.model.users
+
+            q = tbl.select(whereclause=(tbl.c.identifier.like('{} <%'.format(username))))
+            row = conn.execute(q).fetchone()
+            if not row:
+                return None
+            return row.uid
+
+        d = self.db.pool.do(thd)
+        return d
+
+    def createUser(self, user):
+        """ This method creates users in a database.
+            :param user: user, if the user exists in the database, it will skip it
+            :type user: dictionary with 'identifier', 'bb_username' and 'bb_password' fields.
+
+            :return: defer
+        """
+
+        def thd(conn):
+            tbl = self.db.model.users
+            q = tbl.insert()
+            try:
+                conn.execute(q, user)
+                return True
+            except IntegrityError:
+                return False
+            except Exception as e:
+                print("An exception occurs during creating users", e)
+                raise e
+
+        return self.db.pool.do(thd)

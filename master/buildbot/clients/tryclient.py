@@ -37,6 +37,7 @@ from buildbot.status import builder
 from buildbot.util import json
 from buildbot.util import now
 from buildbot.util.eventual import fireEventually
+import klog
 
 
 class SourceStampExtractor:
@@ -820,7 +821,7 @@ class Try(pb.Referenceable):
                 self.announce("%s: %s" % (n, t))
             self.announce("")
         except Exception:
-            log.err(None, "printing status")
+            klog.err_json(None, "printing status")
 
     def statusDone(self):
         if self.printloop:

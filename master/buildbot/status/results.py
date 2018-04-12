@@ -13,13 +13,34 @@
 #
 # Copyright Buildbot Team Members
 
-SUCCESS, WARNINGS, FAILURE, SKIPPED, EXCEPTION, RETRY, CANCELED, NOT_REBUILT, DEPENDENCY_FAILURE, RESUME, \
-MERGED, INTERRUPTED = range(12)
+BEGINNING, SUCCESS, WARNINGS, FAILURE, SKIPPED, EXCEPTION, \
+RETRY, CANCELED, NOT_REBUILT, DEPENDENCY_FAILURE, RESUME, \
+MERGED, INTERRUPTED = range(-1, 12)
 
 Results = ["success", "warnings", "failure", "skipped", "exception", "retry", "canceled", "not-rebuilt",
            "dependency-failure", "resume", "merged", "interrupted"]
 
-BEGINNING = -1
+COMPLETED_RESULTS = [
+    SUCCESS, WARNINGS, FAILURE, SKIPPED, EXCEPTION, CANCELED,
+    NOT_REBUILT, DEPENDENCY_FAILURE, MERGED, INTERRUPTED,
+]
+
+
+RESULT_TO_CSS = {
+    BEGINNING: "running",
+    SUCCESS: "success",
+    WARNINGS: "warnings",
+    FAILURE: "failure",
+    SKIPPED: "skipped",
+    EXCEPTION: "exception",
+    RETRY: "retry",
+    CANCELED: "canceled",
+    NOT_REBUILT: "not-rebuilt",
+    DEPENDENCY_FAILURE: "dependency-failure",
+    RESUME: "waiting-for-dependency",
+    MERGED: "not-started",
+    INTERRUPTED: "interrupted",
+}
 
 def worst_status(a, b):
     # SUCCESS > WARNINGS > FAILURE > EXCEPTION > RETRY

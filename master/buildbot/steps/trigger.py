@@ -23,6 +23,8 @@ from buildbot.status.results import DEPENDENCY_FAILURE, RETRY, WARNINGS, SKIPPED
 from twisted.python.failure import Failure
 from buildbot.schedulers.triggerable import TriggerableSchedulerStopped
 from buildbot.steps.resumebuild import ResumeBuild
+import klog
+
 
 class Trigger(ResumeBuild):
     name = "Trigger"
@@ -185,7 +187,7 @@ class Trigger(ResumeBuild):
 
             if not was_cb:
                 was_exception = True
-                log.err(results)
+                klog.err_json(results)
                 continue
 
             if results == FAILURE:

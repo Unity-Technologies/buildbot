@@ -25,6 +25,7 @@ from twisted.internet import defer, utils
 
 from buildbot import util
 from buildbot.changes import base
+import klog
 
 import xml.dom.minidom
 import os, urllib
@@ -122,7 +123,7 @@ class SVNPoller(base.PollingChangeSource, util.ComparableMixin):
                 self.cachepath = None
                 log.msg(("SVNPoller: SVNPoller(%s) cache file corrupt or unwriteable; " +
                         "skipping and not using") % self.svnurl)
-                log.err()
+                klog.err_json()
 
     def describe(self):
         return "SVNPoller: watching %s" % self.svnurl
