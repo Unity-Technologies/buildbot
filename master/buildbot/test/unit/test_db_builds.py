@@ -19,6 +19,7 @@ from freezegun import freeze_time
 from twisted.trial import unittest
 from twisted.internet import defer, task
 from buildbot.db import builds
+from buildbot.db.builds import BuildDoNotExist
 from buildbot.status import build
 from buildbot.test.fake.botmaster import FakeBotMaster
 from buildbot.test.util import connector_component
@@ -564,14 +565,13 @@ class TestGetBuildIDForRequest(
         ]
         yield self.insertTestData(example_data)
 
-        bid = yield self.db.builds.getBuildIDForRequest(1, 1)
+        with self.assertRaises(BuildDoNotExist):
+            yield self.db.builds.getBuildIDForRequest(1, 1)
 
-        self.assertEqual(bid, None)
 
     @defer.inlineCallbacks
     def testGetBuildIDForRequestIfBuildRequestNotExists(self):
         #Empty database
 
-        bid = yield self.db.builds.getBuildIDForRequest(1, 1)
-
-        self.assertEqual(bid, None)
+        with self.assertRaises(BuildDoNotExist):
+            yield self.db.builds.getBuildIDForRequest(1, 1)

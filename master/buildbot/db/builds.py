@@ -22,6 +22,10 @@ import sqlalchemy as sa
 from buildbot.db.buildrequests import maybeFilterBuildRequestsBySourceStamps, mkdt
 
 
+class BuildDoNotExist(Exception):
+    pass
+
+
 class BuildsConnectorComponent(base.DBConnectorComponent):
     # Documentation is in developer/database.rst
 
@@ -81,7 +85,11 @@ class BuildsConnectorComponent(base.DBConnectorComponent):
             row = res.fetchone()
 
             if not row:
-                return None
+                msg = "There is no build for brid: {brid} and build number {build_number}".format(
+                    brid=brid,
+                    build_number=build_number,
+                )
+                raise BuildDoNotExist(msg)
 
             return row.id
 
