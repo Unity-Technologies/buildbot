@@ -420,38 +420,50 @@ class KatanaBuildChooser(BasicBuildChooser):
         else:
             yield self.master.db.buildrequests.claimBuildRequests(brids)
 
-    def removeBuildRequest(self, breq):
-        # reset the checkMerges in case the breq still in the master cache
+    def __remove_brdict_by_brid(self, brdicts, buildrequest):
+        """
+        Remove every brdict from brdicts by 'brid' key from buildrequest.brdict
+        @param buildrequest: BuildRequest object with brdict['brid'] which we'll use to compare
+        @param brdicts: list of buildrequest data (dicts)
+        @return: information if function removed anything
+        """
+        removed = False
+        for brdict in brdicts:
+            if brdict['brid'] == buildrequest.brdict['brid']:
+                brdicts.remove(brdict)
+                removed = True
+        return removed
 
-        def remove_dict(brdicts, breq):
-            old_len_brdicts = len(brdicts)
-            brdicts = [brdict for brdict in brdicts if brdict['brid'] != breq.brdict['brid']]
-            is_removed = old_len_brdicts != len(brdicts)
-            return {
-                'brdicts': brdicts,
-                'is_removed': is_removed
-            }
+    def removeBuildRequest(self, buildrequest):
+        """
+        Remove buildrequest.brdict from self.unclaimedBrdicts and self.resumeBrdicts.
+        If function removed anything clear buildrequest data about merges too
+        otherwise log error.
+        @param buildrequest: BuildRequest object
+        """
 
-        breq.checkMerges = True
-        breq.retries = 0
-        breq.hasBeenMerged = False
+        if not buildrequest.brdict:
+            klog.err_json("removeBuildRequest has empty breq.brdict: %s" % str(buildrequest.brdict))
+            return
+
         is_removed = False
 
-        if self.unclaimedBrdicts and breq.brdict:
-            unclaimed_data = remove_dict(self.unclaimedBrdicts, breq)
-            self.unclaimedBrdicts = unclaimed_data['brdicts']
-            is_removed |= unclaimed_data['is_removed']
+        if self.unclaimedBrdicts:
+            is_removed |= self.__remove_brdict_by_brid(self.unclaimedBrdicts, buildrequest)
 
-        if self.resumeBrdicts and breq.brdict:
-            resume_data = remove_dict(self.resumeBrdicts, breq)
-            self.resumeBrdicts = resume_data['brdicts']
-            is_removed |= resume_data['is_removed']
+        if self.resumeBrdicts:
+            is_removed |= self.__remove_brdict_by_brid(self.resumeBrdicts, buildrequest)
 
-        msg = "removeBuildRequest does not remove anything. breq.brid: %s" % breq.brdict['brid']
-        if not is_removed:
-            klog.err_json(msg)
-
-        self.breqCache.remove(breq.id)
+        if is_removed:
+            buildrequest.checkMerges = True
+            buildrequest.retries = 0
+            buildrequest.hasBeenMerged = False
+            self.breqCache.remove(buildrequest.id)
+        else:
+            klog.err_json(
+                "removeBuildRequest does not remove anything. buildrequest.brid: %s" %
+                buildrequest.brdict['brid']
+            )
 
     def removeBuildRequests(self, breqs):
         # Remove a BuildrRequest object (and its brdict)
