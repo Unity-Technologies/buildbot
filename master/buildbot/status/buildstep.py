@@ -380,7 +380,7 @@ class BuildStepStatus(styles.Versioned):
         self.wasUpgraded = True
 
     @defer.inlineCallbacks
-    def prepare_trigger_links(self, sourcestamps):
+    def prepare_trigger_links(self, codebases_arg):
         from buildbot.steps.trigger import Trigger
 
         if not issubclass(self.step_type_obj, Trigger):
@@ -396,8 +396,8 @@ class BuildStepStatus(styles.Versioned):
             friendly_name = master.status.getFriendlyName(build['buildername'])
             url = master.status.getURLForBuild(build['buildername'],
                                                build['number'],
-                                               friendly_name=friendly_name,
-                                               sourcestamps=sourcestamps)
+                                               friendly_name=friendly_name)
+            url['path'] += codebases_arg
             results = (build['results'],)  # must be tuple
             links_data.append((url['text'], url['path'], results))
 

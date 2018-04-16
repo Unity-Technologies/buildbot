@@ -136,9 +136,9 @@ class TestBuildStepStatus(unittest.TestCase):
         self.setupStatus(builder)
         build = builder.newBuild()
         shell_step_status = build.addStepWithName('step_1', ShellCommand)
-        sourcestamps = {}
+        codebases_arg = "?foo=bar"
 
-        trigger_links = yield shell_step_status.prepare_trigger_links(sourcestamps)
+        trigger_links = yield shell_step_status.prepare_trigger_links(codebases_arg)
 
         self.assertEqual(len(trigger_links), 0)
 
@@ -161,11 +161,10 @@ class TestBuildStepStatus(unittest.TestCase):
         build.builder.master.db = StubDB()
         build.brids = [1]
         build.builder.master.status.getFriendlyName = lambda x: None
-        build.builder.master.status.getURLForBuild =\
-            lambda x, y, friendly_name, sourcestamps: {'path':x, 'text': y}
-        sourcestamps = {}
+        build.builder.master.status.getURLForBuild = lambda x, y, friendly_name: {'path':x, 'text': y}
+        codebases_arg = "?foo=bar"
 
-        trigger_links = yield trigger_step_status.prepare_trigger_links(sourcestamps)
+        trigger_links = yield trigger_step_status.prepare_trigger_links(codebases_arg)
 
         self.assertEqual(len(trigger_links), 1)
 
@@ -188,10 +187,9 @@ class TestBuildStepStatus(unittest.TestCase):
         build.builder.master.db = StubDB()
         build.brids = [1]
         build.builder.master.status.getFriendlyName = lambda x: None
-        build.builder.master.status.getURLForBuild = \
-            lambda x, y, friendly_name, sourcestamps: {'path': x, 'text': y}
-        sourcestamps = {}
+        build.builder.master.status.getURLForBuild = lambda x, y, friendly_name: {'path': x, 'text': y}
+        codebases_arg = "?foo=bar"
 
-        trigger_links = yield trigger_step_status.prepare_trigger_links(sourcestamps)
+        trigger_links = yield trigger_step_status.prepare_trigger_links(codebases_arg)
 
         self.assertEqual(len(trigger_links), 0)
