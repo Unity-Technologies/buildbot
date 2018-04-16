@@ -217,17 +217,31 @@ class BuildStatus(styles.Versioned, properties.PropertiesMixin):
                 username = " ".join(owner.split()[:-1])
                 user_id = yield self.master.db.users.getUidByLdapUsername(username)
                 if not user_id:
-                    log.msg("Can not find user in database %s" % owner)
-                    log.err()
+                    msg = "Can not find user in database: username: {user}; project: {project};" \
+                          " builder: {builder}"
+                    klog.err_json(msg.format(
+                        user=owner,
+                        project=step.builder.project,
+                        builder=step.builder.friendly_name
+                    ))
+                    continue
                 yield self.master.db.builds.createBuildUser(build_id, user_id, self.finished)
 
-        if self.finished and self.savedStatus is False:
+        def error_thd(err):
+            msg = "There was an error in createBuildUserStatus. Project: {proj}; Builder: {builder}"
+            klog.err_json(err, _why=msg.format(
+                proj=step.builder.project,
+                builder=step.builder.friendly_name,
+            ))
+
+        if self.finished and self.savedStatus is False and len(self.brids) > 0:
             self.savedStatus = True
             build_id_defer = self.master.db.builds.getBuildIDForRequest(
-                self.buildChainID,
+                self.brids[0],
                 self.number,
             )
             build_id_defer.addCallback(thd)
+            build_id_defer.addErrback(error_thd)
 
         return step
 
