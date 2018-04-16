@@ -420,20 +420,6 @@ class KatanaBuildChooser(BasicBuildChooser):
         else:
             yield self.master.db.buildrequests.claimBuildRequests(brids)
 
-    def __remove_brdict_by_brid(self, brdicts, buildrequest):
-        """
-        Remove every brdict from brdicts by 'brid' key from buildrequest.brdict
-        @param buildrequest: BuildRequest object with brdict['brid'] which we'll use to compare
-        @param brdicts: list of buildrequest data (dicts)
-        @return: information if function removed anything
-        """
-        removed = False
-        for brdict in brdicts:
-            if brdict['brid'] == buildrequest.brdict['brid']:
-                brdicts.remove(brdict)
-                removed = True
-        return removed
-
     def removeBuildRequest(self, buildrequest):
         """
         Remove buildrequest.brdict from self.unclaimedBrdicts and self.resumeBrdicts.
@@ -916,6 +902,20 @@ class KatanaBuildChooser(BasicBuildChooser):
             nextBuild = (slave, breq)
 
         defer.returnValue(nextBuild)
+
+    def __remove_brdict_by_brid(self, brdicts, buildrequest):
+        """
+        Remove every brdict from brdicts by 'brid' key from buildrequest.brdict
+        @param buildrequest: BuildRequest object with brdict['brid'] which we'll use to compare
+        @param brdicts: list of buildrequest data (dicts)
+        @return: information if function removed anything
+        """
+        removed = False
+        for brdict in brdicts:
+            if brdict['brid'] == buildrequest.brdict['brid']:
+                brdicts.remove(brdict)
+                removed = True
+        return removed
 
 
 # Buildbot's default BuildRequestDistributor with the default BasicBuildChooser
