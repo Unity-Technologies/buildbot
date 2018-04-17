@@ -53,8 +53,9 @@ def get_steps(steps_list, codebases_arg, request):
             step_obj['css_class'] = 'waiting' if is_waiting else 'running'
             step_obj['time_to_run'] = 'waiting for locks' if is_waiting else 'running'
 
-        # TODO Remove side effect
-        yield step.prepare_trigger_links()
+        trigger_links = yield step.prepare_trigger_links(codebases_arg)
+        for link_data in trigger_links:
+            step.addURL(*link_data)
 
         step_obj['urls'] = __prepare_url_object(step, codebases_arg)
         step_obj['logs'] = __get_logs_for_step(step, codebases_arg, request)

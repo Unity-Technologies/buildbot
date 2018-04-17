@@ -148,7 +148,7 @@ class TestBuildStepStatus(unittest.TestCase):
 
         class StubBuildRequest(object):
             def getBuildRequestForStartbrids(self, brids):
-                return [{'buildername': 'foo', 'number': brids[0], 'results': 1}]
+                return [{'buildername': 'mybuilder', 'number': brids[0], 'results': 2}]
 
         class StubDB(object):
             def __init__(self):

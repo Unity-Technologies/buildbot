@@ -381,6 +381,14 @@ class BuildStepStatus(styles.Versioned):
 
     @defer.inlineCallbacks
     def prepare_trigger_links(self, codebases_arg):
+        """
+        Prepare links data for Trigger depedency builds.
+        For another type of builds return empty list.
+
+        @param codebases_arg: string with query params from request.
+        @return: List of tuples with data for links. Links are created after this
+        method by step.addURL(*link_data)
+        """
         from buildbot.steps.trigger import Trigger
 
         if not issubclass(self.step_type_obj, Trigger):
