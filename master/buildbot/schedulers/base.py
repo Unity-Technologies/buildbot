@@ -260,7 +260,7 @@ class BaseScheduler(service.MultiService, ComparableMixin, StateMixin, ScheduleO
             # use change_consumption_lock to ensure the service does not stop
             # while this change is being processed
             d = self._change_consumption_lock.run(self.gotChange, change, important)
-            d.addErrback(log.err, 'while processing change')
+            d.addErrback(klog.err_json, 'while processing change')
         self._change_subscription = self.master.subscribeToChanges(changeCallback)
 
         return defer.succeed(None)

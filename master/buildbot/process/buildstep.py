@@ -1055,7 +1055,7 @@ class LoggingBuildStep(BuildStep):
 
         if self.cmd:
             d = self.cmd.interrupt(reason)
-            d.addErrback(log.err, 'while interrupting command')
+            d.addErrback(klog.err_json, 'while interrupting command')
 
     def checkDisconnect(self, f):
         f.trap(error.ConnectionLost)

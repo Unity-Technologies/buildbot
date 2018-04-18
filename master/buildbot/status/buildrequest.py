@@ -13,6 +13,7 @@
 #
 # Copyright Buildbot Team Members
 
+import klog
 from zope.interface import implements
 from twisted.python import log
 from twisted.internet import defer
@@ -124,7 +125,7 @@ class BuildRequestStatus:
         d.addCallback(notify_old)
         d.addCallback(lambda _ :
             self.status._buildrequest_subscribe(self.brid, observer))
-        d.addErrback(log.err, 'while notifying subscribers')
+        d.addErrback(klog.err_json, 'while notifying subscribers')
 
     def unsubscribe(self, observer):
         self.status._buildrequest_unsubscribe(self.brid, observer)

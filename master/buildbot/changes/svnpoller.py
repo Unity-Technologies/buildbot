@@ -178,7 +178,7 @@ class SVNPoller(base.PollingChangeSource, util.ComparableMixin):
         d.addCallback(self.create_changes)
         d.addCallback(self.submit_changes)
         d.addCallback(self.finished_ok)
-        d.addErrback(log.err, 'SVNPoller: Error in  while polling') # eat errors
+        d.addErrback(klog.err_json, 'SVNPoller: Error in  while polling') # eat errors
         return d
 
     def getProcessOutput(self, args):

@@ -13,6 +13,7 @@
 #
 # Copyright Buildbot Team Members
 
+import klog
 from twisted.internet import defer, reactor
 from twisted.python import log
 from buildbot import util, config
@@ -89,8 +90,7 @@ class BaseBasicScheduler(base.BaseScheduler):
                 self.scanExistingClassifiedChanges())
 
         # handle Deferred errors, since startService does not return a Deferred
-        d.addErrback(log.err, "while starting SingleBranchScheduler '%s'"
-                              % self.name)
+        d.addErrback(klog.err_json, "while starting SingleBranchScheduler '%s'" % self.name)
 
         if _returnDeferred:
             return d # only used in tests
@@ -133,7 +133,7 @@ class BaseBasicScheduler(base.BaseScheduler):
                 self._stable_timers[timer_name].cancel()
             def fire_timer():
                 d = self.stableTimerFired(timer_name)
-                d.addErrback(log.err, "while firing stable timer")
+                d.addErrback(klog.err_json, "while firing stable timer")
             self._stable_timers[timer_name] = self._reactor.callLater(
                     self.treeStableTimer, fire_timer)
         d.addCallback(fix_timer)

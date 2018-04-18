@@ -13,6 +13,7 @@
 #
 # Copyright Buildbot Team Members
 
+import klog
 from weakref import WeakValueDictionary
 from itertools import ifilterfalse
 from twisted.python import log
@@ -223,7 +224,7 @@ class AsyncLRUCache(LRUCache):
                 d.errback(f)
 
         miss_d.addCallbacks(handle_result, handle_failure)
-        miss_d.addErrback(log.err)
+        miss_d.addErrback(klog.err_json)
 
         return d
 

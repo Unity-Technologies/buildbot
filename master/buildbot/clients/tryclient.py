@@ -905,7 +905,7 @@ class Try(pb.Referenceable):
             d.addCallback(lambda res: self.announce("job has been delivered"))
             d.addCallback(lambda res: self.getStatus())
         d.addErrback(self.trapSystemExit)
-        d.addErrback(log.err)
+        d.addErrback(klog.err_json)
         d.addCallback(self.cleanup)
         d.addCallback(lambda res: reactor.stop())
 

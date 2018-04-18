@@ -15,6 +15,7 @@
 
 from twisted.internet import reactor
 
+import klog
 from buildbot.changes import base
 from buildbot.util import json
 from buildbot import util
@@ -115,7 +116,7 @@ class GerritChangeSource(base.ChangeSource):
     def addChange(self, chdict):
         d = self.master.addChange(**chdict)
         # eat failures..
-        d.addErrback(log.err, 'error adding change from GerritChangeSource')
+        d.addErrback(klog.err_json, 'error adding change from GerritChangeSource')
         return d
     def eventReceived_patchset_created(self, properties, event):
         change = event["change"]

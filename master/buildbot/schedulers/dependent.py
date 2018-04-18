@@ -13,6 +13,7 @@
 #
 # Copyright Buildbot Team Members
 
+import klog
 from twisted.internet import defer
 from twisted.python import log
 from buildbot import util, interfaces, config
@@ -47,7 +48,7 @@ class Dependent(base.BaseScheduler):
 
         # check for any buildsets completed before we started
         d = self._checkCompletedBuildsets(None, None)
-        d.addErrback(log.err, 'while checking for completed buildsets in start')
+        d.addErrback(klog.err_json, 'while checking for completed buildsets in start')
 
     def stopService(self):
         if self._buildset_addition_subscr:
@@ -67,11 +68,11 @@ class Dependent(base.BaseScheduler):
 
         # record our interest in this buildset
         d = self._addUpstreamBuildset(bsid)
-        d.addErrback(log.err, 'while subscribing to buildset %d' % bsid)
+        d.addErrback(klog.err_json, 'while subscribing to buildset %d' % bsid)
 
     def _buildsetCompleted(self, bsid, result):
         d = self._checkCompletedBuildsets(bsid, result)
-        d.addErrback(log.err, 'while checking for completed buildsets')
+        d.addErrback(klog.err_json, 'while checking for completed buildsets')
 
     @util.deferredLocked('_subscription_lock')
     @defer.inlineCallbacks
