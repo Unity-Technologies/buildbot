@@ -864,7 +864,7 @@ class BuildRequestsConnectorComponent(base.DBConnectorComponent):
             rows = res.fetchall()
             buildrequests = []
             for row in rows:
-                merged = "( merged )" if row.mergebrid else ""
+                merged = " ( merged )" if row.mergebrid else ""
                 buildrequest = dict(
                     id=row.id,
                     buildername=str(row.buildername),
@@ -872,7 +872,7 @@ class BuildRequestsConnectorComponent(base.DBConnectorComponent):
                     is_merged=bool(row.mergebrid),
                     startbrid=row.startbrid,
                     triggeredbybrid=row.triggeredbybrid,
-                    full_name="{buildername} #{number} {merged}".format(merged=merged, **row),
+                    full_name="{buildername} #{number}{merged}".format(merged=merged, **row),
                 )
                 buildrequests.append(buildrequest)
             res.close()

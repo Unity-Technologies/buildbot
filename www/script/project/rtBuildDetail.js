@@ -9,7 +9,8 @@ define(function (require) {
         popups = require('ui.popup'),
         qs = require('libs/query-string'),
         hb = require('project/handlebars-extend'),
-        hbBuild = hb.build;
+        hbBuild = hb.build,
+        hbStopBuild = hb.stop_build;
 
     var rtBuildDetail,
         isLoaded = false,
@@ -47,14 +48,36 @@ define(function (require) {
                 $body.append($popup);
             });
 
+
             // Setup dialog for stop entire chain
             $("form[data-stop-chain]").ajaxForm({
                 beforeSubmit: function beforeSubmit(data, $form) {
                     var chainBuild = $form.data("chain").toString();
                     var deleteMsgKey = $form.data('msg-label') || 'ONE_BUILD';
                     return confirm(messages[deleteMsgKey].format(chainBuild));
-
                 }
+            });
+
+            $('button[data-stop-build-url]').click(function() {
+                var prop = {
+                    one_build: $(this).data('single-build') !== undefined,
+                    chained_build: $(this).data('chain-builds') !== undefined,
+                    builds_in_chain: $(this).data('chain-builds'),
+                    url: $(this).data('stop-build-url')
+                };
+                var $popup = $("<div/>").popup({
+                    destroyAfter: true,
+                    closeButton: false,
+                    html: hbStopBuild(prop),
+                    onCreate: function($elem) {
+                        $elem.on('click', '.close-button', $elem.hidePopup);
+                        $elem.on('click', '.confirm-button', function() {
+                            var url = $(this).data('url');
+                            $elem.hidePopup();
+                        });
+                    }
+                });
+                $("body").append($popup);
             });
 
             // Setup build buttons

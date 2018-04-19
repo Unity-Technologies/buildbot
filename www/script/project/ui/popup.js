@@ -58,10 +58,13 @@ define(function (require) {
                     return "click.katana.popup" + id + " touchstart.katana.popup" + id;
                 },
                 createHTML: function () {
-                    $elem.addClass("more-info-box more-info-box-js").
-                        append("<span class='close-btn'></span>").
-                        append(opts.title).
-                        attr("data-ui-popup", true).hide();
+                    $elem.addClass("more-info-box more-info-box-js");
+                    if (opts.closeButton) {
+                        $elem.append("<span class='close-btn'></span>");
+                    }
+                    $elem.append(opts.title)
+                         .attr("data-ui-popup", true)
+                         .hide();
 
                     if (opts.url) {
                         $.ajax(opts.url).
@@ -177,6 +180,7 @@ define(function (require) {
             autoShow: true,
             center: true,
             animate: true,
+            closeButton: true,
             showAnimation: "fast",
             hideAnimation: "fast",
             onCreate: function ($elem) {

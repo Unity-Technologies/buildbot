@@ -1,0 +1,27 @@
+<div>
+    <div class="confirmation-content">
+        {{#if one_build}}
+            <p>This will cancel this build.</p>
+            <p>Are you sure you want to cancel this build?</p>
+        {{/if}}
+
+        {{#if chained_build}}
+            <p>
+                This will cancel all builds in this chain,<br>
+                which may take a little while.
+            </p>
+            <p>These build will also be affected:</p>
+            <ul>
+                {{#each builds_in_chain}}
+                    <li>{{full_name}}</li>
+                {{/each}}
+            </ul>
+            <p>Are you sure you want to cancel those builds?</p>
+        {{/if}}
+    </div>
+
+    <div class="confirmation-footer pull-right">
+        <button class="btn btn-md btn-danger confirm-button" data-url="{{url}}">Yes</button>
+        <button class="btn btn-md btn-info close-button">No</button>
+    </div>
+</div>

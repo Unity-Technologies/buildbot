@@ -37,19 +37,20 @@
             {% if build_is_resuming %}
                 <div class="divider"></div>
                 <h2 class="head-2">Stop Build</h2>
-                {{ forms.stop_build(build_url+"/cancel"+codebases_arg, on_all=False, label='This Build') }}
+                <button class="grey-btn" data-stop-build-url="{{ build_url+"/cancel"+codebases_arg }}" data-single-build>Stop this build</button>
 
             {% elif not build_is_finished %}
                 <div class="divider"></div>
                 {% if authz.advertiseAction('stopBuild', request) %}
                     <h2 class="head-2">Stop Build</h2>
-                    {{ forms.stop_build(build_url+"/stop"+codebases_arg, on_all=False, label='This Build', msg_label='ONE_BUILD') }}
+                    <button class="grey-btn" data-stop-build-url="{{ build_url+"/stop"+codebases_arg }}" data-single-build>Stop build</button>
                 {% endif %}
 
                 {% if authz.advertiseAction('stopAllBuilds', request) and chained_build|length > 1 %}
                     <div class="divider"></div>
                     <h2 class="head-2">Stop Entire Build Chain</h2>
-                    {{ forms.stop_build(build_url+"/stopchain"+codebases_arg, on_all=True, label='Entire Build Chain', chained_build=chained_build, msg_label='CHAINED_BUILD') }}
+                    <button class="grey-btn" data-stop-build-url="{{ build_url+"/stopchain"+codebases_arg }}"
+                            data-chain-builds='{{ chained_build|tojson }}'>Stop entire build chain</button>
                 {% endif %}
                 {% if tests_link %}
                     <div class="divider"></div>
