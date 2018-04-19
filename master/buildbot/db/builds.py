@@ -405,8 +405,10 @@ class BuildsConnectorComponent(base.DBConnectorComponent):
 
     @staticmethod
     def _minimal_bdict(row, botmaster):
+        buildername = row.buildrequests_buildername
         return dict(
-            buildername=row.buildrequests_buildername,
+            buildername=buildername,
+            friendly_name=botmaster.master.status.getFriendlyName(buildername) or buildername,
             complete=bool(row.buildrequests_complete),
             builds_id=row.builds_id,
             builds_number=row.builds_number,

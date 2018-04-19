@@ -63,6 +63,9 @@ class FakeStatus(object):
     def build_started(self, brid, buildername, build_status):
         pass
 
+    def getFriendlyName(self, name):
+        return name
+
 
 class FakeBuildRequestMerger(object):
 
