@@ -312,16 +312,19 @@ class CreateArtifactDirectory(ShellCommand):
     descriptionDone="Remote artifact directory created."
 
     def __init__(self,  artifactDirectory=None, artifactServer=None, artifactServerDir=None, artifactServerPort=None,
-                **kwargs):
+                 customArtifactPathRef=None, **kwargs):
         self.artifactDirectory = artifactDirectory
         self.artifactServer = artifactServer
         self.artifactServerDir = artifactServerDir
         self.artifactServerPort = artifactServerPort
+        self.customArtifactPathRef = customArtifactPathRef
         ShellCommand.__init__(self, **kwargs)
 
     def start(self):
         br = self.build.requests[0]
-        if mkdt(br.submittedAt) > ARTIFACT_LOCATION_CHANGE_DATE:
+        if callable(self.customArtifactPathRef):
+            artifactPath = self.customArtifactPathRef(self.build)
+        elif mkdt(br.submittedAt) > ARTIFACT_LOCATION_CHANGE_DATE:
             artifactPath  = "%s/%s_%s" % (self.build.builder.config.builddir,
                                           br.id, FormatDatetime(mkdt(br.submittedAt)))
         else:
@@ -393,7 +396,8 @@ class UploadArtifact(ShellCommand):
     descriptionDone="Artifact(s) uploaded."
 
     def __init__(self, artifact=None, artifactDirectory=None, artifactServer=None, artifactServerDir=None,
-                 artifactServerURL=None, artifactServerPort=None, usePowerShell=True, **kwargs):
+                 artifactServerURL=None, artifactServerPort=None, usePowerShell=True,
+                 customArtifactPathRef=None, **kwargs):
         self.artifact=artifact
         self.artifactURL = None
         self.artifactDirectory = artifactDirectory
@@ -402,6 +406,7 @@ class UploadArtifact(ShellCommand):
         self.artifactServerURL = artifactServerURL
         self.artifactServerPort = artifactServerPort
         self.usePowerShell = usePowerShell
+        self.customArtifactPathRef = customArtifactPathRef
         ShellCommand.__init__(self, **kwargs)
 
     @defer.inlineCallbacks
@@ -413,7 +418,9 @@ class UploadArtifact(ShellCommand):
             master = self.build.builder.botmaster.parent
             reuse = yield master.db.buildrequests.updateMergedBuildRequest(self.build.requests)
 
-        if mkdt(br.submittedAt) > ARTIFACT_LOCATION_CHANGE_DATE:
+        if callable(self.customArtifactPathRef):
+            artifactPath = self.customArtifactPathRef(self.build)
+        elif mkdt(br.submittedAt) > ARTIFACT_LOCATION_CHANGE_DATE:
             artifactPath  = "%s/%s_%s" % (self.build.builder.config.builddir, br.id, FormatDatetime(mkdt(br.submittedAt)))
         else:
             artifactPath = "%s_%s_%s" % (self.build.builder.config.builddir, br.id, FormatDatetime(mkdt(br.submittedAt)))
@@ -445,7 +452,8 @@ class DownloadArtifact(ShellCommand):
     descriptionDone="Artifact(s) downloaded."
 
     def __init__(self, artifactBuilderName=None, artifact=None, artifactDirectory=None, artifactDestination=None,
-                 artifactServer=None, artifactServerDir=None, artifactServerPort=None, usePowerShell=True, **kwargs):
+                 artifactServer=None, artifactServerDir=None, artifactServerPort=None, usePowerShell=True,
+                 customArtifactPathRef=None, **kwargs):
         self.artifactBuilderName = artifactBuilderName
         self.artifact = artifact
         self.artifactDirectory = artifactDirectory
@@ -455,6 +463,7 @@ class DownloadArtifact(ShellCommand):
         self.artifactDestination = artifactDestination or artifact
         self.master = None
         self.usePowerShell = usePowerShell
+        self.customArtifactPathRef = customArtifactPathRef
         name = "Download Artifact for '%s'" % artifactBuilderName
         description = "Downloading artifact '%s'..." % artifactBuilderName
         descriptionDone="Downloaded '%s'." % artifactBuilderName
@@ -469,7 +478,9 @@ class DownloadArtifact(ShellCommand):
         #find artifact dependency
         br = yield self._getBuildRequest()
 
-        if br["submitted_at"] > ARTIFACT_LOCATION_CHANGE_DATE:
+        if callable(self.customArtifactPathRef):
+            artifactPath = self.customArtifactPathRef(self.build)
+        elif br["submitted_at"] > ARTIFACT_LOCATION_CHANGE_DATE:
             artifactPath  = "%s/%s_%s" % (safeTranslate(self.artifactBuilderName),
                                           br['brid'], FormatDatetime(br["submitted_at"]))
         else:
