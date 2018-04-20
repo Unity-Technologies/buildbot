@@ -773,6 +773,9 @@ class BuilderControl:
 
     @defer.inlineCallbacks
     def rebuildBuild(self, bs, reason="<rebuild, no reason given>", extraProperties=None, absolute=True, newOwner=''):
+        """
+        TODO: This method is probably is not used. Consider to remove it.
+        """
         if not bs.isFinished():
             return
 

@@ -38,7 +38,7 @@ AcquireBuildLocksType = "<class 'buildbot.steps.artifact.AcquireBuildLocks'>"
 class BuildStatus(styles.Versioned, properties.PropertiesMixin):
     implements(interfaces.IBuildStatus, interfaces.IStatusEvent)
 
-    persistenceVersion = 4
+    persistenceVersion = 5
     persistenceForgets = ( 'wasUpgraded', )
 
     sources = None
@@ -60,6 +60,7 @@ class BuildStatus(styles.Versioned, properties.PropertiesMixin):
     slavename = "???"
     foi_url = None
     artifacts = None
+    user_id = None
 
     set_runtime_properties = True
 
@@ -211,21 +212,15 @@ class BuildStatus(styles.Versioned, properties.PropertiesMixin):
     def createBuildUserStatus(self, step):
         @defer.inlineCallbacks
         def thd(build_id):
-            for owner in self.owners:
-                # TODO: Change in future to uid from session!
-                # "pyflakes pyflakes@unity3d.com" -> "pyflakes"
-                username = " ".join(owner.split()[:-1])
-                user_id = yield self.master.db.users.getUidByLdapUsername(username)
-                if not user_id:
-                    msg = "Can not find user in database: username: {user}; project: {project};" \
-                          " builder: {builder}"
-                    klog.err_json(msg.format(
-                        user=owner,
-                        project=step.builder.project,
-                        builder=step.builder.friendly_name
-                    ))
-                    continue
-                yield self.master.db.builds.createBuildUser(build_id, user_id, self.finished)
+            if self.user_id:
+                yield self.master.db.builds.createBuildUser(build_id, self.user_id, self.finished)
+            else:
+                msg = "Uknown user_id; project: {project}; builder: {builder}; build_id: {build_id}"
+                klog.err_json(msg.format(
+                    project=step.builder.project,
+                    builder=step.builder.friendly_name,
+                    build_id=build_id,
+                ))
 
         def error_thd(err):
             msg = "There was an error in createBuildUserStatus. Project: {proj}; Builder: {builder}"
@@ -385,6 +380,9 @@ class BuildStatus(styles.Versioned, properties.PropertiesMixin):
 
     def setOwners(self, owners):
         self.owners = owners
+
+    def setUserID(self, user_id):
+        self.user_id = user_id
 
     def setReason(self, reason):
         self.reason = reason
@@ -555,6 +553,15 @@ class BuildStatus(styles.Versioned, properties.PropertiesMixin):
         if hasattr(self, "source"):
             self.sources = [self.source]
             del self.source
+        self.wasUpgraded = True
+
+    def upgradeToVersion5(self):
+        if not hasattr(self, "user_id"):
+            self.user_id = None
+            # maybe we should search here user_id 'in old way'
+            # for owner in self.owners:
+            #     username = " ".join(owner.split()[:-1])
+            #     self.user_id = yield self.master.db.users.getUidByLdapUsername(username)
         self.wasUpgraded = True
 
     def checkLogfiles(self):

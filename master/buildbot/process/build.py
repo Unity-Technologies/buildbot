@@ -434,8 +434,11 @@ class Build(properties.PropertiesMixin):
         # gather owners from build requests
         owners = [r.properties['owner'] for r in self.requests
                   if r.properties.has_key('owner')]
+        user_ids = [r.properties['user_id'] for r in self.requests
+                    if r.properties.has_key('user_id')]
         if owners: self.setProperty('owners', owners, self.reason)
         self.build_status.setOwners(owners)
+        if user_ids: self.build_status.setUserID(user_ids[0])
 
         self.results = [] # list of FAILURE, SUCCESS, WARNINGS, SKIPPED
         self.result = SUCCESS # overall result, may downgrade after each step
