@@ -308,7 +308,26 @@ class BuildsConnectorComponent(base.DBConnectorComponent):
 
             res = conn.execute(q)
 
-            return [self._minimal_bdict(row, botmaster) for row in res.fetchall()]
+            last_builds = []
+            for row in res.fetchall():
+                buildername = row.buildrequests_buildername
+                last_builds.append(dict(
+                    buildername=buildername,
+                    friendly_name=botmaster.master.status.getFriendlyName(buildername) or buildername,
+                    complete=bool(row.buildrequests_complete),
+                    builds_id=row.builds_id,
+                    builds_number=row.builds_number,
+                    reason=row.buildsets_reason,
+                    project=botmaster.getBuilderConfig(row.buildrequests_buildername).project,
+                    slavename=row.builds_slavename,
+                    submitted_at=mkdt(row.buildrequests_submitted_at),
+                    complete_at=mkdt(row.buildrequests_complete_at),
+                    sourcestampsetid=row.buildsets_sourcestampsetid,
+                    results=row.buildrequests_results,
+                ))
+            return last_builds
+
+
         return self.db.pool.do(thd)
 
     def createFullBuildObject(self, branch, revision, repository, project, reason, submitted_at,
@@ -402,21 +421,3 @@ class BuildsConnectorComponent(base.DBConnectorComponent):
         if 'results' in row.keys():
             _bdict['results'] = row.results
         return _bdict
-
-    @staticmethod
-    def _minimal_bdict(row, botmaster):
-        buildername = row.buildrequests_buildername
-        return dict(
-            buildername=buildername,
-            friendly_name=botmaster.master.status.getFriendlyName(buildername) or buildername,
-            complete=bool(row.buildrequests_complete),
-            builds_id=row.builds_id,
-            builds_number=row.builds_number,
-            reason=row.buildsets_reason,
-            project=botmaster.getBuilderConfig(row.buildrequests_buildername).project,
-            slavename=row.builds_slavename,
-            submitted_at=mkdt(row.buildrequests_submitted_at),
-            complete_at=mkdt(row.buildrequests_complete_at),
-            sourcestampsetid=row.buildsets_sourcestampsetid,
-            results=row.buildrequests_results,
-        )
