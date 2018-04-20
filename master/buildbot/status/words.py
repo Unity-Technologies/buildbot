@@ -822,7 +822,6 @@ class IRCContact(base.StatusReceiver):
             def logErr(f):
                 klog.err_json(f)
                 self.send("Something bad happened (see logs)")
-            d.addErrback(klog.err_json)
             return d
         return defer.succeed(None)
 
