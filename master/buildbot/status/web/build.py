@@ -359,9 +359,11 @@ class StatusResourceBuild(HtmlResource):
         start, end = self.build_status.getTimes()
         context['start'] = time.ctime(start)
         context['end'] = time.ctime(end) if end else None
+        context['elapsed'] = None
         if not end:
             end = util.now()
-        context['elapsed'] = util.formatInterval(end - start)
+        if start:
+            context['elapsed'] = util.formatInterval(end - start)
 
         context['authz'] = self.getAuthz(request)
         context['has_changes'] = False
