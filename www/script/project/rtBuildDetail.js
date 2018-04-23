@@ -72,8 +72,12 @@ define(function (require) {
                     onCreate: function($elem) {
                         $elem.on('click', '.close-button', $elem.hidePopup);
                         $elem.on('click', '.confirm-button', function() {
-                            var url = $(this).data('url');
-                            $elem.hidePopup();
+                            $('.confirm-button, .close-button').hide();
+                            $('#loading-modal').show();
+                            $.post($(this).data('url'), {}, function() {
+                                $elem.hidePopup();
+                                location.reload();
+                            });
                         });
                     }
                 });

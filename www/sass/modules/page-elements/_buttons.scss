@@ -30,6 +30,7 @@
 a.grey-btn,
 .grey-btn,
 .clear-btn,
+.red-btn,
 .blue-btn {
 	@include bgimage(linear-gradient(bottom, lighten($brand-katana, 20%) 10%, lighten($brand-primary, 5%) 100%)); 
     border: 1px solid lighten($brand-katana, 5%);
@@ -65,6 +66,16 @@ a.grey-btn,
         color: rgba(247, 247, 247, 0.72);
 
     }
+}
+
+.red-btn {
+    @include bgimage(linear-gradient(bottom, $brand-danger 10%, $brand-danger 100%));
+		border: 1px solid $brand-danger;
+		border-bottom:1px solid $brand-danger;
+		color: $text-color;
+		&:hover{
+            color: $link-hover-color;
+		}
 }
 
 .grey-btn{
@@ -202,4 +213,8 @@ a.grey-btn,
     content: "✖";
     font-size: 20px;
     text-shadow: 1px 1px 1px #FFFFFF;
+}
+
+.form-btn {
+  min-width: 60px;
 }

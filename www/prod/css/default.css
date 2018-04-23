@@ -957,10 +957,12 @@ ul.top-menu>li>a:hover{opacity:.5}
 .link-button:hover{color:#999}
 .link-1 a{text-decoration:underline;color:#333}
 .link-1 a:hover{color:#999}
-.blue-btn,.clear-btn,.grey-btn,a.grey-btn{background-image:-moz-linear-gradient(bottom,#5eaaad 10%,#438e89 100%);background-image:-webkit-linear-gradient(bottom,#5eaaad 10%,#438e89 100%);background-image:-o-linear-gradient(bottom,#5eaaad 10%,#438e89 100%);background-image:-ms-linear-gradient(bottom,#5eaaad 10%,#438e89 100%);background-image:linear-gradient(bottom,#5eaaad 10%,#438e89 100%);border:1px solid #417c7e;-webkit-border-radius:7px;-moz-border-radius:7px;-ms-border-radius:7px;-o-border-radius:7px;border-radius:7px;color:#eee;font-size:10px;font-weight:700;letter-spacing:.3px;padding:10px;text-transform:uppercase;display:inline-block}
-.blue-btn:hover,.clear-btn:hover,.grey-btn:hover,a.grey-btn:hover{color:#A4A4A4}
+.blue-btn,.clear-btn,.grey-btn,.red-btn,a.grey-btn{background-image:-moz-linear-gradient(bottom,#5eaaad 10%,#438e89 100%);background-image:-webkit-linear-gradient(bottom,#5eaaad 10%,#438e89 100%);background-image:-o-linear-gradient(bottom,#5eaaad 10%,#438e89 100%);background-image:-ms-linear-gradient(bottom,#5eaaad 10%,#438e89 100%);background-image:linear-gradient(bottom,#5eaaad 10%,#438e89 100%);border:1px solid #417c7e;-webkit-border-radius:7px;-moz-border-radius:7px;-ms-border-radius:7px;-o-border-radius:7px;border-radius:7px;color:#eee;font-size:10px;font-weight:700;letter-spacing:.3px;padding:10px;text-transform:uppercase;display:inline-block}
+.blue-btn:hover,.clear-btn:hover,.grey-btn:hover,.red-btn:hover,a.grey-btn:hover{color:#A4A4A4}
 .blue-btn{background-image:-moz-linear-gradient(bottom,#5eaaad 10%,#438e89 100%);background-image:-webkit-linear-gradient(bottom,#5eaaad 10%,#438e89 100%);background-image:-o-linear-gradient(bottom,#5eaaad 10%,#438e89 100%);background-image:-ms-linear-gradient(bottom,#5eaaad 10%,#438e89 100%);background-image:linear-gradient(bottom,#5eaaad 10%,#438e89 100%);border:1px solid #417c7e;border-bottom:1px solid #6D6D6D;-webkit-box-shadow:0 1px 0 rgba(255,255,255,.45) inset,1px 1px 0 #fff;box-shadow:0 1px 0 rgba(255,255,255,.45) inset,1px 1px 0 #fff;-webkit-border-radius:6px;-moz-border-radius:6px;-ms-border-radius:6px;-o-border-radius:6px;border-radius:6px;color:#F7F7F7;display:inline-block;font-size:10px;font-weight:700;letter-spacing:.3px;padding:8px 10px;text-shadow:0 -1px 0 rgba(0,0,0,.44);text-transform:uppercase}
 .blue-btn:hover{color:rgba(247,247,247,.72)}
+.red-btn{background-image:-moz-linear-gradient(bottom,#d9534f 10%,#d9534f 100%);background-image:-webkit-linear-gradient(bottom,#d9534f 10%,#d9534f 100%);background-image:-o-linear-gradient(bottom,#d9534f 10%,#d9534f 100%);background-image:-ms-linear-gradient(bottom,#d9534f 10%,#d9534f 100%);background-image:linear-gradient(bottom,#d9534f 10%,#d9534f 100%);border:1px solid #d9534f;border-bottom:1px solid #d9534f;color:#444}
+.red-btn:hover{color:#5eaaad}
 .grey-btn{background-image:-moz-linear-gradient(bottom,#eee 10%,#999 100%);background-image:-webkit-linear-gradient(bottom,#eee 10%,#999 100%);background-image:-o-linear-gradient(bottom,#eee 10%,#999 100%);background-image:-ms-linear-gradient(bottom,#eee 10%,#999 100%);background-image:linear-gradient(bottom,#eee 10%,#999 100%);border:1px solid #eee;border-bottom:1px solid #999;color:#444}
 .grey-btn:hover{color:#5eaaad}
 .grey-btn.var-1{float:right;font-size:12px;margin-left:15px;margin-bottom:15px}
@@ -985,6 +987,7 @@ ul.top-menu>li>a:hover{opacity:.5}
 .close-btn{position:absolute;right:10px;top:4px;cursor:pointer}
 .close-btn:hover:after{color:#5eaaad}
 .close-btn:after{color:#333;content:"✖";font-size:20px;text-shadow:1px 1px 1px #FFF}
+.form-btn{min-width:60px}
 .initjson{display:none}
 .percent-outer{position:relative;height:17px;width:100%;overflow:hidden;background-color:#ADADAD;border-radius:4px;-webkit-box-shadow:1px 0 4px rgba(0,0,0,.6) inset;box-shadow:1px 0 4px rgba(0,0,0,.6) inset;margin-top:2px;margin-bottom:10px}
 .percent-outer.build-detail-progress{width:40%;margin-top:10px}
