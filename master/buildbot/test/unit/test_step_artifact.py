@@ -19,6 +19,7 @@ class TestArtifactSteps(steps.BuildStepMixin, unittest.TestCase):
 
         self.remote = '\'usr@srv.com:/home/srv/web/dir/build/1_17_12_2014_13_31_26_+0000/mydir/myartifact.py\''
         self.remote_2 = '\'usr@srv.com:/home/srv/web/dir/B/2_01_01_1970_00_00_00_+0000/mydir/myartifact.py\''
+        self.remote_custom = '\'usr@srv.com:/home/srv/web/dir/foobar/mydir/myartifact.py\''
         self.local = '\'myartifact.py\''
 
         fake_br = fakedb.BuildRequest(id=1, buildsetid=1, buildername="A", complete=1, results=0)
@@ -70,6 +71,23 @@ class TestArtifactSteps(steps.BuildStepMixin, unittest.TestCase):
         self.expectOutcome(result=SUCCESS, status_text=['Remote artifact directory created.'])
         return self.runStep()
 
+    def test_create_artifact_directory_with_customArtifactPath(self):
+        self.setupStep(artifact.CreateArtifactDirectory(artifactDirectory="mydir",
+                                                        artifactServer='usr@srv.com',
+                                                        artifactServerDir='/home/srv/web/dir',
+                                                        artifactServerPort=222,
+                                                        customArtifactPath='foobar'))
+        self.expectCommands(
+            ExpectShell(workdir='wkdir', usePTY='slave-config',
+                        command=['ssh', 'usr@srv.com', '-p 222', 'cd /home/srv/web/dir;',
+                                 'mkdir -p ',
+                                 'foobar/mydir'])
+            + ExpectShell.log('stdio', stdout='')
+            + 0
+        )
+        self.expectOutcome(result=SUCCESS, status_text=['Remote artifact directory created.'])
+        return self.runStep()
+
     def test_upload_artifact(self):
         self.setupStep(artifact.UploadArtifact(artifact="myartifact.py", artifactDirectory="mydir",
                                                artifactServer='usr@srv.com', artifactServerDir='/home/srv/web/dir',
@@ -104,6 +122,26 @@ class TestArtifactSteps(steps.BuildStepMixin, unittest.TestCase):
         self.expectOutcome(result=SUCCESS, status_text=['Artifact(s) uploaded.'])
         self.expectProperty('artifactServerPath',
                             'http://srv.com/dir/build/1_17_12_2014_13_31_26_+0000',
+                            'UploadArtifact')
+        return self.runStep()
+
+    def test_upload_artifact_with_customArtifactPath(self):
+        self.setupStep(artifact.UploadArtifact(artifact="myartifact.py", artifactDirectory="mydir",
+                                               artifactServer='usr@srv.com',
+                                               artifactServerDir='/home/srv/web/dir',
+                                               artifactServerURL="http://srv.com/dir",
+                                               customArtifactPath="foobar"))
+        self.expectCommands(
+            ExpectShell(workdir='wkdir', usePTY='slave-config',
+                        command='for i in 1 2 3 4 5; do rsync -var --progress --partial ' +
+                                self.local + ' ' + self.remote_custom +
+                                '; if [ $? -eq 0 ]; then exit 0; else sleep 5; fi; done; exit -1')
+            + ExpectShell.log('stdio', stdout='')
+            + 0
+        )
+        self.expectOutcome(result=SUCCESS, status_text=['Artifact(s) uploaded.'])
+        self.expectProperty('artifactServerPath',
+                            'http://srv.com/dir/foobar',
                             'UploadArtifact')
         return self.runStep()
 
@@ -213,6 +251,28 @@ class TestArtifactSteps(steps.BuildStepMixin, unittest.TestCase):
         )
         self.expectOutcome(result=SUCCESS, status_text=["Downloaded 'B'."])
         return self.runStep()
+
+    def test_download_artifact_with_customArtifactPath(self):
+        fake_trigger = fakedb.BuildRequest(id=2, buildsetid=2, buildername="B", complete=1,
+                                           results=0, triggeredbybrid=1, startbrid=1)
+        self.setupStep(artifact.DownloadArtifact(artifactBuilderName="B", artifact="myartifact.py",
+                                                 artifactDirectory="mydir",
+                                                 artifactServer='usr@srv.com',
+                                                 artifactServerDir='/home/srv/web/dir',
+                                                 customArtifactPath='foobar'),
+                       [fake_trigger])
+
+        self.expectCommands(
+            ExpectShell(workdir='wkdir', usePTY='slave-config',
+                        command='for i in 1 2 3 4 5; do rsync -var --progress --partial ' +
+                                self.remote_custom + ' ' + self.local +
+                                '; if [ $? -eq 0 ]; then exit 0; else sleep 5; fi; done; exit -1')
+            + ExpectShell.log('stdio', stdout='')
+            + 0
+        )
+        self.expectOutcome(result=SUCCESS, status_text=["Downloaded 'B'."])
+        return self.runStep()
+
 
     def test_download_artifact_Win_DOS(self):
         fake_trigger = fakedb.BuildRequest(id=2, buildsetid=2, buildername="B", complete=1,

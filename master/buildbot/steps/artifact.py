@@ -321,7 +321,7 @@ class CreateArtifactDirectory(ShellCommand):
         if self.customArtifactPath:
             artifactPath = self.customArtifactPath
         else:
-            artifactPath  = "%s/%s_%s" % (self.build.builder.config.builddir,
+            artifactPath = "%s/%s_%s" % (self.build.builder.config.builddir,
                                           br.id, FormatDatetime(mkdt(br.submittedAt)))
 
         if (self.artifactDirectory):
@@ -414,7 +414,7 @@ class UploadArtifact(ShellCommand):
         if self.customArtifactPath:
             artifactPath = self.customArtifactPath
         else:
-            artifactPath  = "%s/%s_%s" % (self.build.builder.config.builddir, br.id, FormatDatetime(mkdt(br.submittedAt)))
+            artifactPath = "%s/%s_%s" % (self.build.builder.config.builddir, br.id, FormatDatetime(mkdt(br.submittedAt)))
 
         artifactServerPath = self.build.getProperty("artifactServerPath", None)
         if artifactServerPath is None:
@@ -472,7 +472,7 @@ class DownloadArtifact(ShellCommand):
         if self.customArtifactPath:
             artifactPath = self.customArtifactPath
         else:
-            artifactPath  = "%s/%s_%s" % (safeTranslate(self.artifactBuilderName),
+            artifactPath = "%s/%s_%s" % (safeTranslate(self.artifactBuilderName),
                                           br['brid'], FormatDatetime(br["submitted_at"]))
 
         if (self.artifactDirectory):
