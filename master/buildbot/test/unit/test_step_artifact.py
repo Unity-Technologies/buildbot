@@ -17,8 +17,8 @@ class TestArtifactSteps(steps.BuildStepMixin, unittest.TestCase):
     def setupStep(self, step, brqs=None, winslave=False):
         steps.BuildStepMixin.setupStep(self, step)
 
-        self.remote = '\'usr@srv.com:/home/srv/web/dir/build_1_17_12_2014_13_31_26_+0000/mydir/myartifact.py\''
-        self.remote_2 = '\'usr@srv.com:/home/srv/web/dir/B_2_01_01_1970_00_00_00_+0000/mydir/myartifact.py\''
+        self.remote = '\'usr@srv.com:/home/srv/web/dir/build/1_17_12_2014_13_31_26_+0000/mydir/myartifact.py\''
+        self.remote_2 = '\'usr@srv.com:/home/srv/web/dir/B/2_01_01_1970_00_00_00_+0000/mydir/myartifact.py\''
         self.local = '\'myartifact.py\''
 
         fake_br = fakedb.BuildRequest(id=1, buildsetid=1, buildername="A", complete=1, results=0)
@@ -48,7 +48,7 @@ class TestArtifactSteps(steps.BuildStepMixin, unittest.TestCase):
         self.expectCommands(
             ExpectShell(workdir='wkdir', usePTY='slave-config',
                         command=['ssh', 'usr@srv.com', 'cd /home/srv/web/dir;', 'mkdir -p ',
-                                 'build_1_17_12_2014_13_31_26_+0000/mydir'])
+                                 'build/1_17_12_2014_13_31_26_+0000/mydir'])
             + ExpectShell.log('stdio', stdout='')
             + 0
         )
@@ -63,7 +63,7 @@ class TestArtifactSteps(steps.BuildStepMixin, unittest.TestCase):
         self.expectCommands(
             ExpectShell(workdir='wkdir', usePTY='slave-config',
                         command=['ssh', 'usr@srv.com', '-p 222', 'cd /home/srv/web/dir;', 'mkdir -p ',
-                                 'build_1_17_12_2014_13_31_26_+0000/mydir'])
+                                 'build/1_17_12_2014_13_31_26_+0000/mydir'])
             + ExpectShell.log('stdio', stdout='')
             + 0
         )
@@ -84,7 +84,7 @@ class TestArtifactSteps(steps.BuildStepMixin, unittest.TestCase):
         )
         self.expectOutcome(result=SUCCESS, status_text=['Artifact(s) uploaded.'])
         self.expectProperty('artifactServerPath',
-                            'http://srv.com/dir/build_1_17_12_2014_13_31_26_+0000',
+                            'http://srv.com/dir/build/1_17_12_2014_13_31_26_+0000',
                             'UploadArtifact')
         return self.runStep()
 
@@ -103,7 +103,7 @@ class TestArtifactSteps(steps.BuildStepMixin, unittest.TestCase):
         )
         self.expectOutcome(result=SUCCESS, status_text=['Artifact(s) uploaded.'])
         self.expectProperty('artifactServerPath',
-                            'http://srv.com/dir/build_1_17_12_2014_13_31_26_+0000',
+                            'http://srv.com/dir/build/1_17_12_2014_13_31_26_+0000',
                             'UploadArtifact')
         return self.runStep()
 
