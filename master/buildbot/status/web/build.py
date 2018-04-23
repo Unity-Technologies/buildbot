@@ -419,9 +419,12 @@ class StatusResourceBuild(HtmlResource):
             prop = {
                 'name': name,
                 'value': cxt_value,
-                'short_value': cxt_value[:500],
                 'source': source,
             }
+
+            # TODO not always string, sometimes cxt_value is dictionary!
+            if len(cxt_value) > 500:
+                prop['short_value'] = cxt_value[:500]
 
             if name in parameters:
                 param = parameters[name]
