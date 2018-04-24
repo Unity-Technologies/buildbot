@@ -268,12 +268,13 @@ class CheckArtifactExists(ShellCommandResumeBuild, FindPreviousSuccessBuildMixin
             self.step_status.setText(["Artifact not found."])
             self.finished(SUCCESS)
 
+    @defer.inlineCallbacks
     def _previousBuildFound(self, prevBuildRequest):
         self.artifactBuildrequest = prevBuildRequest
         self.step_status.setText(["Artifact has been already generated."])
 
         if self.customArtifactPath:
-            self.artifactPath = self.customArtifactPath
+            self.artifactPath = yield self.build.render(self.customArtifactPath)
         else:
             self.artifactPath = "%s/%s_%s" % (self.build.builder.config.builddir,
                                               self.artifactBuildrequest['brid'],
@@ -316,10 +317,11 @@ class CreateArtifactDirectory(ShellCommand):
         self.customArtifactPath = customArtifactPath
         ShellCommand.__init__(self, **kwargs)
 
+    @defer.inlineCallbacks
     def start(self):
         br = self.build.requests[0]
         if self.customArtifactPath:
-            artifactPath = self.customArtifactPath
+            artifactPath = yield self.build.render(self.customArtifactPath)
         else:
             artifactPath = "%s/%s_%s" % (self.build.builder.config.builddir,
                                           br.id, FormatDatetime(mkdt(br.submittedAt)))
@@ -412,7 +414,7 @@ class UploadArtifact(ShellCommand):
             reuse = yield master.db.buildrequests.updateMergedBuildRequest(self.build.requests)
 
         if self.customArtifactPath:
-            artifactPath = self.customArtifactPath
+            artifactPath = yield self.build.render(self.customArtifactPath)
         else:
             artifactPath = "%s/%s_%s" % (self.build.builder.config.builddir, br.id, FormatDatetime(mkdt(br.submittedAt)))
 
@@ -470,7 +472,7 @@ class DownloadArtifact(ShellCommand):
         br = yield self._getBuildRequest()
 
         if self.customArtifactPath:
-            artifactPath = self.customArtifactPath
+            artifactPath = yield self.build.render(self.customArtifactPath)
         else:
             artifactPath = "%s/%s_%s" % (safeTranslate(self.artifactBuilderName),
                                           br['brid'], FormatDatetime(br["submitted_at"]))
