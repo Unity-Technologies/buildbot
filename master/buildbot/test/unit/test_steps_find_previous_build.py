@@ -265,8 +265,8 @@ class TestFindPreviousSuccessfulBuild(steps.BuildStepMixin, config.ConfigErrorsM
                         command= ['ssh',
               'usr@srv.com',
               'cd /home/srv/web/dir;',
-              "if [ -d build_1_01_01_1970_00_00_00_+0000/artifact ]; then echo 'Exists'; else echo 'Not found!!'; fi;",
-              'cd build_1_01_01_1970_00_00_00_+0000/artifact',
+              "if [ -d build/1_01_01_1970_00_00_00_+0000/artifact ]; then echo 'Exists'; else echo 'Not found!!'; fi;",
+              'cd build/1_01_01_1970_00_00_00_+0000/artifact',
               '; ls myartifact.py',
               '; ls'])
             + ExpectShell.log('stdio', stdout='Not found!!')
@@ -290,8 +290,8 @@ class TestFindPreviousSuccessfulBuild(steps.BuildStepMixin, config.ConfigErrorsM
                         command= ['ssh',
               'usr@srv.com',
               'cd /home/srv/web/dir;',
-              "if [ -d build_1_01_01_1970_00_00_00_+0000/artifact ]; then echo 'Exists'; else echo 'Not found!!'; fi;",
-              'cd build_1_01_01_1970_00_00_00_+0000/artifact',
+              "if [ -d build/1_01_01_1970_00_00_00_+0000/artifact ]; then echo 'Exists'; else echo 'Not found!!'; fi;",
+              'cd build/1_01_01_1970_00_00_00_+0000/artifact',
               '; ls myartifact.py',
               '; ls'])
             + ExpectShell.log('stdio', stdout='')
@@ -314,8 +314,8 @@ class TestFindPreviousSuccessfulBuild(steps.BuildStepMixin, config.ConfigErrorsM
                         command= ['ssh',
               'usr@srv.com',
               'cd /home/srv/web/dir;',
-              "if [ -d build_1_01_01_1970_00_00_00_+0000/artifact ]; then echo 'Exists'; else echo 'Not found!!'; fi;",
-              'cd build_1_01_01_1970_00_00_00_+0000/artifact',
+              "if [ -d build/1_01_01_1970_00_00_00_+0000/artifact ]; then echo 'Exists'; else echo 'Not found!!'; fi;",
+              'cd build/1_01_01_1970_00_00_00_+0000/artifact',
               '; ls myartifact.py',
               '; ls'])
             + ExpectShell.log('stdio', stdout='myartifact.py')
@@ -341,8 +341,8 @@ class TestFindPreviousSuccessfulBuild(steps.BuildStepMixin, config.ConfigErrorsM
                         command= ['ssh',
               'usr@srv.com',
               'cd /home/srv/web/dir;',
-              "if [ -d build_1_01_01_1970_00_00_00_+0000/artifact ]; then echo 'Exists'; else echo 'Not found!!'; fi;",
-              'cd build_1_01_01_1970_00_00_00_+0000/artifact',
+              "if [ -d build/1_01_01_1970_00_00_00_+0000/artifact ]; then echo 'Exists'; else echo 'Not found!!'; fi;",
+              'cd build/1_01_01_1970_00_00_00_+0000/artifact',
               '; ls myartifact.py',
               '; ls'])
             + ExpectShell.log('stdio', stdout='myartifact.py')
@@ -381,8 +381,8 @@ class TestFindPreviousSuccessfulBuild(steps.BuildStepMixin, config.ConfigErrorsM
                         command= ['ssh',
               'usr@srv.com',
               'cd /home/srv/web/dir;',
-              "if [ -d build_1_01_01_1970_00_00_00_+0000/artifact ]; then echo 'Exists'; else echo 'Not found!!'; fi;",
-              'cd build_1_01_01_1970_00_00_00_+0000/artifact',
+              "if [ -d build/1_01_01_1970_00_00_00_+0000/artifact ]; then echo 'Exists'; else echo 'Not found!!'; fi;",
+              'cd build/1_01_01_1970_00_00_00_+0000/artifact',
               '; ls myartifact.py',
               '; ls'])
             + ExpectShell.log('stdio', stdout='myartifact.py')

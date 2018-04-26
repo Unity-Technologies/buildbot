@@ -13,10 +13,6 @@ from buildbot.steps.resumebuild import ResumeBuild, ShellCommandResumeBuild
 from twisted.python import log
 import ntpath
 
-# Change artifact location in August
-# datetime.datetime(2017, 7, 31, 23, 59, 59, tzinfo=UTC)
-ARTIFACT_LOCATION_CHANGE_DATE = epoch2datetime(1501545599)
-
 def FormatDatetime(value):
     return value.strftime("%d_%m_%Y_%H_%M_%S_%z")
 
@@ -182,7 +178,8 @@ class CheckArtifactExists(ShellCommandResumeBuild, FindPreviousSuccessBuildMixin
     descriptionDone="Searching complete."
 
     def __init__(self, artifact=None, artifactDirectory=None, artifactServer=None, artifactServerDir=None,
-                 artifactServerURL=None, artifactServerPort=None, stopBuild=True, resumeBuild=None, **kwargs):
+                 artifactServerURL=None, artifactServerPort=None, stopBuild=True, resumeBuild=None,
+                 customArtifactPath=None, **kwargs):
         self.master = None
         self.build_sourcestamps = []
         if not isinstance(artifact, list):
@@ -197,6 +194,7 @@ class CheckArtifactExists(ShellCommandResumeBuild, FindPreviousSuccessBuildMixin
         self.artifactPath = None
         self.artifactURL = None
         self.stopBuild = stopBuild
+        self.customArtifactPath = customArtifactPath
         resume_build_val = stopBuild if resumeBuild is None else resumeBuild
         ShellCommandResumeBuild.__init__(self, resumeBuild=resume_build_val, **kwargs)
 
@@ -270,16 +268,15 @@ class CheckArtifactExists(ShellCommandResumeBuild, FindPreviousSuccessBuildMixin
             self.step_status.setText(["Artifact not found."])
             self.finished(SUCCESS)
 
+    @defer.inlineCallbacks
     def _previousBuildFound(self, prevBuildRequest):
         self.artifactBuildrequest = prevBuildRequest
         self.step_status.setText(["Artifact has been already generated."])
 
-        if self.artifactBuildrequest["submitted_at"] > ARTIFACT_LOCATION_CHANGE_DATE:
-            self.artifactPath = "%s/%s_%s" % (self.build.builder.config.builddir,
-                                              self.artifactBuildrequest['brid'],
-                                              FormatDatetime(self.artifactBuildrequest['submitted_at']))
+        if self.customArtifactPath:
+            self.artifactPath = yield self.build.render(self.customArtifactPath)
         else:
-            self.artifactPath = "%s_%s_%s" % (self.build.builder.config.builddir,
+            self.artifactPath = "%s/%s_%s" % (self.build.builder.config.builddir,
                                               self.artifactBuildrequest['brid'],
                                               FormatDatetime(self.artifactBuildrequest['submitted_at']))
 
@@ -312,20 +309,21 @@ class CreateArtifactDirectory(ShellCommand):
     descriptionDone="Remote artifact directory created."
 
     def __init__(self,  artifactDirectory=None, artifactServer=None, artifactServerDir=None, artifactServerPort=None,
-                **kwargs):
+                 customArtifactPath=None, **kwargs):
         self.artifactDirectory = artifactDirectory
         self.artifactServer = artifactServer
         self.artifactServerDir = artifactServerDir
         self.artifactServerPort = artifactServerPort
+        self.customArtifactPath = customArtifactPath
         ShellCommand.__init__(self, **kwargs)
 
+    @defer.inlineCallbacks
     def start(self):
         br = self.build.requests[0]
-        if mkdt(br.submittedAt) > ARTIFACT_LOCATION_CHANGE_DATE:
-            artifactPath  = "%s/%s_%s" % (self.build.builder.config.builddir,
-                                          br.id, FormatDatetime(mkdt(br.submittedAt)))
+        if self.customArtifactPath:
+            artifactPath = yield self.build.render(self.customArtifactPath)
         else:
-            artifactPath  = "%s_%s_%s" % (self.build.builder.config.builddir,
+            artifactPath = "%s/%s_%s" % (self.build.builder.config.builddir,
                                           br.id, FormatDatetime(mkdt(br.submittedAt)))
 
         if (self.artifactDirectory):
@@ -393,7 +391,8 @@ class UploadArtifact(ShellCommand):
     descriptionDone="Artifact(s) uploaded."
 
     def __init__(self, artifact=None, artifactDirectory=None, artifactServer=None, artifactServerDir=None,
-                 artifactServerURL=None, artifactServerPort=None, usePowerShell=True, **kwargs):
+                 artifactServerURL=None, artifactServerPort=None, usePowerShell=True,
+                 customArtifactPath=None, **kwargs):
         self.artifact=artifact
         self.artifactURL = None
         self.artifactDirectory = artifactDirectory
@@ -402,6 +401,7 @@ class UploadArtifact(ShellCommand):
         self.artifactServerURL = artifactServerURL
         self.artifactServerPort = artifactServerPort
         self.usePowerShell = usePowerShell
+        self.customArtifactPath = customArtifactPath
         ShellCommand.__init__(self, **kwargs)
 
     @defer.inlineCallbacks
@@ -413,10 +413,10 @@ class UploadArtifact(ShellCommand):
             master = self.build.builder.botmaster.parent
             reuse = yield master.db.buildrequests.updateMergedBuildRequest(self.build.requests)
 
-        if mkdt(br.submittedAt) > ARTIFACT_LOCATION_CHANGE_DATE:
-            artifactPath  = "%s/%s_%s" % (self.build.builder.config.builddir, br.id, FormatDatetime(mkdt(br.submittedAt)))
+        if self.customArtifactPath:
+            artifactPath = yield self.build.render(self.customArtifactPath)
         else:
-            artifactPath = "%s_%s_%s" % (self.build.builder.config.builddir, br.id, FormatDatetime(mkdt(br.submittedAt)))
+            artifactPath = "%s/%s_%s" % (self.build.builder.config.builddir, br.id, FormatDatetime(mkdt(br.submittedAt)))
 
         artifactServerPath = self.build.getProperty("artifactServerPath", None)
         if artifactServerPath is None:
@@ -445,7 +445,8 @@ class DownloadArtifact(ShellCommand):
     descriptionDone="Artifact(s) downloaded."
 
     def __init__(self, artifactBuilderName=None, artifact=None, artifactDirectory=None, artifactDestination=None,
-                 artifactServer=None, artifactServerDir=None, artifactServerPort=None, usePowerShell=True, **kwargs):
+                 artifactServer=None, artifactServerDir=None, artifactServerPort=None, usePowerShell=True,
+                 customArtifactPath=None, **kwargs):
         self.artifactBuilderName = artifactBuilderName
         self.artifact = artifact
         self.artifactDirectory = artifactDirectory
@@ -455,6 +456,7 @@ class DownloadArtifact(ShellCommand):
         self.artifactDestination = artifactDestination or artifact
         self.master = None
         self.usePowerShell = usePowerShell
+        self.customArtifactPath = customArtifactPath
         name = "Download Artifact for '%s'" % artifactBuilderName
         description = "Downloading artifact '%s'..." % artifactBuilderName
         descriptionDone="Downloaded '%s'." % artifactBuilderName
@@ -469,11 +471,10 @@ class DownloadArtifact(ShellCommand):
         #find artifact dependency
         br = yield self._getBuildRequest()
 
-        if br["submitted_at"] > ARTIFACT_LOCATION_CHANGE_DATE:
-            artifactPath  = "%s/%s_%s" % (safeTranslate(self.artifactBuilderName),
-                                          br['brid'], FormatDatetime(br["submitted_at"]))
+        if self.customArtifactPath:
+            artifactPath = yield self.build.render(self.customArtifactPath)
         else:
-            artifactPath  = "%s_%s_%s" % (safeTranslate(self.artifactBuilderName),
+            artifactPath = "%s/%s_%s" % (safeTranslate(self.artifactBuilderName),
                                           br['brid'], FormatDatetime(br["submitted_at"]))
 
         if (self.artifactDirectory):
