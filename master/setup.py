@@ -184,7 +184,7 @@ else:
     # dependencies
     setup_args['install_requires'] = [
         'twisted == 17.5.0',
-        'Jinja2 == 2.8',
+        'Jinja2 == 2.10',
         # sqlalchemy-0.8 betas show issues with sqlalchemy-0.7.2, so
         # stick to 0.7.9
         'sqlalchemy >= 0.6, <= 0.7.9',

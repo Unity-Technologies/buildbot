@@ -1,0 +1,29 @@
+<div>
+    <div class="confirmation-content">
+        {{#if one_build}}
+            <p>This will cancel this build.</p>
+            <p>Are you sure you want to cancel this build?</p>
+        {{/if}}
+
+        {{#if chained_build}}
+            <p>
+                This will cancel all builds in this chain,<br>
+                which may take a little while.
+            </p>
+            <p>These build will also be affected:</p>
+            <ul>
+                {{#each builds_in_chain}}
+                    <li>{{full_name}}</li>
+                {{/each}}
+            </ul>
+            <p>Are you sure you want to cancel those builds?</p>
+        {{/if}}
+    </div>
+
+
+    <div class="confirmation-footer pull-right">
+        <span class="spin-icon animate-spin" id="loading-modal" style="display: none;"></span>
+        <button class="btn btn-md red-btn confirm-button form-btn" data-url="{{url}}">Yes</button>
+        <button class="btn btn-md grey-btn close-button form-btn">No</button>
+    </div>
+</div>
