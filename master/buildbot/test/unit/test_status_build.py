@@ -250,8 +250,8 @@ class BuildStepStub:
     def getResults(self):
         return self.results
 
-    def prepare_trigger_links(self):
-        pass
+    def prepare_trigger_links(self, codebases_arg):
+        return []
 
 
 class TestBuildStepsUtils(unittest.TestCase):
