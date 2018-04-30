@@ -282,7 +282,7 @@ class BuildMaster(config.ReconfigurableServiceMixin, service.MultiService):
                 self.reconfig()
             return res
 
-        d.addErrback(log.err, 'while reconfiguring')
+        d.addErrback(klog.err_json, 'while reconfiguring')
 
         return d # for tests
 
@@ -714,9 +714,9 @@ class BuildMaster(config.ReconfigurableServiceMixin, service.MultiService):
         # simultaneously.  Each particular poll method handles errors itself,
         # although catastrophic errors are handled here
         d = defer.gatherResults([
-            self.pollDatabaseChanges().addErrback(log.err,
+            self.pollDatabaseChanges().addErrback(klog.err_json,
                 "while polling changes"),
-            self.pollDatabaseBuildRequests().addErrback(log.err,
+            self.pollDatabaseBuildRequests().addErrback(klog.err_json,
                 "while polling build requests"),
             # also unclaim
         ])

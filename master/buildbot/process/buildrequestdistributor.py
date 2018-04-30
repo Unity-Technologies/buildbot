@@ -981,7 +981,7 @@ class BuildRequestDistributor(service.Service):
         def remove(x):
             self._pendingMSBOCalls.remove(d)
             return x
-        d.addErrback(log.err, "while strting builds on %s" % (new_builders,))
+        d.addErrback(klog.err_json, "while strting builds on %s" % (new_builders,))
 
     def _maybeStartBuildsOn(self, new_builders):
         new_builders = set(new_builders)
@@ -1209,7 +1209,7 @@ class KatanaBuildRequestDistributor(service.Service):
         def remove(x):
             self._pendingMSBOCalls.remove(d)
             return x
-        d.addErrback(log.err, "while starting or resuming builds on %s" % (new_builders,))
+        d.addErrback(klog.err_json, "while starting or resuming builds on %s" % (new_builders,))
 
     @defer.inlineCallbacks
     def _maybeStartOrResumeBuildsOn(self, new_builders):

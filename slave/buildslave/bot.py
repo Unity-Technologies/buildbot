@@ -506,7 +506,7 @@ class BotFactory(ReconnectingPBClientFactory):
             # was already dropped, so just log and ignore.
             log.msg("sending app-level keepalive")
             d = self.perspective.callRemote("keepalive")
-            d.addErrback(log.err, "eror sending keepalive")
+            d.addErrback(klog.err_json, "eror sending keepalive")
         self.keepaliveTimer = self._reactor.callLater(self.keepaliveInterval,
                                                       doKeepalive)
 

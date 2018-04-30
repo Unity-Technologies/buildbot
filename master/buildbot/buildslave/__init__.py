@@ -824,7 +824,7 @@ class AbstractLatentBuildSlave(AbstractBuildSlave):
             self.substantiation_build = build
             if self.slave is None:
                 d = self._substantiate(build) # start up instance
-                d.addErrback(log.err, "while substantiating")
+                d.addErrback(klog.err_json, "while substantiating")
             # else: we're waiting for an old one to detach.  the _substantiate
             # will be done in ``detached`` below.
         return self.substantiation_deferred
@@ -867,7 +867,7 @@ class AbstractLatentBuildSlave(AbstractBuildSlave):
         AbstractBuildSlave.detached(self, mind)
         if self.substantiation_deferred is not None:
             d = self._substantiate(self.substantiation_build)
-            d.addErrback(log.err, 'while re-substantiating')
+            d.addErrback(klog.err_json, 'while re-substantiating')
 
     def _substantiation_failed(self, failure):
         self.missing_timer = None

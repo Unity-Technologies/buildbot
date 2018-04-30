@@ -116,7 +116,7 @@ class BotMaster(config.ReconfigurableServiceMixin, service.MultiService):
             else:
                 self.brd.startService()
         d.addCallback(shutdown)
-        d.addErrback(log.err, 'while processing cleanShutdown')
+        d.addErrback(klog.err_json, 'while processing cleanShutdown')
 
     def cancelCleanShutdown(self):
         """Cancel a clean shutdown that is already in progress, if any"""

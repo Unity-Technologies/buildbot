@@ -18,6 +18,7 @@ Miscellaneous utilities; these should be imported from C{buildbot.util}, not
 directly from this module.
 """
 
+import klog
 from twisted.python import log
 from twisted.internet import defer
 
@@ -49,7 +50,7 @@ class SerializedInvocation(object):
         invocation_deferreds = self.pending_deferreds
         self.pending_deferreds = []
         d = self.method()
-        d.addErrback(log.err, 'in invocation of %r' % (self.method,))
+        d.addErrback(klog.err_json, 'in invocation of %r' % (self.method,))
 
         def notify_callers(_):
             for d in invocation_deferreds:

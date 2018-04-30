@@ -18,6 +18,7 @@ import urllib
 from twisted.python import log
 from twisted.internet import defer, utils
 
+import klog
 from buildbot.changes import base
 from buildbot.util import epoch2datetime
 from buildbot.util.state import StateMixin
@@ -84,7 +85,7 @@ class GitPoller(base.PollingChangeSource, StateMixin):
 
         d.addCallback(lambda _:
         base.PollingChangeSource.startService(self))
-        d.addErrback(log.err, 'while initializing GitPoller repository')
+        d.addErrback(klog.err_json, 'while initializing GitPoller repository')
 
         return d
 
@@ -338,5 +339,5 @@ class GitPoller(base.PollingChangeSource, StateMixin):
         "utility method to stop the service when a failure occurs"
         if self.running:
             d = defer.maybeDeferred(lambda : self.stopService())
-            d.addErrback(log.err, 'while stopping broken GitPoller service')
+            d.addErrback(klog.err_json, 'while stopping broken GitPoller service')
         return f

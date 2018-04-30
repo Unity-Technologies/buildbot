@@ -172,7 +172,7 @@ class Trigger(ResumeBuild):
         else:
             # do something to handle errors
             for d in dl:
-                d.addErrback(log.err,
+                d.addErrback(klog.err_json,
                     '(ignored) while invoking Triggerable schedulers:')
             self.finishIfRunning(SUCCESS)
             return

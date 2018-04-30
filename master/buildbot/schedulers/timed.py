@@ -15,6 +15,7 @@
 
 from zope.interface import implements
 
+import klog
 from buildbot import util
 from buildbot.interfaces import ITriggerableScheduler
 from buildbot.process import buildstep, properties
@@ -81,7 +82,7 @@ class Timed(base.BaseScheduler):
         d.addCallback(lambda _ : self.startTimedSchedulerService())
 
         # startService does not return a Deferred, so handle errors with a traceback
-        d.addErrback(log.err, "while initializing %s '%s'" %
+        d.addErrback(klog.err_json, "while initializing %s '%s'" %
                 (self.__class__.__name__, self.name))
 
     def startTimedSchedulerService(self):
@@ -194,8 +195,8 @@ class Timed(base.BaseScheduler):
         d = self.actuationLock.run(set_state_and_start)
 
         # this function can't return a deferred, so handle any failures via
-        # log.err
-        d.addErrback(log.err, 'while actuating')
+        # klog.err_json
+        d.addErrback(klog.err_json, 'while actuating')
 
 
 class Periodic(Timed):
