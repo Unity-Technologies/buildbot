@@ -69,7 +69,7 @@ a.grey-btn,
 }
 
 .red-btn {
-    @include bgimage(linear-gradient(bottom, $brand-danger 10%, $brand-danger 100%));
+    @include bgimage(linear-gradient(bottom, $brand-danger 10%, $brand-danger 100%) !important);
 		border: 1px solid $brand-danger;
 		border-bottom:1px solid $brand-danger;
 		color: $text-color;
