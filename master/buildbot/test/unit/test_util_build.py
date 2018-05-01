@@ -34,6 +34,7 @@ class TestUtilBuild(unittest.TestCase):
     def test_merge_sourcestamps_to_build(self):
         builds_by_ssid = {69: {
             'buildername': u'Elementary Test',
+            'friendly_name': "Friendly Elementary Test",
             'builds_id': 131,
             'builds_number': 4,
             'complete': True,
@@ -63,6 +64,7 @@ class TestUtilBuild(unittest.TestCase):
 
         expected_data = [{
             'buildername': u'Elementary Test',
+            'friendly_name': "Friendly Elementary Test",
             'builds_id': 131,
             'builds_number': 4,
             'complete': True,

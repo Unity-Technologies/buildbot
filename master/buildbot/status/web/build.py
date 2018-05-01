@@ -19,20 +19,20 @@ from twisted.web import html
 from twisted.internet import defer, reactor
 from twisted.web.util import Redirect, DeferredResource
 
-import urllib, time
+import time
 from twisted.python import log
 from buildbot.status.web.base import HtmlResource, \
     css_classes, path_to_build, path_to_builder, path_to_slave, \
-    path_to_codebases, path_to_builders, path_to_step, getCodebasesArg, \
-    getAndCheckProperties, ActionResource, path_to_authzfail, \
-    getRequestCharset, path_to_json_build, path_to_build_by_params
+    path_to_codebases, path_to_builders, getCodebasesArg, \
+    ActionResource, path_to_authzfail, \
+    getRequestCharset, path_to_json_build
 from buildbot.schedulers.forcesched import ForceScheduler, TextParameter
-from buildbot.status.web.status_json import BuildJsonResource
 from buildbot.status.web.step import StepsResource
 from buildbot.status.web.tests import TestsResource
-from buildbot.status.build import BuildStatus
 from buildbot import util, interfaces
-from buildbot.status.results import RESUME, EXCEPTION
+from buildbot.util.steps import get_steps
+from buildbot.status.results import RESUME
+from buildbot.util.urls import get_url_and_name_build_in_chain
 
 
 class CancelBuildActionResource(ActionResource):
@@ -194,6 +194,7 @@ class StopBuildChainActionResource(ActionResource):
 
         defer.returnValue(path_to_build(req, self.build_status))
 
+
 # /builders/$builder/builds/$buildnum
 class StatusResourceBuild(HtmlResource):
     addSlash = True
@@ -209,204 +210,60 @@ class StatusResourceBuild(HtmlResource):
 
     @defer.inlineCallbacks
     def content(self, req, cxt):
-        b = self.build_status
         status = self.getStatus(req)
-        req.setHeader('Cache-Control', 'no-cache')
+        cxt = self.__prepare_context(req, cxt)
+        slave_obj = None
 
-        builder = self.build_status.getBuilder()
-        cxt['builder'] = builder
-        cxt['builder_name'] = builder.getFriendlyName()
-        cxt['build_number'] = b.getNumber()
-        cxt['builder_name_link'] = urllib.quote(self.build_status.getBuilder().getName(), safe='')
-        cxt['b'] = b
-        project = cxt['selectedproject'] = builder.getProject()
-        cxt['path_to_builder'] = path_to_builder(req, b.getBuilder())
-        cxt['path_to_builders'] = path_to_builders(req, project)
-        cxt['path_to_codebases'] = path_to_codebases(req, project)
-        cxt['build_url'] = path_to_build(req, b, False)
-        cxt['slave_debug_url'] = self.getBuildmaster(req).config.slave_debug_url
-        cxt['customBuildUrls'] = b.getCustomUrls()
-        codebases_arg = cxt['codebases_arg'] = getCodebasesArg(request=req)
+        is_finished_build = self.build_status.isFinished()
+        if is_finished_build:
+            cxt['result_css'] = css_classes[self.build_status.getResults()]
 
-        if not b.isFinished():
-            cxt['stop_build_chain'] = False
-            step = b.getCurrentStep()
-            if not step:
-                cxt['current_step'] = "[waiting for build slave]"
-            else:
-                if step.isWaitingForLocks():
-                    cxt['current_step'] = "%s [waiting for build slave]" % step.getName()
-                else:
-                    cxt['current_step'] = step.getName()
-            when = b.getETA()
-            if when is not None:
-                cxt['when'] = util.formatInterval(when)
-                cxt['when_time'] = time.strftime("%H:%M:%S",
-                                                time.localtime(time.time() + when))
-
-        else:
-            cxt['result_css'] = css_classes[b.getResults()]
-            if b.getTestResults():
-                cxt['tests_link'] = req.childLink("tests")
-
-        ssList = b.getSourceStamps()
-        sourcestamps = cxt['sourcestamps'] = ssList
-
-        all_got_revisions = b.getAllGotRevisions()
-        cxt['got_revisions'] = all_got_revisions
+        if is_finished_build and self.build_status.getTestResults():
+            cxt['tests_link'] = req.childLink("tests")
 
         try:
-            slave_obj = status.getSlave(b.getSlavename())
-
-            if slave_obj is not None:
-                cxt['slave_friendly_name'] = slave_obj.getFriendlyName()
-                cxt['slave_url'] = path_to_slave(req, slave_obj)
-            else:
-                cxt['slave_friendly_name'] = b.getSlavename()
-                cxt['slave_url'] = ""
-
+            slave_obj = status.getSlave(self.build_status.getSlavename())
         except KeyError:
             pass
 
-        if b.resume:
-            cxt['resume'] = b.resume
+        if slave_obj:
+            cxt['slave_friendly_name'] = slave_obj.getFriendlyName()
+            cxt['slave_url'] = path_to_slave(req, slave_obj)
 
-        cxt['steps'] = []
+        if self.build_status.resume:
+            cxt['resume'] = self.build_status.resume
 
-        for s in b.getSteps():
-            step = {'name': s.getName() }
+        cxt['steps'] = yield get_steps(
+            self.build_status.getSteps(),
+            getCodebasesArg(req),
+            req,
+        )
 
-            if s.isFinished():
-                if s.isHidden():
-                    continue
-
-                step['css_class'] = css_classes[s.getResults()[0]]
-                (start, end) = s.getTimes()
-                step['time_to_run'] = util.formatInterval(end - start)
-            elif s.isStarted():
-                if s.isWaitingForLocks():
-                    step['css_class'] = "waiting"
-                    step['time_to_run'] = "waiting for locks"
-                else:
-                    step['css_class'] = "running"
-                    step['time_to_run'] = "running"
-            else:
-                step['css_class'] = "not-started"
-                step['time_to_run'] = ""
-
-            step['link'] = path_to_step(req, s)
-            step['text'] = " ".join(s.getText())
-
-            cxt['steps'].append(step)
-
-            yield s.prepare_trigger_links()
-
-            urls = []
-            for k,v in s.getURLs().items():
-                if isinstance(v, dict):
-                    if 'results' in v.keys() and v['results'] in css_classes:
-                        url_dict = dict(logname=k, url=v['url'] + codebases_arg, results=css_classes[v['results']])
-                    else:
-                        url_dict = dict(logname=k, url=v['url'] + codebases_arg)
-                else:
-                    url_dict = dict(logname=k, url=v + codebases_arg)
-                urls.append(url_dict)
-
-            step['urls'] = urls
-
-            step['logs']= []
-            for l in s.getLogs():
-                logname = l.getName()
-                step['logs'].append({ 'link': req.childLink("steps/%s/logs/%s%s" %
-                                           (urllib.quote(s.getName(), safe=''),
-                                            urllib.quote(logname, safe=''), codebases_arg)),
-                                      'name': logname })
-
-        scheduler = b.getProperty("scheduler", None)
-        parameters = {}
-        master = self.getBuildmaster(req)
-        for sch in master.allSchedulers():
-            if isinstance(sch, ForceScheduler) and scheduler == sch.name:
-                for p in sch.all_fields:
-                    parameters[p.name] = p
-
-        ps = cxt['properties'] = []
-        for name, value, source in b.getProperties().asList():
-            if not isinstance(value, dict):
-                cxt_value = unicode(value)
-            else:
-                cxt_value = value
-
-            if name == 'submittedTime':
-                cxt_value = time.ctime(value)
-
-            p = { 'name': name, 'value': cxt_value, 'source': source}
-            if len(cxt_value) > 500:
-                p['short_value'] = cxt_value[:500]
-            if name in parameters:
-                param = parameters[name]
-                if isinstance(param, TextParameter):
-                    p['text'] = param.value_to_text(value)
-                    p['cols'] = param.cols
-                    p['rows'] = param.rows
-                p['label'] = param.label
-            ps.append(p)
-
-        (start, end) = b.getTimes()
-        cxt['start'] = time.ctime(start)
-        cxt['elapsed'] = None
-        if end and start:
-            cxt['end'] = time.ctime(end)
-            cxt['elapsed'] = util.formatInterval(end - start)
-        elif start:
-            now = util.now()
-            cxt['elapsed'] = util.formatInterval(now - start)
-
-        has_changes = False
-        for ss in sourcestamps:
-            has_changes = has_changes or ss.changes
-        cxt['has_changes'] = has_changes
-        cxt['authz'] = self.getAuthz(req)
-
-        filters = {
-            "number": b.getNumber()
-        }
-
-        build_json = BuildJsonResource(status, b)
-        build_dict = yield build_json.asDict(req)
-        cxt['instant_json']['build'] = {"url": path_to_json_build(status, req, builder.name, b.getNumber()),
-                                        "data": json.dumps(build_dict, separators=(',', ':')),
-                                        "waitForPush": status.master.config.autobahn_push,
-                                        "pushFilters": {
-                                            "buildStarted": filters,
-                                            "buildFinished": filters,
-                                            "stepStarted": filters,
-                                            "stepFinished": filters,
-                                        }}
-        # Retrive build chain
+        parameters = self.__get_force_scheduler_parameters(req)
+        cxt['properties'] = self.__get_properties(parameters)
+        cxt['has_changes'] = any(map(lambda ss: ss.changes, self.build_status.getSourceStamps()))
+        cxt['instant_json']['build'] = yield self.__prepare_instant_json(status, req)
         cxt['chained_build'] = yield req.site.buildbot_service.master.db.buildrequests.getBuildChain(
             self.build_status.buildChainID,
         )
-        current_brids = self.build_status.brids
-        current_build = next(ifilter(lambda x: x['id'] in current_brids, cxt['chained_build']), None)
+        current_build = next(
+            ifilter(lambda x: x['id'] in self.build_status.brids, cxt['chained_build']),
+            None,
+        )
 
-        cxt['parent_build_url'] = None
-        cxt['top_build_url'] = None
-
-        top_build = next(ifilter(lambda x: current_build and x['id'] == current_build['startbrid'], cxt['chained_build']), None)
-        if top_build:
-            cxt['top_build_url'] = path_to_build_by_params(req, top_build['buildername'], top_build['number'], project)
-            cxt['top_build_name'] = "{builder_name} #{build_number}".format(
-                builder_name=top_build['buildername'],
-                build_number=top_build['number'],
+        builder_project = self.build_status.getBuilder().getProject()
+        if current_build:
+            cxt['top_build_url'], cxt['top_build_name'] = get_url_and_name_build_in_chain(
+                current_build['startbrid'],
+                cxt['chained_build'],
+                builder_project,
+                req,
             )
-
-        parrent_build = next(ifilter(lambda x: current_build and x['id'] == current_build['triggeredbybrid'], cxt['chained_build']), None)
-        if parrent_build:
-            cxt['parent_build_url'] = path_to_build_by_params(req, parrent_build['buildername'], parrent_build['number'], project)
-            cxt['parent_build_name'] = "{builder_name} #{build_number}".format(
-                builder_name=parrent_build['buildername'],
-                build_number=parrent_build['number'],
+            cxt['parent_build_url'], cxt['parent_build_name'] = get_url_and_name_build_in_chain(
+                current_build['triggeredbybrid'],
+                cxt['chained_build'],
+                builder_project,
+                req,
             )
 
         template = req.site.buildbot_service.templates.get_template("build.html")
@@ -461,6 +318,157 @@ class StatusResourceBuild(HtmlResource):
             return TestsResource(self.build_status)
 
         return HtmlResource.getChild(self, path, req)
+
+    def __prepare_context(self, request, cxt=None):
+        """ This method prepares context for templates
+
+        :param request: http request object
+        :param cxt: default context variable
+        :type cxt: dictionary
+        :return: dictionary with variables for template
+        """
+        if not cxt:
+            context = {}
+        else:
+            context = cxt.copy()
+
+        builder = self.build_status.getBuilder()
+
+        context['builder_name'] = builder.name
+        context['builder_friendly_name'] = builder.getFriendlyName()
+        context['selected_project'] = builder.getProject()
+
+        context['build_number'] = self.build_status.getNumber()
+        context['custom_build_urls'] = self.build_status.getCustomUrls()
+        context['source_stamps'] = self.build_status.getSourceStamps()
+        context['got_revisions'] = self.build_status.getAllGotRevisions()
+        context['slave_friendly_name'] = self.build_status.getSlavename()
+        context['build_reason'] = self.build_status.getReason()
+        context['build_is_resuming'] = self.build_status.isResuming()
+        context['build_is_finished'] = self.build_status.isFinished()
+
+        context['path_to_builder'] = path_to_builder(request, self.build_status.getBuilder())
+        context['path_to_builders'] = path_to_builders(request, builder.getProject())
+        context['path_to_codebases'] = path_to_codebases(request, builder.getProject())
+        context['build_url'] = path_to_build(request, self.build_status, False)
+        context['slave_debug_url'] = self.getBuildmaster(request).config.slave_debug_url
+        context['codebases_arg'] = getCodebasesArg(request=request)
+        context['parent_build_url'] = None
+        context['top_build_url'] = None
+
+        start, end = self.build_status.getTimes()
+        context['start'] = time.ctime(start)
+        context['end'] = time.ctime(end) if end else None
+        context['elapsed'] = None
+        if not end:
+            end = util.now()
+        if start:
+            context['elapsed'] = util.formatInterval(end - start)
+
+        context['authz'] = self.getAuthz(request)
+        context['has_changes'] = False
+        context['tests_link'] = None
+        context['resume'] = None
+        context['top_build_name'] = None
+        context['parent_build_name'] = None
+        context['result_css'] = ""
+        context['slave_url'] = ""
+        context['steps'] = []
+        context['properties'] = []
+
+        return context
+
+    def __get_force_scheduler_parameters(self, request):
+        """ This method return dictionary of parameters from scheduler
+
+        :param request: http request object
+        :return: dictionary with parameters
+        """
+        scheduler_name = self.build_status.getProperty("scheduler", None)
+        parameters = {}
+        scheduler = next(
+            ifilter(
+                lambda s: s.name == scheduler_name and isinstance(s, ForceScheduler),
+                self.getBuildmaster(request).allSchedulers(),
+            ),
+            None
+        )
+        if not scheduler:
+            return {}
+
+        for p in scheduler.all_fields:
+            parameters[p.name] = p
+
+        return parameters
+
+    def __get_properties(self, parameters):
+        """ This method prepare properties of build
+        TODO refactor
+
+        :param parameters: dictionary with parameter object
+        :return: list of properties object
+        """
+        properties = []
+        for name, value, source in self.build_status.getProperties().asList():
+            if not isinstance(value, dict):
+                cxt_value = unicode(value)
+            else:
+                cxt_value = value
+
+            if name == 'submittedTime':
+                cxt_value = time.ctime(value)
+
+            prop = {
+                'name': name,
+                'value': cxt_value,
+                'source': source,
+            }
+
+            # TODO not always string, sometimes cxt_value is dictionary!
+            if len(cxt_value) > 500:
+                prop['short_value'] = cxt_value[:500]
+
+            if name in parameters:
+                param = parameters[name]
+                if isinstance(param, TextParameter):
+                    prop['text'] = param.value_to_text(value)
+                    prop['cols'] = param.cols
+                    prop['rows'] = param.rows
+                prop['label'] = param.label
+            properties.append(prop)
+        return properties
+
+    @defer.inlineCallbacks
+    def __prepare_instant_json(self, status, request):
+        """ This method prepare instant json variable
+
+        :param status: current build status
+        :param request: http request object
+        :return: defer with instant json variable
+        """
+        filters = {
+            "number": self.build_status.getNumber()
+        }
+
+        build_url = path_to_json_build(
+            status,
+            request,
+            self.build_status.getBuilder().name,
+            self.build_status.getNumber(),
+        )
+        build_dict = yield self.build_status.asDict(request)
+        defer.returnValue({
+            "url": build_url,
+            "data": json.dumps(build_dict, separators=(',', ':')),
+            "waitForPush": status.master.config.autobahn_push,
+            "pushFilters": {
+                "buildStarted": filters,
+                "buildFinished": filters,
+                "stepStarted": filters,
+                "stepFinished": filters,
+            }
+        })
+
 
 # /builders/$builder/builds
 class BuildsResource(HtmlResource):

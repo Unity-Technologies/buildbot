@@ -12,19 +12,25 @@
 # Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 # Copyright Buildbot Team Members
-
+from twisted.internet import defer
 from zope.interface import implements
 import mock
 from twisted.trial import unittest
 from buildbot.status import build
 from buildbot import interfaces
 from buildbot.test.fake import fakemaster
-from buildbot import util
+from buildbot.util.steps import get_steps
+from buildbot.util.urls import get_url_and_name_build_in_chain
+from buildbot.util import ComparableMixin, now
+from buildbot.status import results
+import buildbot.util.steps
+
 
 class FakeBuilderStatus:
     implements(interfaces.IBuilderStatus)
 
-class FakeSource(util.ComparableMixin):
+
+class FakeSource(ComparableMixin):
     compare_attrs = ('codebase', 'revision')
     def __init__(self, codebase, revision):
         self.codebase = codebase
@@ -152,3 +158,186 @@ class TestBuildGetSourcestamps(unittest.TestCase):
                                  FakeSource('lib2', 'aaaaaaa'),
                                  FakeSource('lib3', '0000000')]
         self.assertEqual(sourcestamps, expected_sourcestamps)
+
+
+class TestBuildStatusUtils(unittest.TestCase):
+    @mock.patch('buildbot.status.web.base.path_to_build_by_params')
+    def test_get_url_and_name_build_in_chain_with_selected_build_in_chain(self, path_mock):
+        path_mock.return_value = "http://example.com/example/url"
+
+        chained_builds = [
+            {'id': 1, 'buildername': 'Test Builder', 'number': 13},
+            {'id': 2, 'buildername': 'Test Builder', 'number': 14},
+            {'id': 3, 'buildername': 'Another Builder', 'number': 15},
+            {'id': 4, 'buildername': 'Another Builder', 'number': 16},
+        ]
+        build_id = 3
+
+        build_url, build_name = get_url_and_name_build_in_chain(
+            build_id,
+            chained_builds,
+            None,
+            None,
+        )
+
+        self.assertEqual(build_url, "http://example.com/example/url")
+        self.assertEqual(build_name, "Another Builder #15")
+
+    def test_get_url_and_name_build_in_chain_with_selected_build_not_in_chain(self):
+        chained_builds = [
+            {'id': 1, 'buildername': 'Test Builder', 'number': 13},
+            {'id': 2, 'buildername': 'Test Builder', 'number': 14},
+            {'id': 3, 'buildername': 'Another Builder', 'number': 15},
+            {'id': 4, 'buildername': 'Another Builder', 'number': 16},
+        ]
+        build_id = 5
+
+        build_url, build_name = get_url_and_name_build_in_chain(
+            build_id,
+            chained_builds,
+            None,
+            None,
+        )
+
+        self.assertEqual(build_url, None)
+        self.assertEqual(build_name, None)
+
+
+class BuildStepStub:
+    implements(interfaces.IBuildStepStatus)
+
+    def __init__(
+            self,
+            name,
+            start_time,
+            end_time,
+            results,
+            is_started,
+            is_finished,
+            is_hidden,
+            is_waiting_for_locks,
+    ):
+        self.name = name
+        self.start = start_time
+        self.end = end_time
+        self.results = results
+        self.is_started = is_started
+        self.is_finished = is_finished
+        self.is_hidden = is_hidden
+        self.is_waiting_for_locks = is_waiting_for_locks
+
+    def getName(self):
+        return self.name
+
+    def getText(self):
+        return [self.name, self.name, self.name]
+
+    def isStarted(self):
+        return self.is_started
+
+    def isFinished(self):
+        return self.is_finished
+
+    def isHidden(self):
+        return self.is_hidden
+
+    def isWaitingForLocks(self):
+        return self.is_waiting_for_locks
+
+    def getTimes(self):
+        return self.start, self.end
+
+    def getResults(self):
+        return self.results
+
+    def prepare_trigger_links(self, codebases_arg):
+        return []
+
+
+class TestBuildStepsUtils(unittest.TestCase):
+
+    @mock.patch.object(buildbot.util.steps, 'path_to_step')
+    @mock.patch.object(buildbot.util.steps, '__prepare_url_object')
+    @mock.patch.object(buildbot.util.steps, '__get_logs_for_step')
+    @defer.inlineCallbacks
+    def test_get_steps_with_unhidden_and_finished_steps_object(
+            self, get_logs_mock, get_prepare_url_mock, path_to_step_mock
+    ):
+        path_to_step_mock.return_value = 'example-path'
+        get_logs_mock.return_value = {}
+        get_prepare_url_mock.return_value = {}
+        start_time = now()
+        expected_step1 = {
+            'time_to_run': '3 mins, 20 secs',
+            'name': 'Step 1',
+            'css_class': 'success',
+        }
+        expected_step2 = {
+            'time_to_run': '4 mins, 10 secs',
+            'name': 'Step 2',
+            'css_class': 'exception'
+        }
+        steps_list = [
+            BuildStepStub("Step 1", start_time-100, start_time+100, [results.SUCCESS], True, True, False, False),
+            BuildStepStub("Step 2", start_time-50, start_time+200, [results.EXCEPTION], True, True, False, False),
+        ]
+
+        steps = yield get_steps(steps_list, "", None)
+
+        self.assertEqual(len(steps), 2)
+        self.assertDictContainsSubset(expected_step1, steps[0])
+        self.assertDictContainsSubset(expected_step2, steps[1])
+
+    @mock.patch.object(buildbot.util.steps, 'path_to_step')
+    @mock.patch.object(buildbot.util.steps, '__prepare_url_object')
+    @mock.patch.object(buildbot.util.steps, '__get_logs_for_step')
+    @defer.inlineCallbacks
+    def test_get_steps_with_hidden_steps_object(
+            self, get_logs_mock, get_prepare_url_mock, path_to_step_mock
+    ):
+        path_to_step_mock.return_value = 'example-path'
+        get_logs_mock.return_value = {}
+        get_prepare_url_mock.return_value = {}
+        start_time = now()
+
+        steps_list = [
+            BuildStepStub("Step 1", start_time - 100, start_time + 100, [results.SUCCESS], True, True, True, False),
+            BuildStepStub("Step 2", start_time - 50, start_time + 200, [results.EXCEPTION], True, True, True, False),
+        ]
+
+        steps = yield get_steps(steps_list, "", None)
+
+        self.assertEqual(len(steps), 0)
+
+    @mock.patch.object(buildbot.util.steps, 'path_to_step')
+    @mock.patch.object(buildbot.util.steps, '__prepare_url_object')
+    @mock.patch.object(buildbot.util.steps, '__get_logs_for_step')
+    @defer.inlineCallbacks
+    def test_get_steps_with_not_finished_steps_object(
+            self, get_logs_mock, get_prepare_url_mock, path_to_step_mock,
+    ):
+        path_to_step_mock.return_value = 'example-path'
+        get_logs_mock.return_value = {}
+        get_prepare_url_mock.return_value = {}
+        start_time = now()
+        expected_step1 = {
+            'time_to_run': 'running',
+            'name': 'Step 1',
+            'css_class': 'running',
+        }
+        expected_step2 = {
+            'time_to_run': 'waiting for locks',
+            'name': 'Step 2',
+            'css_class': 'waiting',
+        }
+
+        steps_list = [
+            BuildStepStub("Step 1", start_time - 100, None, [results.BEGINNING], True, False, True, False),
+            BuildStepStub("Step 2", start_time - 50, None, [results.BEGINNING], True, False, True, True),
+        ]
+
+        steps = yield get_steps(steps_list, "", None)
+
+        self.assertEqual(len(steps), 2)
+        self.assertDictContainsSubset(expected_step1, steps[0])
+        self.assertDictContainsSubset(expected_step2, steps[1])

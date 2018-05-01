@@ -14,6 +14,7 @@
 # Copyright Buildbot Team Members
 
 import os
+from twisted.internet import defer
 from twisted.trial import unittest
 from buildbot.status import builder, master
 from buildbot.test.fake import fakemaster
@@ -128,22 +129,26 @@ class TestBuildStepStatus(unittest.TestCase):
         bss1.addURL("URL2", "http://www.url2")
         self.assertEquals(bss1.getURLs(), urlList)
 
+    @defer.inlineCallbacks
     def test_prepare_trigger_links_for_nontrigger(self):
         from buildbot.steps.shell import ShellCommand
         builder = self.setupBuilder('builder_1')
         self.setupStatus(builder)
         build = builder.newBuild()
-
         shell_step_status = build.addStepWithName('step_1', ShellCommand)
-        shell_step_status.prepare_trigger_links()
-        self.assertEqual(len(shell_step_status.urls), 0)
+        codebases_arg = "?foo=bar"
 
+        trigger_links = yield shell_step_status.prepare_trigger_links(codebases_arg)
+
+        self.assertEqual(len(trigger_links), 0)
+
+    @defer.inlineCallbacks
     def test_prepare_trigger_link_for_trigger(self):
         from buildbot.steps.trigger import Trigger
 
         class StubBuildRequest(object):
             def getBuildRequestForStartbrids(self, brids):
-                return [{'buildername': 'foo', 'number': brids[0], 'results': 1}]
+                return [{'buildername': 'mybuilder', 'number': brids[0], 'results': 2}]
 
         class StubDB(object):
             def __init__(self):
@@ -155,15 +160,15 @@ class TestBuildStepStatus(unittest.TestCase):
         trigger_step_status = build.addStepWithName('step_2', Trigger)
         build.builder.master.db = StubDB()
         build.brids = [1]
-        build.builder.master.status.getURLForBuild = lambda x, y, friendly_name: {'path':x, 'text': y}
         build.builder.master.status.getFriendlyName = lambda x: None
+        build.builder.master.status.getURLForBuild = lambda x, y, friendly_name: {'path':x, 'text': y}
+        codebases_arg = "?foo=bar"
 
-        self.assertEqual(len(trigger_step_status.urls), 0)
+        trigger_links = yield trigger_step_status.prepare_trigger_links(codebases_arg)
 
-        trigger_step_status.prepare_trigger_links()
+        self.assertEqual(len(trigger_links), 1)
 
-        self.assertEqual(len(trigger_step_status.urls), 1)
-
+    @defer.inlineCallbacks
     def test_prepare_trigger_link_for_trigger_with_empty_children(self):
         from buildbot.steps.trigger import Trigger
 
@@ -182,10 +187,9 @@ class TestBuildStepStatus(unittest.TestCase):
         build.builder.master.db = StubDB()
         build.brids = [1]
         build.builder.master.status.getFriendlyName = lambda x: None
-        build.builder.master.status.getURLForBuild = lambda x, y, friendly_name: {'path':x, 'text': y}
+        build.builder.master.status.getURLForBuild = lambda x, y, friendly_name: {'path': x, 'text': y}
+        codebases_arg = "?foo=bar"
 
-        self.assertEqual(len(trigger_step_status.urls), 0)
+        trigger_links = yield trigger_step_status.prepare_trigger_links(codebases_arg)
 
-        trigger_step_status.prepare_trigger_links()
-
-        self.assertEqual(len(trigger_step_status.urls), 0)
+        self.assertEqual(len(trigger_links), 0)

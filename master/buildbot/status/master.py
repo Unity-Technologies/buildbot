@@ -591,7 +591,7 @@ class Status(config.ReconfigurableServiceMixin, service.MultiService):
                 for d in self._buildset_finished_waiters.pop(bsid):
                     eventually(d.callback, bss)
         d.addCallback(do_notifies)
-        d.addErrback(log.err, 'while notifying for buildset finishes')
+        d.addErrback(klog.err_json, 'while notifying for buildset finishes')
 
     def _builder_subscribe(self, buildername, watcher):
         # should get requestSubmitted and requestCancelled
@@ -609,7 +609,7 @@ class Status(config.ReconfigurableServiceMixin, service.MultiService):
                 if hasattr(t, 'buildsetSubmitted'):
                     t.buildsetSubmitted(bss)
         d.addCallback(do_notifies)
-        d.addErrback(log.err, 'while notifying buildsetSubmitted')
+        d.addErrback(klog.err_json, 'while notifying buildsetSubmitted')
 
     def _buildsetCompletionCallback(self, bsid, result):
         self._maybeBuildsetFinished(bsid)

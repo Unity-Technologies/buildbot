@@ -85,7 +85,7 @@ class HgPoller(base.PollingChangeSource, StateMixin):
 
         d.addCallback(lambda _:
         base.PollingChangeSource.startService(self))
-        d.addErrback(log.err, 'while initializing HgPoller repository')
+        d.addErrback(klog.err_json, 'while initializing HgPoller repository')
 
         return d
 
@@ -338,5 +338,5 @@ class HgPoller(base.PollingChangeSource, StateMixin):
         "utility method to stop the service when a failure occurs"
         if self.running:
             d = defer.maybeDeferred(lambda : self.stopService())
-            d.addErrback(log.err, 'while stopping broken HgPoller service')
+            d.addErrback(klog.err_json, 'while stopping broken HgPoller service')
         return f

@@ -24,6 +24,7 @@ import os
 from twisted.python import log
 from twisted.internet import defer, utils
 
+import klog
 from buildbot import util
 from buildbot.changes import base
 
@@ -91,7 +92,7 @@ class P4Source(base.PollingChangeSource, util.ComparableMixin):
 
     def poll(self):
         d = self._poll()
-        d.addErrback(log.err, 'P4 poll failed')
+        d.addErrback(klog.err_json, 'P4 poll failed')
         return d
 
     def _get_process_output(self, args):

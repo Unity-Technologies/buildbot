@@ -126,7 +126,7 @@ class Builder(config.ReconfigurableServiceMixin,
         if self.building:
             for b in self.building:
                 d.addCallback(self._resubmit_buildreqs, b.requests)
-                d.addErrback(log.err)
+                d.addErrback(klog.err_json)
         return d
 
     def __repr__(self):
@@ -169,7 +169,7 @@ class Builder(config.ReconfigurableServiceMixin,
             return defer.succeed(None)
 
         d = self.master.db.buildrequests.reclaimBuildRequests(brids)
-        d.addErrback(log.err, 'while re-claiming running BuildRequests')
+        d.addErrback(klog.err_json, 'while re-claiming running BuildRequests')
         return d
 
     def getBuild(self, number):
@@ -525,7 +525,7 @@ class Builder(config.ReconfigurableServiceMixin,
                 bs, self.expectations, slavebuilder)
         d.addCallback(self.buildFinished, slavebuilder, bids)
         # this shouldn't happen. if it does, the slave will be wedged
-        d.addErrback(log.err, 'from a running build; this is a '
+        d.addErrback(klog.err_json, 'from a running build; this is a '
             'serious error - please file a bug at http://buildbot.net')
 
         # make sure the builder's status is represented correctly
@@ -623,13 +623,13 @@ class Builder(config.ReconfigurableServiceMixin,
 
         # TODO: we should probably do better error handle
         d.addCallback(lambda _: self.master.db.builds.finishedMergedBuilds(mergedbrids, build.build_status.number))
-        d.addErrback(log.err, 'while marking builds as finished (ignored)')
+        d.addErrback(klog.err_json, 'while marking builds as finished (ignored)')
         d.addCallback(lambda _: self.master.db.buildrequests.maybeUpdateMergedBrids(mergedbrids))
 
         results = build.build_status.getResults()
         if results == RETRY:
             d.addCallback(lambda _: self._resubmit_buildreqs(requests=requests))
-            d.addErrback(log.err, 'while resubmitting build requests')
+            d.addErrback(klog.err_json, 'while resubmitting build requests')
         else:
             db = self.master.db
             if results == RESUME:

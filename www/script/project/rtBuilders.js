@@ -129,7 +129,7 @@ define(function (require) {
 
                 $.each(builder.tags, function eachBuilderTag(i, tag) {
                     // If we found a branch tag then add it
-                    if (rtBuilders.tagAsBranchRegex.exec(tag)) {
+                    if (rtBuilders.tagAsBranchRegex.exec(tag.toLowerCase())) {
                         branch_tags.add(tag.toLowerCase());
                     }
                 });
@@ -282,7 +282,7 @@ define(function (require) {
             if (tag.indexOf("-") > -1) {
                 return tag.toLowerCase().indexOf(branch_type.toLowerCase()) > -1;
             }
-            return !rtBuilders.tagAsBranchRegex.exec(tag);
+            return !rtBuilders.tagAsBranchRegex.exec(tag.toLowerCase());
         },
         setHideUnstable: function setHideUnstable(hidden) {
             hideUnstable = hidden;

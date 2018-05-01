@@ -295,7 +295,7 @@ class SlaveFileDownloadCommand(TransferCommand):
         def _close(res):
             # close the file, but pass through any errors from _loop
             d1 = self.reader.callRemote('close')
-            d1.addErrback(log.err, 'while trying to close reader')
+            d1.addErrback(klog.err_json, 'while trying to close reader')
             d1.addCallback(lambda ignored: res)
             return d1
         d.addBoth(_close)

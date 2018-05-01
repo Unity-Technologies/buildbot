@@ -9,12 +9,19 @@ define(function (require) {
         popups = require('ui.popup'),
         qs = require('libs/query-string'),
         hb = require('project/handlebars-extend'),
-        hbBuild = hb.build;
+        hbBuild = hb.build,
+        hbStopBuild = hb.stop_build;
 
     var rtBuildDetail,
         isLoaded = false,
         noMoreReloads = false,
-        debug = qs.parse(location.search).debug === "true";
+        debug = qs.parse(location.search).debug === "true",
+        messages = {
+            ONE_BUILD: "This will cancel this build.\n\nAre you sure you want to cancel this build?",
+            CHAINED_BUILD: "This will cancel all builds in this chain, which may take a little while.\n" +
+                           "These build will also be affected: \n\n" +
+                           "{0}\n\nAre you sure you want to cancel those builds?"
+        };
 
     rtBuildDetail = {
         init: function () {
@@ -41,22 +48,40 @@ define(function (require) {
                 $body.append($popup);
             });
 
+
             // Setup dialog for stop entire chain
             $("form[data-stop-chain]").ajaxForm({
                 beforeSubmit: function beforeSubmit(data, $form) {
-                    var chainBuild = $form.data("chain").toString().split(';');
-                    var deleteMsg = '';
-                    if(chainBuild.length > 1) {
-                        deleteMsg = 'This will cancel all builds in this chain, which may take a little while.' +
-                                  '\nThese builds will also be affected: \n\n' + chainBuild.join('\n') +
-                                  '\n\nAre you sure you want to cancel those builds?';
-                    } else {
-                        deleteMsg = 'This will cancel this build.' +
-                                    '\n\nAre you sure you want to cancel those builds?';
-                    }
-                    return confirm(deleteMsg);
-
+                    var chainBuild = $form.data("chain").toString();
+                    var deleteMsgKey = $form.data('msg-label') || 'ONE_BUILD';
+                    return confirm(messages[deleteMsgKey].format(chainBuild));
                 }
+            });
+
+            $('button[data-stop-build-url]').click(function() {
+                var prop = {
+                    one_build: $(this).data('single-build') !== undefined,
+                    chained_build: $(this).data('chain-builds') !== undefined,
+                    builds_in_chain: $(this).data('chain-builds'),
+                    url: $(this).data('stop-build-url')
+                };
+                var $popup = $("<div/>").popup({
+                    destroyAfter: true,
+                    closeButton: false,
+                    html: hbStopBuild(prop),
+                    onCreate: function($elem) {
+                        $elem.on('click', '.close-button', $elem.hidePopup);
+                        $elem.on('click', '.confirm-button', function() {
+                            $('.confirm-button, .close-button').hide();
+                            $('#loading-modal').show();
+                            $.post($(this).data('url'), {}, function() {
+                                $elem.hidePopup();
+                                location.reload();
+                            });
+                        });
+                    }
+                });
+                $("body").append($popup);
             });
 
             // Setup build buttons

@@ -420,16 +420,36 @@ class KatanaBuildChooser(BasicBuildChooser):
         else:
             yield self.master.db.buildrequests.claimBuildRequests(brids)
 
-    def removeBuildRequest(self, breq):
-        # reset the checkMerges in case the breq still in the master cache
-        breq.checkMerges = True
-        breq.retries = 0
-        breq.hasBeenMerged = False
-        if self.unclaimedBrdicts and breq.brdict and breq.brdict in self.unclaimedBrdicts:
-            self.unclaimedBrdicts.remove(breq.brdict)
-        if self.resumeBrdicts and breq.brdict and breq.brdict in self.resumeBrdicts:
-            self.resumeBrdicts.remove(breq.brdict)
-        self.breqCache.remove(breq.id)
+    def removeBuildRequest(self, buildrequest):
+        """
+        Remove buildrequest.brdict from self.unclaimedBrdicts and self.resumeBrdicts.
+        If function removed anything clear buildrequest data about merges too
+        otherwise log error.
+        @param buildrequest: BuildRequest object
+        """
+
+        if not buildrequest.brdict:
+            klog.err_json("removeBuildRequest has empty breq.brdict: %s" % str(buildrequest.brdict))
+            return
+
+        is_removed = False
+
+        if self.unclaimedBrdicts:
+            is_removed |= self.__remove_brdict_by_brid(self.unclaimedBrdicts, buildrequest)
+
+        if self.resumeBrdicts:
+            is_removed |= self.__remove_brdict_by_brid(self.resumeBrdicts, buildrequest)
+
+        if is_removed:
+            buildrequest.checkMerges = True
+            buildrequest.retries = 0
+            buildrequest.hasBeenMerged = False
+            self.breqCache.remove(buildrequest.id)
+        else:
+            klog.err_json(
+                "removeBuildRequest does not remove anything. buildrequest.brid: %s" %
+                buildrequest.brdict['brid']
+            )
 
     def removeBuildRequests(self, breqs):
         # Remove a BuildrRequest object (and its brdict)
@@ -883,6 +903,20 @@ class KatanaBuildChooser(BasicBuildChooser):
 
         defer.returnValue(nextBuild)
 
+    def __remove_brdict_by_brid(self, brdicts, buildrequest):
+        """
+        Remove every brdict from brdicts by 'brid' key from buildrequest.brdict
+        @param buildrequest: BuildRequest object with brdict['brid'] which we'll use to compare
+        @param brdicts: list of buildrequest data (dicts)
+        @return: information if function removed anything
+        """
+        removed = False
+        for brdict in brdicts:
+            if brdict['brid'] == buildrequest.brdict['brid']:
+                brdicts.remove(brdict)
+                removed = True
+        return removed
+
 
 # Buildbot's default BuildRequestDistributor with the default BasicBuildChooser
 # from the eight branch
@@ -947,7 +981,7 @@ class BuildRequestDistributor(service.Service):
         def remove(x):
             self._pendingMSBOCalls.remove(d)
             return x
-        d.addErrback(log.err, "while strting builds on %s" % (new_builders,))
+        d.addErrback(klog.err_json, "while strting builds on %s" % (new_builders,))
 
     def _maybeStartBuildsOn(self, new_builders):
         new_builders = set(new_builders)
@@ -1169,14 +1203,13 @@ class KatanaBuildRequestDistributor(service.Service):
         """
         if not self.running or not self.master.config.builders:
             return
-
         d = self._maybeStartOrResumeBuildsOn(new_builders)
         self._pendingMSBOCalls.append(d)
         @d.addBoth
         def remove(x):
             self._pendingMSBOCalls.remove(d)
             return x
-        d.addErrback(log.err, "while starting or resuming builds on %s" % (new_builders,))
+        d.addErrback(klog.err_json, "while starting or resuming builds on %s" % (new_builders,))
 
     @defer.inlineCallbacks
     def _maybeStartOrResumeBuildsOn(self, new_builders):

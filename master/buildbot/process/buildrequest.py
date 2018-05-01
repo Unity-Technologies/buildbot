@@ -14,6 +14,7 @@
 # Copyright Buildbot Team Members
 
 import calendar
+import klog
 from zope.interface import implements
 from twisted.python import log
 from twisted.internet import defer
@@ -309,4 +310,4 @@ class BuildRequestControl:
                     d.addCallback(lambda _:
                                   self.original_builder.builder_status.cancelBuildOnResume(brsdict['lastBuildNumber']))
 
-            d.addErrback(log.err, 'while cancelling build request')
+            d.addErrback(klog.err_json, 'while cancelling build request')

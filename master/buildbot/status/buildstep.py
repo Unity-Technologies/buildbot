@@ -380,27 +380,36 @@ class BuildStepStatus(styles.Versioned):
         self.wasUpgraded = True
 
     @defer.inlineCallbacks
-    def prepare_trigger_links(self):
+    def prepare_trigger_links(self, codebases_arg):
+        """
+        Prepare links data for Trigger depedency builds.
+        For another type of builds return empty list.
+
+        @param codebases_arg: string with query params from request.
+        @return: List of tuples with data for links. Links are created after this
+        method by step.addURL(*link_data)
+        """
         from buildbot.steps.trigger import Trigger
 
-        # for backward compatibility, the old pickled object does not have it.
-        if not hasattr(self, 'step_type_obj'):
-            return
-
         if not issubclass(self.step_type_obj, Trigger):
+            defer.returnValue([])
             return
 
+        links_data = []
         brids = self.build.brids
         db_results = yield self.build.builder.master.db.buildrequests\
                         .getBuildRequestForStartbrids(brids)
         master = self.build.builder.master
         for build in db_results:
             friendly_name = master.status.getFriendlyName(build['buildername'])
-            url = master.status.getURLForBuild(build['buildername'], build['number'],
+            url = master.status.getURLForBuild(build['buildername'],
+                                               build['number'],
                                                friendly_name=friendly_name)
+            url['path'] += codebases_arg
             results = (build['results'],)  # must be tuple
-            self.addURL(url['text'], url['path'], results)
+            links_data.append((url['text'], url['path'], results))
 
+        defer.returnValue(links_data)
 
     def asDict(self, request=None):
         from buildbot.status.web.base import getCodebasesArg

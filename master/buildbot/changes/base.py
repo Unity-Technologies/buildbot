@@ -18,6 +18,7 @@ from twisted.application import service
 from twisted.internet import defer, task, reactor
 from twisted.python import log
 
+import klog
 from buildbot.interfaces import IChangeSource
 from buildbot import util
 
@@ -59,7 +60,7 @@ class PollingChangeSource(ChangeSource):
         then the 2nd invocation won't start until the 1st has finished.
         """
         d = defer.maybeDeferred(self.poll)
-        d.addErrback(log.err, 'while polling for changes')
+        d.addErrback(klog.err_json, 'while polling for changes')
         return d
 
     def poll(self):

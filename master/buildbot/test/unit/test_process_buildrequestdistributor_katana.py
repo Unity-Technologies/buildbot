@@ -444,7 +444,6 @@ class TestKatanaBuildRequestDistributorMaybeStartBuildsOn(KatanaBuildRequestDist
         self.quiet_deferred.addCallback(self.checkMerges, [('slave-01', mergesBrids + previousMergesBrids)])
         self.quiet_deferred.addCallback(lambda _: self.master.db.buildrequests.getBuildRequests(brids=[31, 40]))
         self.quiet_deferred.addCallback(checkMergedBrid, brid=1)
-
         return self.quiet_deferred
 
     @defer.inlineCallbacks
@@ -814,6 +813,85 @@ class TestKatanaBuildChooser(KatanaBuildRequestDistributorTestSetup, unittest.Te
         slave, breq = yield self.brd.katanaBuildChooser.popNextBuildToResume()
 
         self.assertEquals((slave.name, breq.id), ('slave-02', 1))
+
+    def __prepare_chooser_and_buildrequest(self):
+        chooser = self.brd.katanaBuildChooser
+        chooser.unclaimedBrdicts = [{'brid': 1}, {'brid': 2}]
+        chooser.resumeBrdicts = [{'brid': 3}, {'brid': 4}]
+        chooser.breqCache = mock.Mock()
+        chooser.breqCache.remove = mock.Mock()
+        buildrequest = mock.Mock()
+        buildrequest.check_merges = False
+        buildrequest.retries = 1
+        buildrequest.hasBeenMerged = True
+        return chooser, buildrequest
+
+    def __check_buildrequest_status(self, buildrequest):
+        self.assertEqual(buildrequest.checkMerges, True)
+        self.assertEqual(buildrequest.retries, 0)
+        self.assertEqual(buildrequest.hasBeenMerged, False)
+
+    def test_removeBuildRequest_for_resumeBrdict(self):
+        chooser, buildrequest = self.__prepare_chooser_and_buildrequest()
+        buildrequest.brdict = {'brid': 3}
+        expected_unclaimed = [{'brid': 1}, {'brid': 2}]
+        expected_resume = [{'brid': 4}]
+
+        chooser.removeBuildRequest(buildrequest)
+
+        self.assertEqual(chooser.unclaimedBrdicts, expected_unclaimed)
+        self.assertEqual(chooser.resumeBrdicts, expected_resume)
+        self.assertEqual(chooser.breqCache.remove.called, True)
+        self.__check_buildrequest_status(buildrequest)
+
+    def test_removeBuildRequest_for_unclaimedBrdict(self):
+        chooser, buildrequest = self.__prepare_chooser_and_buildrequest()
+        buildrequest.brdict = {'brid': 1}
+        expected_unclaimed = [{'brid': 2}]
+        expected_resume = [{'brid': 3}, {'brid': 4}]
+
+        chooser.removeBuildRequest(buildrequest)
+
+        self.assertEqual(chooser.unclaimedBrdicts, expected_unclaimed)
+        self.assertEqual(chooser.resumeBrdicts, expected_resume)
+        self.assertEqual(chooser.breqCache.remove.called, True)
+        self.__check_buildrequest_status(buildrequest)
+
+    @mock.patch('klog.err_json')
+    def test_removeBuildRequest_for_uknown_brid(self, err_json):
+        chooser, buildrequest = self.__prepare_chooser_and_buildrequest()
+        buildrequest.brdict = {'brid': 5}
+        expected_unclaimed = [{'brid': 1}, {'brid': 2}]
+        expected_resume = [{'brid': 3}, {'brid': 4}]
+
+        chooser.removeBuildRequest(buildrequest)
+
+        self.assertEqual(err_json.called, True)
+        self.assertEqual(chooser.unclaimedBrdicts, expected_unclaimed)
+        self.assertEqual(chooser.resumeBrdicts, expected_resume)
+        # function did not clear buildrequest merges' data
+        self.assertEqual(chooser.breqCache.remove.called, False)
+        self.assertEqual(buildrequest.check_merges, False)
+        self.assertEqual(buildrequest.retries, 1)
+        self.assertEqual(buildrequest.hasBeenMerged, True)
+
+    @mock.patch('klog.err_json')
+    def test_removeBuildRequest_for_empty_brdict(self, err_json):
+        chooser, buildrequest = self.__prepare_chooser_and_buildrequest()
+        buildrequest.brdict = {}
+        expected_unclaimed = [{'brid': 1}, {'brid': 2}]
+        expected_resume = [{'brid': 3}, {'brid': 4}]
+
+        chooser.removeBuildRequest(buildrequest)
+
+        self.assertEqual(err_json.called, True)
+        self.assertEqual(chooser.unclaimedBrdicts, expected_unclaimed)
+        self.assertEqual(chooser.resumeBrdicts, expected_resume)
+        # function did not clear buildrequest merges' data
+        self.assertEqual(chooser.breqCache.remove.called, False)
+        self.assertEqual(buildrequest.check_merges, False)
+        self.assertEqual(buildrequest.retries, 1)
+        self.assertEqual(buildrequest.hasBeenMerged, True)
 
 
 class TestKatanaMaybeStartBuildsOnBuilder(KatanaBuildRequestDistributorTestSetup, unittest.TestCase):

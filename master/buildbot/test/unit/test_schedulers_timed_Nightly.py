@@ -13,6 +13,7 @@
 #
 # Copyright Buildbot Team Members
 
+import klog
 import time
 import mock
 from mock import Mock
@@ -166,7 +167,7 @@ class Nightly(scheduler.SchedulerMixin, unittest.TestCase):
                     self.clock.seconds() >=
                                     self.localtime_offset + changes_at[0][0]):
                 when, newchange, important = changes_at.pop(0)
-                self.sched.gotChange(newchange, important).addErrback(log.err)
+                self.sched.gotChange(newchange, important).addErrback(klog.err_json)
             # and advance the clock by a minute
             self.clock.advance(60)
 
