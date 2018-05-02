@@ -19,6 +19,7 @@ import inspect
 from twisted.python import log, failure
 from twisted.spread import pb
 from buildbot.process import buildstep
+from buildbot.process.properties import Interpolate
 from buildbot.status.results import SUCCESS, WARNINGS, FAILURE
 from buildbot.status.logfile import STDOUT, STDERR
 from buildbot import config
@@ -200,6 +201,8 @@ class ShellCommand(buildstep.LoggingBuildStep):
             words = self.command
             if isinstance(words, (str, unicode)):
                 words = words.split()
+            elif isinstance(words, Interpolate):
+                return str(words)
 
             try:
                 len(words)
