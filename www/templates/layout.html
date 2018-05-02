@@ -75,7 +75,7 @@
     {% set colorBlindInputVal = 'off' %}
   {% endif %}
 
-   <body {{ bodyId }} class="interface katana-main {{colorBlindClass}} production" data-realTimeServer="{{ realTimeServer }}">
+   <body {{ bodyId }} class="interface katana-main {{ colorBlindClass }} {{ environment }}" data-realTimeServer="{{ realTimeServer }}">
    
     {% block header -%}
  

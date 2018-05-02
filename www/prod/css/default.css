@@ -921,7 +921,7 @@ ul.top-menu>li>a{display:block;padding:10px 0;text-transform:none;font-size:11px
 .submenu li:last-child{margin-bottom:10px}
 .submenu li a{font-size:11px}
 .sub-menu-container{background-image:-moz-linear-gradient(top,#869e9c 0,#b9c9ca 100%);background-image:-webkit-linear-gradient(top,#869e9c 0,#b9c9ca 100%);background-image:-o-linear-gradient(top,#869e9c 0,#b9c9ca 100%);background-image:-ms-linear-gradient(top,#869e9c 0,#b9c9ca 100%);background-image:linear-gradient(top,#869e9c 0,#b9c9ca 100%);border-bottom:1px solid #b6c7c8;border-top:1px #89a09e;margin-bottom:22px}
-.production .sub-menu-container,.staging .sub-menu-container{background-image:-moz-linear-gradient(top,#869e9c 0,#b9c9ca 100%);background-image:-webkit-linear-gradient(top,#869e9c 0,#b9c9ca 100%);background-image:-o-linear-gradient(top,#869e9c 0,#b9c9ca 100%);background-image:-ms-linear-gradient(top,#869e9c 0,#b9c9ca 100%);background-image:linear-gradient(top,#869e9c 0,#b9c9ca 100%)}
+.production .sub-menu-container,.staging .sub-menu-container{background-image:-moz-linear-gradient(top,#a9a7aa 0,#cdcdcd 100%);background-image:-webkit-linear-gradient(top,#a9a7aa 0,#cdcdcd 100%);background-image:-o-linear-gradient(top,#a9a7aa 0,#cdcdcd 100%);background-image:-ms-linear-gradient(top,#a9a7aa 0,#cdcdcd 100%);background-image:linear-gradient(top,#a9a7aa 0,#cdcdcd 100%)}
 .header+.container{margin-top:30px}
 .breadcrumbs-nav{display:inline-block;padding:11px 0 10px;margin:0}
 .breadcrumbs-nav>li{color:rgba(255,255,255,.52);font-size:11px;float:left;list-style:none;margin:0 12px 0 0;padding:0;font-weight:700;letter-spacing:1.1px;line-height:12px}

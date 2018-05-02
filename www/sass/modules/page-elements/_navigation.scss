@@ -205,11 +205,11 @@ ul.top-menu > .project-dropdown {
 }
 
 .staging .sub-menu-container {
-	@include bgimage (linear-gradient(top , $breadcrumb-background-top 0%, $breadcrumb-background-bottom 100%));
+	@include bgimage (linear-gradient(top , $breadcrumb-staging-background-top 0%, $breadcrumb-staging-background-bottom 100%));
 }
 
 .production .sub-menu-container {
-	@include bgimage (linear-gradient(top , $breadcrumb-background-top 0%, $breadcrumb-background-bottom 100%));
+	@include bgimage (linear-gradient(top , $breadcrumb-production-background-top 0%, $breadcrumb-production-background-bottom 100%));
 }
 
 .header + .container {
