@@ -14,6 +14,7 @@
 # Copyright Buildbot Team Members
 
 import datetime
+import mock
 import sqlalchemy as sa
 from twisted.trial import unittest
 from twisted.internet import task, defer
@@ -1463,8 +1464,11 @@ class TestBuildsetsConnectorComponent(
             8: [8, 9],
             9: [9],
         }
+        status_mock = mock.Mock()
+        status_mock.getFriendlyName = lambda buildername: buildername
+
         for brid, expected_result in expected_results.iteritems():
-            results = yield self.db.buildrequests.getBuildChain(brid)
+            results = yield self.db.buildrequests.getBuildChain(brid, status_mock)
 
             self.assertEqual(len(results), len(expected_result),
                 msg="Wrong result length for brid={}, got {}, expected {}".format(brid, len(results), len(expected_result)))

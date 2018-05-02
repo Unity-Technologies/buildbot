@@ -166,10 +166,10 @@ class TestBuildStatusUtils(unittest.TestCase):
         path_mock.return_value = "http://example.com/example/url"
 
         chained_builds = [
-            {'id': 1, 'buildername': 'Test Builder', 'number': 13},
-            {'id': 2, 'buildername': 'Test Builder', 'number': 14},
-            {'id': 3, 'buildername': 'Another Builder', 'number': 15},
-            {'id': 4, 'buildername': 'Another Builder', 'number': 16},
+            {'id': 1, 'buildername': 'Test Builder', 'friendly_name': 'Friendly Builder', 'number': 13},
+            {'id': 2, 'buildername': 'Test Builder', 'friendly_name': 'Friendly Builder', 'number': 14},
+            {'id': 3, 'buildername': 'Another Builder', 'friendly_name': 'Happy Builder', 'number': 15},
+            {'id': 4, 'buildername': 'Another Builder', 'friendly_name': 'Happy Builder', 'number': 16},
         ]
         build_id = 3
 
@@ -181,7 +181,7 @@ class TestBuildStatusUtils(unittest.TestCase):
         )
 
         self.assertEqual(build_url, "http://example.com/example/url")
-        self.assertEqual(build_name, "Another Builder #15")
+        self.assertEqual(build_name, "Happy Builder #15")
 
     def test_get_url_and_name_build_in_chain_with_selected_build_not_in_chain(self):
         chained_builds = [
