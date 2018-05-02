@@ -75,7 +75,7 @@ class TestShellCommandExecution(steps.BuildStepMixin, unittest.TestCase, configm
     def test_describe_with_command_Interpolate(self):
         command = Interpolate("echo 'test %s'", 'one fish')
         step = shell.ShellCommand(command=command)
-        self.assertEqual(step.describe(), str(command))
+        self.assertEqual(step.describe(), [str(command)])
 
     def test_describe_no_command(self):
         step = shell.ShellCommand(workdir='build')

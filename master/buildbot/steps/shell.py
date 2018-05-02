@@ -202,7 +202,7 @@ class ShellCommand(buildstep.LoggingBuildStep):
             if isinstance(words, (str, unicode)):
                 words = words.split()
             elif isinstance(words, Interpolate):
-                return str(words)
+                return [str(words)]
 
             try:
                 len(words)
