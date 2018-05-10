@@ -371,11 +371,11 @@ class TestBuildRequest(unittest.TestCase):
     def test_cancelBuildRequest_for_NotClaimedError(self, mock_completeBuildRequests):
         mock_completeBuildRequests.side_effect = NotClaimedError
 
-        def checkCanceled(brdict, func):
+        def checkCanceled(brdict, mocked_func):
             # NotClaimedError was raised and results wasn't changed to CANCELED
             self.assertEqual(brdict['results'], INTERRUPTED)
             self.assertEqual(brdict['complete'], 1)
-            self.assertEqual(func.called, True)
+            self.assertEqual(mocked_func.called, True)
 
         master = fakemaster.make_master()
         master.db = fakedb.FakeDBConnector(self)

@@ -1,5 +1,6 @@
-import buildbot
 import klog
+import mock
+
 from twisted.trial import unittest
 from twisted.internet import defer
 from twisted.python import log
@@ -9,7 +10,6 @@ from buildbot.process import buildrequestdistributor
 from buildbot.process.buildrequestdistributor import Slavepool
 from buildbot.process import builder, factory
 from buildbot import config
-import mock
 from buildbot.db.buildrequests import Queue, AlreadyClaimedError
 from buildbot.status.results import RESUME, BEGINNING
 from buildbot.test.util.katanabuildrequestdistributor import KatanaBuildRequestDistributorTestSetup
@@ -367,24 +367,15 @@ class TestKatanaBuildRequestDistributorMaybeStartBuildsOn(KatanaBuildRequestDist
         self.quiet_deferred.addCallback(check)
         return self.quiet_deferred
 
-    @compat.usesFlushLoggedErrors
-    @mock.patch('klog.err_json')
-    def test_maybeStartBuildsOnHandleExceptionsDuringClaim(self, err_json):
+    def test_maybeStartBuildsOnHandleExceptionsDuringClaim(self):
+        mock_err_json = mock.Mock()
+        self.patch(klog, "err_json", mock_err_json)
+
         self.setupBuilderInMaster(name='bldr1', slavenames={'slave-01': True},
                                   startSlavenames={'slave-02': True})
 
         self.setupBuilderInMaster(name='bldr2', slavenames={'slave-01': True},
                                   startSlavenames={'slave-03': True})
-
-        # --- USE DECORATOR FOR _maybeStartBuildsOnBuilder FOR RAISING EXCEPTION ---
-        # orig_maybe = self.brd._maybeStartBuildsOnBuilder
-        # @defer.inlineCallbacks
-        # def maybeStartBuildsOnBuilder_raising_exception(*args, **kwargs):
-        #     data = yield orig_maybe(*args, **kwargs)
-        #     if data == False:
-        #         raise AlreadyClaimedError
-        # self.brd._maybeStartBuildsOnBuilder = maybeStartBuildsOnBuilder_raising_exception
-
 
         d = self.generateUnclaimBuilds()
         d.addCallback(lambda _: self.brd.maybeStartBuildsOn(['bldr1', 'bldr2']))
@@ -395,19 +386,14 @@ class TestKatanaBuildRequestDistributorMaybeStartBuildsOn(KatanaBuildRequestDist
         def claimBuildRequests(breqs):
             yield funct(breqs)
             if breqs[0].id == 4:
-                yield funct(breqs)  # generate AlreadyClaimedError
+                yield funct(breqs)  # klog catches generated AlreadyClaimedError
 
         self.brd.katanaBuildChooser.claimBuildRequests = claimBuildRequests
 
         def check(_):
             self.checkBRDCleanedUp()
             self.assertEquals(self.processedBuilds, [('slave-02', [3])])
-
-            # NEW VERSION err_json does not work as Mock
-            # self.assertTrue(err_json.called)
-
-            # OLD VERSION
-            # self.assertEqual(len(self.flushLoggedErrors(AlreadyClaimedError)), 1)
+            self.assertTrue(mock_err_json.called)
 
         self.quiet_deferred.addCallback(check)
         return self.quiet_deferred
