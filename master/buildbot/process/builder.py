@@ -776,6 +776,7 @@ class BuilderControl:
         """
         TODO: This method is probably is not used. Consider to remove it.
         """
+        klog.err_json("rebuildBuild_still_works. Don't remove me")
         if not bs.isFinished():
             return
 

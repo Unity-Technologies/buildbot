@@ -214,13 +214,6 @@ class BuildStatus(styles.Versioned, properties.PropertiesMixin):
         def thd(build_id):
             if self.user_id:
                 yield self.master.db.builds.createBuildUser(build_id, self.user_id, self.finished)
-            else:
-                msg = "Uknown user_id; project: {project}; builder: {builder}; build_id: {build_id}"
-                klog.err_json(msg.format(
-                    project=step.builder.project,
-                    builder=step.builder.friendly_name,
-                    build_id=build_id,
-                ))
 
         def error_thd(err):
             msg = "There was an error in createBuildUserStatus. Project: {proj}; Builder: {builder}"
@@ -381,8 +374,26 @@ class BuildStatus(styles.Versioned, properties.PropertiesMixin):
     def setOwners(self, owners):
         self.owners = owners
 
+    @defer.inlineCallbacks
     def setUserID(self, user_id):
         self.user_id = user_id
+        if self.user_id:
+            return
+
+        # TODO: check in logz if "Found user_id in old way" is logged
+        # If yes, add generating user_id in that step
+        # Else remove below for-loop and tests for it.
+        for owner in self.owners:
+            username = " ".join(owner.split()[:-1])
+            self.user_id = yield self.master.db.users.getUidByLdapUsername(username)
+            if self.user_id:
+                klog.err_json("Found user_id in old way [user_id: %s] [project: %s] [builder: %s]" %
+                              (self.user_id, self.builder.project, self.builder.name))
+                break
+
+        if not self.user_id:
+            klog.err_json("Cannot find user_id for build [project: %s] [builder: %s]" %
+                          (self.builder.project, self.builder.name))
 
     def setReason(self, reason):
         self.reason = reason
@@ -555,14 +566,17 @@ class BuildStatus(styles.Versioned, properties.PropertiesMixin):
             del self.source
         self.wasUpgraded = True
 
+    @defer.inlineCallbacks
     def upgradeToVersion5(self):
-        if not hasattr(self, "user_id"):
-            self.user_id = None
-            # maybe we should search here user_id 'in old way'
-            # for owner in self.owners:
-            #     username = " ".join(owner.split()[:-1])
-            #     self.user_id = yield self.master.db.users.getUidByLdapUsername(username)
+        self.user_id = None
         self.wasUpgraded = True
+
+        if not self.owners:
+            return
+        # search user_id 'in old way'
+        for owner in self.owners:
+            username = " ".join(owner.split()[:-1])
+            self.user_id = yield self.master.db.users.getUidByLdapUsername(username)
 
     def checkLogfiles(self):
         # check that all logfiles exist, and remove references to any that
