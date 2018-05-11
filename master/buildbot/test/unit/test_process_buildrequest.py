@@ -347,35 +347,25 @@ class TestBuildRequest(unittest.TestCase):
                                     "should never be able to merge")
 
     def test_cancelBuildRequest(self):
-        def checkCanceled(brdict):
-            self.assertEqual(brdict['results'], CANCELED)
-            self.assertEqual(brdict['complete'], 1)
-
         master = fakemaster.make_master()
         master.db = fakedb.FakeDBConnector(self)
         master.db.insertTestData([fakedb.BuildRequest(id=1, buildsetid=1, buildername='bldr'),
                                   fakedb.Buildset(id=1, reason='force', sourcestampsetid=1),
                                   fakedb.SourceStampSet(id=1),
                                   fakedb.SourceStamp(id=1, sourcestampsetid=1)])
+        expected_sub_brdict = {'results': CANCELED, 'complete': 1}
 
         d = master.db.buildrequests.getBuildRequest(1)
         d.addCallback(lambda brdict:
                       buildrequest.BuildRequest.fromBrdict(master, brdict))
         d.addCallback(lambda br: br.cancelBuildRequest())
         d.addCallback(lambda _: master.db.buildrequests.getBuildRequest(1))
-        d.addCallback(checkCanceled)
-
+        d.addCallback(lambda brdict: self.assertDictContainsSubset(expected_sub_brdict, brdict))
         return d
 
     @mock.patch('buildbot.test.fake.fakedb.FakeBuildRequestsComponent.completeBuildRequests')
     def test_cancelBuildRequest_for_NotClaimedError(self, mock_completeBuildRequests):
         mock_completeBuildRequests.side_effect = NotClaimedError
-
-        def checkCanceled(brdict, mocked_func):
-            # NotClaimedError was raised and results wasn't changed to CANCELED
-            self.assertEqual(brdict['results'], INTERRUPTED)
-            self.assertEqual(brdict['complete'], 1)
-            self.assertEqual(mocked_func.called, True)
 
         master = fakemaster.make_master()
         master.db = fakedb.FakeDBConnector(self)
@@ -384,14 +374,16 @@ class TestBuildRequest(unittest.TestCase):
                                   fakedb.Buildset(id=1, reason='force', sourcestampsetid=1),
                                   fakedb.SourceStampSet(id=1),
                                   fakedb.SourceStamp(id=1, sourcestampsetid=1)])
+        expected_sub_brdict = {'results': INTERRUPTED, 'complete': 1}
 
         d = master.db.buildrequests.getBuildRequest(1)
         d.addCallback(lambda brdict:
                       buildrequest.BuildRequest.fromBrdict(master, brdict))
         d.addCallback(lambda br: br.cancelBuildRequest())
         d.addCallback(lambda _: master.db.buildrequests.getBuildRequest(1))
-        d.addCallback(checkCanceled, mock_completeBuildRequests)
-
+        d.addCallback(lambda brdict: self.assertDictContainsSubset(expected_sub_brdict, brdict))
+        d.addCallback(lambda _: self.assertEqual(mock_completeBuildRequests.called, True))
+        return d
 
     def test_buildRequestControlCancelBuildRequestUnknownBuilder(self):
         master = fakemaster.make_master()
