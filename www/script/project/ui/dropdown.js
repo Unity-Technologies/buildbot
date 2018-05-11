@@ -1,7 +1,9 @@
 /*global define, jQuery*/
-define(['jquery', 'screensize'], function ($, screenSize) {
-
+define(function (require) {
     "use strict";
+    var $ = require('jquery'),
+        screenSize = require('screensize'),
+        hb = require('project/handlebars-extend');
 
     // Extend our jquery object with dropdown widget
     (function ($) {
@@ -159,12 +161,14 @@ define(['jquery', 'screensize'], function ($, screenSize) {
 
     return {
         init: function () {
-
-            var mobileHTML,
-                desktopHTML;
+            var projects;
+            var page = 0;
+            var maxPage = 0;
+            var maxShowedItems = 10;
 
             $("#projectDropdown").dropdown({
-                url: "/projects",
+                url: "/json/projects/list",
+                title: "<h3>Project list</h3>",
                 beforeCreate: function ($elem) {
                     $("#preloader").preloader("showPreloader");
                 },
@@ -175,45 +179,58 @@ define(['jquery', 'screensize'], function ($, screenSize) {
                     });
                 },
                 onResponse: function ($elem, $dropdown, response) {
-                    if (desktopHTML === undefined || mobileHTML === undefined) {
-                        //Cache desktop HTML
-                        desktopHTML = $(response).find('.tablesorter-js');
-
-
-                        var fw = $(response).find('.scLink');
-                        mobileHTML = $('<ul/>').addClass('submenu list-unstyled');
-                        $(fw).each(function () {
-                            var scLink = $(this).attr('data-sc');
-                            $(this).attr('href', scLink);
-                            var $li = $('<li/>').append($(this));
-                            mobileHTML.append($li);
-                        });
-
-                        $(desktopHTML, mobileHTML).find("a").each(function () {
-                            var scLink = $(this).attr('data-sc');
-                            $(this).attr('href', scLink);
-                        });
-                    }
-
+                    var self = this;
+                    projects = response.map(function(item) {
+                        return item.name;
+                    });
+                    maxPage = projects.length / maxShowedItems;
+                    var html = hb.projectListDropdown();
+                    var projectList = hb.projectList({projects: projects});
+                    $dropdown.append(html);
+                    $dropdown.append(projectList);
+                    $('body').on('keyup', '#project-list', function() {
+                        self.updateProject($(this).val());
+                    });
+                    $('body').on('click', '#prev-projects', function() {
+                        console.log('prev'); // @TODO
+                    });
+                    $('body').on('click', '#next-projects', function() {
+                        console.log('next'); // @TODO
+                    });
                     return true;
-                },
-                beforeShow: function ($elem, $dropdown) {
-                    if (screenSize.isMediumScreen()) {
-                        $dropdown.append(desktopHTML);
-                    } else {
-                        $elem.append(mobileHTML);
-                    }
                 },
                 onShow: function ($elem, $dropdown) {
                     if (!screenSize.isMediumScreen()) {
                         $dropdown.hide();
                     }
+                    if (page === 0) {
+                        $('#prev-projects').hide();
+                    }
+                    if (page === maxPage) {
+                        $('#next-projects').show();
+                    }
                 },
-                onHide: function ($elem, $dropdown) {
-                    $elem.find("ul").remove();
+                onHide: function($elem, $dropdown) {
+                    $('#project-list').val('');
+                },
+                beforeShow: function() {
+                    this.updateProject("");
                 },
                 animate: function () {
                     return screenSize.isMediumScreen();
+                },
+                updateProject: function(text) {
+                    var showedItems = 0;
+                    text = text.toLowerCase();
+                    $('#dropdown-project-list .item').each(function() {
+                        var name = $(this).data('name').toLowerCase();
+                        if(name.includes(text) && showedItems < maxShowedItems) {
+                            $(this).show();
+                            showedItems++;
+                        } else {
+                            $(this).hide();
+                        }
+                    });
                 }
             });
 

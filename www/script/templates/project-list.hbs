@@ -1,0 +1,26 @@
+<div>
+    <table class="table table-katana table-stripes no-bg dataTable shortcut-js tools-js no-footer" id="dropdown-project-list" role="grid">
+        <thead>
+            <tr role="row">
+                <th class="sorting" tabindex="0" rowspan="1" colspan="1">Name</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{#each projects}}
+                <tr role="row" class="odd item" data-name="{{this}}">
+                    <td>
+                        <a class="scLink" href="/projects/{{this}}" data-sc="/projects/{{this}}/builders?fmod_branch=master">
+                            {{this}}
+                        </a>
+                    </td>
+                </tr>
+            {{/each}}
+        </tbody>
+    </table>
+
+    <div class="dataTables_paginate" style="width: 100%; text-align: center;">
+        <a id="prev-projects" class="paginate_button previous" href="#">Prev</a>
+        <a href="/projects" class="paginiate_button">All projects</a>
+        <a id="next-projects" class="paginate_button next" href="#">Next</a>
+    </div>
+</div>
