@@ -199,10 +199,10 @@ class ShellCommand(buildstep.LoggingBuildStep):
                 return ["???"]
 
             words = self.command
+            if isinstance(words, Interpolate):
+                words = words.getRenderingFor(self.build).result
             if isinstance(words, (str, unicode)):
                 words = words.split()
-            elif isinstance(words, Interpolate):
-                return [str(words)]
 
             try:
                 len(words)

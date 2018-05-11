@@ -22,6 +22,7 @@ from buildbot.status.results import SKIPPED, SUCCESS, WARNINGS, FAILURE
 from buildbot.status.results import EXCEPTION
 from buildbot.test.util import steps, compat
 from buildbot.test.util import config as configmixin
+from buildbot.test.fake.fakebuild import FakeBuild
 from buildbot.test.fake.remotecommand import ExpectShell, Expect
 from buildbot.test.fake.remotecommand import ExpectRemoteRef
 from buildbot import config
@@ -73,9 +74,17 @@ class TestShellCommandExecution(steps.BuildStepMixin, unittest.TestCase, configm
                             wrongArg1=1, wrongArg2='two'))
 
     def test_describe_with_command_Interpolate(self):
-        command = Interpolate("echo 'test %s'", 'one fish')
+        bash_command = "sleep %d"
+        bash_command_arg = 60
+        expected_output = ["'sleep", "60'"]
+        build = FakeBuild()
+
+        command = Interpolate(bash_command, bash_command_arg)
         step = shell.ShellCommand(command=command)
-        self.assertEqual(step.describe(), [str(command)])
+        step.build = build
+        output = step.describe()
+
+        self.assertEqual(expected_output, output)
 
     def test_describe_no_command(self):
         step = shell.ShellCommand(workdir='build')
