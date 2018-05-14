@@ -807,6 +807,7 @@ class BuildStep(object, properties.PropertiesMixin):
                 if isinstance(why.type, str):
                     klog.err_json("Failure.type is string: [name: %s] [builder: %s] " %
                                   (self.name, self.build))
+                    why = Failure(why)  # ensure CopiedFailure -> Failure
                     why.type = locate(why.type) or why.type
                 self.addCompleteLog("err.text", why.getTraceback())
                 self.addHTMLLog("err.html", formatFailure(why))
