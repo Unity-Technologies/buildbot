@@ -134,6 +134,7 @@ class MasterConfig(object):
         self.globalFactory = dict(initialSteps=[], lastSteps=[])
         self.regex_branches = REGEX_BRANCHES
         self.tag_as_branch_regex = TAG_AS_BRANCH_REGEX
+        self.environment = 'staging'
 
     _known_config_keys = set([
         "buildbotURL", "buildCacheSize", "builders", "buildHorizon", "caches",
@@ -147,6 +148,7 @@ class MasterConfig(object):
         "analytics_code", "gzip", "autobahn_push", "lastBuildCacheDays",
         "requireLogin", "globalFactory", "slave_debug_url", "slaveManagerUrl",
         "cleanUpPeriod", "buildRequestsDays", "remoteCallTimeout", "myBuildDayCount",
+        "environment",
     ])
 
     @classmethod
@@ -289,6 +291,7 @@ class MasterConfig(object):
 
         copy_str_param('realTimeServer')
         copy_str_param('analytics_code')
+        copy_str_param('environment')
 
         copy_int_param('cleanUpPeriod')
         copy_int_param('changeHorizon')
