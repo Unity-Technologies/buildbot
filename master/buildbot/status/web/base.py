@@ -515,6 +515,7 @@ class ContextMixin(AccessorMixin):
         locale_enc = locale.getdefaultlocale()[1]
         authz = self.getAuthz(request)
         authenticated = authz.authenticated(request)
+        master = request.site.buildbot_service.master
 
         if locale_enc is not None:
             locale_tz = unicode(time.tzname[time.localtime()[-1]], locale_enc)
@@ -536,7 +537,8 @@ class ContextMixin(AccessorMixin):
                     request = request,
                     alert_msg = request.args.get("alert_msg", [""])[0],
                     analytics_code = self.getAnalyticsCode(request),
-                    authenticated=authenticated
+                    authenticated=authenticated,
+                    environment=master.config.environment,
                     )
 
 
@@ -662,7 +664,6 @@ class HtmlResource(resource.Resource, ContextMixin):
                 ctx['instant_json'] = yield self.getInstantJSON(request)
                 ctx['user_settings'] = yield authz.getAllUserAttr(request)
                 ctx['user_settings_json'] = json.dumps(ctx['user_settings'])
-                ctx['environment'] = master.config.environment
                 result = yield self.content(request, ctx)
                 defer.returnValue(result)
 
