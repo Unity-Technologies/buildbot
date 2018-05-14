@@ -245,6 +245,7 @@ class StatusResourceBuild(HtmlResource):
         cxt['instant_json']['build'] = yield self.__prepare_instant_json(status, req)
         cxt['chained_build'] = yield req.site.buildbot_service.master.db.buildrequests.getBuildChain(
             self.build_status.buildChainID,
+            status,
         )
         current_build = next(
             ifilter(lambda x: x['id'] in self.build_status.brids, cxt['chained_build']),
