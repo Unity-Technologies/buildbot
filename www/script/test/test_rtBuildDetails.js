@@ -58,7 +58,7 @@ define(function (require) {
             expect(htmlLink.length).toEqual(1);
         });
 
-         it("if logs list contains the same keys result will render the last one", function () {
+        it("if logs list contains the same keys result will render the last one", function () {
             var data = {
                 steps : [],
                 logs  :[["TestResults.xml", "the/first/link/TestResults.xml"],
@@ -76,6 +76,66 @@ define(function (require) {
             expect(aElements.length).toEqual(2);
             expect(xmlLink.length).toEqual(1);
             expect(htmlLink.length).toEqual(1);
+        });
+
+        it("checks if NOT skipped step correctly setup hasDependency and hasArtifacts flag", function(){
+            var stepData = {
+                'urls': {'Child #3': {'url': 'http:/127.0.0.1:/projects/DeveloperTests/builders/Child/builds/3'}},
+                'is_skipped': false
+            }
+
+            stepData = rtBuildDetails.setup_dependencies_and_artifacts_flags(stepData);
+
+            expect(stepData.hasDependency).toEqual(true);
+            expect(stepData.hasArtifacts).toEqual(false);
+        });
+
+        it("checks if skipped step correctly setup hasDependency and hasArtifacts flag", function(){
+            var stepData = {
+                'urls': {'Child #3': {'url': 'http:/127.0.0.1:/projects/DeveloperTests/builders/Child/builds/3'}},
+                'is_skipped': true
+            }
+
+            stepData = rtBuildDetails.setup_dependencies_and_artifacts_flags(stepData);
+
+            expect(stepData.hasDependency).toEqual(false);
+            expect(stepData.hasArtifacts).toEqual(false);
+        });
+
+        it("checks if step with artifacts correctly setup hasDependency and hasArtifacts flag", function(){
+            var stepData = {
+                'urls': {'Test.txt': 'http://artifacts/SomeTest/Test.txt'},
+                'is_skipped': false
+            }
+
+            stepData = rtBuildDetails.setup_dependencies_and_artifacts_flags(stepData);
+
+            expect(stepData.hasDependency).toEqual(false);
+            expect(stepData.hasArtifacts).toEqual(true);
+        });
+
+        it("checks if step with artifacts (skipped) correctly setup hasDependency and hasArtifacts flag", function(){
+            var stepData = {
+                'urls': {'Test.txt': 'http://artifacts/SomeTest/Test.txt'},
+                'is_skipped': true
+            }
+
+            stepData = rtBuildDetails.setup_dependencies_and_artifacts_flags(stepData);
+
+            expect(stepData.hasDependency).toEqual(false);
+            expect(stepData.hasArtifacts).toEqual(true);
+        });
+
+        it("checks if step with with empty urls do not setup hasDependency and hasArtifacts flag", function(){
+            var stepData = {
+                'urls': {},
+                'is_skipped': false
+            }
+
+            stepData = rtBuildDetails.setup_dependencies_and_artifacts_flags(stepData);
+
+            expect(stepData.hasDependency).toEqual(undefined);
+            expect(stepData.hasArtifacts).toEqual(undefined);
         });
     });
 });

@@ -137,6 +137,24 @@ define(function (require) {
             $progressBar.addClass("build-detail-progress");
             helpers.delegateToProgressBar($progressBar);
         },
+        /* Setup `hasDependency` and `hasArtifacts` flags based on `url` and `is_not_skipped`
+           values from backend
+           @return stepData with above flags.
+        */
+        setup_dependencies_and_artifacts_flags: function(stepData){
+            $.each(stepData.urls, function (j, url) {
+                stepData.hasDependency = false;
+                stepData.hasArtifacts = true;
+                if (url.url !== undefined) {
+                    stepData.hasArtifacts = false;
+                    if(stepData.is_skipped === false){
+                        stepData.hasDependency = true;
+                    }
+                }
+                return true;
+            });
+            return stepData;
+        },
         processSteps: function (data) {
             var html = "";
             var $stepList = $('#stepList');
@@ -157,14 +175,7 @@ define(function (require) {
                     status = helpers.cssClassesEnum.RUNNING;
                 }
 
-                stepData.hasURLs = Object.keys(stepData.urls).length > 0;
-                $.each(stepData.urls, function (i, url) {
-                    if (url.url !== undefined) {
-                        stepData.hasDependency = true;
-                        return false;
-                    }
-                    return true;
-                });
+                stepData = rtBuildDetail.setup_dependencies_and_artifacts_flags(stepData);
 
                 var cssClass = helpers.getCssClassFromStatus(status);
                 var startTime = stepData.times[0];
