@@ -274,8 +274,10 @@ class BuildRequest(object):
             # then complete it with 'FAILURE'; this is the closest we can get to
             # cancelling a request without running into trouble with dangling
             # references.
-            yield self.master.db.buildrequests.completeBuildRequests([self.id],
-                                                                    CANCELED)
+            try:
+                yield self.master.db.buildrequests.completeBuildRequests([self.id], CANCELED)
+            except buildrequests.NotClaimedError:
+                klog.err_json("NotClaimedError occurs. buildrequest table was updated earlier")
 
         # and let the master know that the enclosing buildset may be complete
         yield self.master.maybeBuildsetComplete(self.bsid)
