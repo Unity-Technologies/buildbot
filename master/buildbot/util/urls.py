@@ -39,8 +39,8 @@ def get_url_and_name_build_in_chain(build_id, chained_builds, project, request):
             selected_build['number'],
             project,
         )
-        build_name = "{builder_name} #{build_number}".format(
-            builder_name=selected_build['buildername'],
+        build_name = "{friendly_name} #{build_number}".format(
+            friendly_name=selected_build['friendly_name'],
             build_number=selected_build['number'],
         )
 
