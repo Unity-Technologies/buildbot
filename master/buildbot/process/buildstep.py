@@ -14,6 +14,7 @@
 # Copyright Buildbot Team Members
 
 import re
+from pydoc import locate
 
 from zope.interface import implements
 from twisted.internet import defer, error
@@ -797,19 +798,19 @@ class BuildStep(object, properties.PropertiesMixin):
         if why.check(BuildStepFailed):
             self.finished(FAILURE)
             return
-
         klog.err_json(why, "BuildStep.failed; traceback follows")
         results = EXCEPTION
         try:
             if self.progress:
                 self.progress.finish()
             try:
+                if isinstance(why.type, str):
+                    klog.err_json("Failure.type is string: [name: %s] [builder: %s] " %
+                                  (self.name, self.build))
+                    why = Failure(why)  # ensure CopiedFailure -> Failure
+                    why.type = locate(why.type) or why.type
                 self.addCompleteLog("err.text", why.getTraceback())
                 self.addHTMLLog("err.html", formatFailure(why))
-            except AttributeError:
-                klog.err_json(
-                    Failure(), "DEBUG formatting exc. why.type: %s %s" % (why.type, type(why.type))
-                )
             except Exception:
                 klog.err_json(Failure(), "error while formatting exceptions")
 
