@@ -56,6 +56,14 @@ border: 1px solid #9F9B41;
 	@include pie-clearfix;
 }
 
+.staging .top-menu-container {
+	@include bgimage (linear-gradient(top, $brand-staging-katana 0%, $brand-staging-katana 100%));
+}
+
+.production .top-menu-container {
+	@include bgimage (linear-gradient(top, $brand-production-katana 0%, $brand-production-katana 100%));
+}
+
 .outer-bar {
 	float:right;
 	height:17px;
@@ -194,6 +202,14 @@ ul.top-menu > .project-dropdown {
     border-bottom: 1px solid darken($breadcrumb-background-bottom, 1%);
     border-top:1px lighten($breadcrumb-background-top, 1%);
     margin-bottom: 22px;
+}
+
+.staging .sub-menu-container {
+	@include bgimage (linear-gradient(top , $breadcrumb-staging-background-top 0%, $breadcrumb-staging-background-bottom 100%));
+}
+
+.production .sub-menu-container {
+	@include bgimage (linear-gradient(top , $breadcrumb-production-background-top 0%, $breadcrumb-production-background-bottom 100%));
 }
 
 .header + .container {
