@@ -161,7 +161,8 @@ define(function (require) {
 
     return {
         init: function () {
-            var projects;
+            var allProjects;
+            var visibleProjects;
             var page = 0;
             var maxPage = 0;
             var maxShowedItems = 10;
@@ -180,22 +181,29 @@ define(function (require) {
                 },
                 onResponse: function ($elem, $dropdown, response) {
                     var self = this;
-                    projects = response.map(function(item) {
+                    allProjects = response.map(function(item) {
                         return item.name;
                     });
-                    maxPage = projects.length / maxShowedItems;
+                    maxPage = allProjects.length / maxShowedItems;
                     var html = hb.projectListDropdown();
-                    var projectList = hb.projectList({projects: projects});
+                    var projectList = hb.projectList({projects: allProjects});
                     $dropdown.append(html);
                     $dropdown.append(projectList);
-                    $('body').on('keyup', '#project-list', function() {
+
+                    var $body = $('body');
+                    $body.on('keyup', '#project-list', function() {
+                        page = 0;
                         self.updateProject($(this).val());
                     });
-                    $('body').on('click', '#prev-projects', function() {
-                        console.log('prev'); // @TODO
+                    $body.on('click', '#prev-projects', function(e) {
+                        e.preventDefault();
+                        page--;
+                        self.updateProject($('#project-list').val());
                     });
-                    $('body').on('click', '#next-projects', function() {
-                        console.log('next'); // @TODO
+                    $body.on('click', '#next-projects', function(e) {
+                        e.preventDefault();
+                        page++;
+                        self.updateProject($('#project-list').val());
                     });
                     return true;
                 },
@@ -203,15 +211,12 @@ define(function (require) {
                     if (!screenSize.isMediumScreen()) {
                         $dropdown.hide();
                     }
-                    if (page === 0) {
-                        $('#prev-projects').hide();
-                    }
-                    if (page === maxPage) {
-                        $('#next-projects').show();
-                    }
+                    this.updatePagination();
                 },
                 onHide: function($elem, $dropdown) {
                     $('#project-list').val('');
+                    page = 0;
+                    visibleProjects = allProjects;
                 },
                 beforeShow: function() {
                     this.updateProject("");
@@ -219,14 +224,40 @@ define(function (require) {
                 animate: function () {
                     return screenSize.isMediumScreen();
                 },
+                updatePagination: function() {
+                    if (page === 0) {
+                        $('#prev-projects').hide();
+                    } else {
+                        $('#prev-projects').show();
+                    }
+                    if (visibleProjects.length < maxShowedItems) {
+                        $('#next-projects').hide();
+                    } else {
+                        $('#next-projects').show();
+                    }
+                },
                 updateProject: function(text) {
-                    var showedItems = 0;
                     text = text.toLowerCase();
+                    visibleProjects = allProjects
+                        .map(function(project) {return project.toLowerCase();} )
+                        .filter(function(project) { return project.includes(text);} );
+
+                    if (visibleProjects.length > maxShowedItems) {
+                        visibleProjects = visibleProjects.slice(
+                            page * maxShowedItems, (page + 1) * maxShowedItems
+                        )
+
+                    } else {
+                        // there is only one page, no needed pagination
+                        $('#prev-projects').hide();
+                        $('#next-projects').hide();
+                    }
+                    this.updatePagination();
+
                     $('#dropdown-project-list .item').each(function() {
                         var name = $(this).data('name').toLowerCase();
-                        if(name.includes(text) && showedItems < maxShowedItems) {
+                        if(visibleProjects.includes(name)) {
                             $(this).show();
-                            showedItems++;
                         } else {
                             $(this).hide();
                         }
