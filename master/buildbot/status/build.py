@@ -38,7 +38,7 @@ AcquireBuildLocksType = "<class 'buildbot.steps.artifact.AcquireBuildLocks'>"
 class BuildStatus(styles.Versioned, properties.PropertiesMixin):
     implements(interfaces.IBuildStatus, interfaces.IStatusEvent)
 
-    persistenceVersion = 4
+    persistenceVersion = 5
     persistenceForgets = ( 'wasUpgraded', )
 
     sources = None
@@ -60,6 +60,7 @@ class BuildStatus(styles.Versioned, properties.PropertiesMixin):
     slavename = "???"
     foi_url = None
     artifacts = None
+    user_id = None
 
     set_runtime_properties = True
 
@@ -211,21 +212,8 @@ class BuildStatus(styles.Versioned, properties.PropertiesMixin):
     def createBuildUserStatus(self, step):
         @defer.inlineCallbacks
         def thd(build_id):
-            for owner in self.owners:
-                # TODO: Change in future to uid from session!
-                # "pyflakes pyflakes@unity3d.com" -> "pyflakes"
-                username = " ".join(owner.split()[:-1])
-                user_id = yield self.master.db.users.getUidByLdapUsername(username)
-                if not user_id:
-                    msg = "Can not find user in database: username: {user}; project: {project};" \
-                          " builder: {builder}"
-                    klog.err_json(msg.format(
-                        user=owner,
-                        project=step.builder.project,
-                        builder=step.builder.friendly_name
-                    ))
-                    continue
-                yield self.master.db.builds.createBuildUser(build_id, user_id, self.finished)
+            if self.user_id:
+                yield self.master.db.builds.createBuildUser(build_id, self.user_id, self.finished)
 
         def error_thd(err):
             msg = "There was an error in createBuildUserStatus. Project: {proj}; Builder: {builder}"
@@ -385,6 +373,27 @@ class BuildStatus(styles.Versioned, properties.PropertiesMixin):
 
     def setOwners(self, owners):
         self.owners = owners
+
+    @defer.inlineCallbacks
+    def setUserID(self, user_id):
+        self.user_id = user_id
+        if self.user_id:
+            return
+
+        # TODO: check in logz if "Found user_id in old way" is logged
+        # If yes, add generating user_id in that step
+        # Else remove below for-loop and tests for it.
+        for owner in self.owners:
+            username = " ".join(owner.split()[:-1])
+            self.user_id = yield self.master.db.users.getUidByLdapUsername(username)
+            if self.user_id:
+                klog.err_json("Found user_id in old way [user_id: %s] [project: %s] [builder: %s]" %
+                              (self.user_id, self.builder.project, self.builder.name))
+                break
+
+        if not self.user_id:
+            klog.err_json("Cannot find user_id for build [project: %s] [builder: %s]" %
+                          (self.builder.project, self.builder.name))
 
     def setReason(self, reason):
         self.reason = reason
@@ -556,6 +565,18 @@ class BuildStatus(styles.Versioned, properties.PropertiesMixin):
             self.sources = [self.source]
             del self.source
         self.wasUpgraded = True
+
+    @defer.inlineCallbacks
+    def upgradeToVersion5(self):
+        self.user_id = None
+        self.wasUpgraded = True
+
+        if not self.owners:
+            return
+        # search user_id 'in old way'
+        for owner in self.owners:
+            username = " ".join(owner.split()[:-1])
+            self.user_id = yield self.master.db.users.getUidByLdapUsername(username)
 
     def checkLogfiles(self):
         # check that all logfiles exist, and remove references to any that
