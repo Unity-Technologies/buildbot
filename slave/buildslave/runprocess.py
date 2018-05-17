@@ -881,6 +881,7 @@ class RunProcess:
                             if e.returncode == 128:
                                 # Process not found, we killed it
                                 logAndSend("Process no longer exists, success!")
+                                hit = 1
                                 break
 
                             # Otherwise, sleep 5 seconds and try again
