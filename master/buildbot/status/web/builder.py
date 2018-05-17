@@ -41,10 +41,14 @@ class ForceAction(ActionResource):
     @defer.inlineCallbacks
     def force(self, req, builderNames):
         master = self.getBuildmaster(req)
-        owner = self.getAuthz(req).getUsernameFull(req)
+        authz = self.getAuthz(req)
+        owner = authz.getUsernameFull(req)
+        username = authz.getUsername(req)
+        user_id = authz.getUserInfo(username).get('uid')
         scheduler_name = req.args.get("forcescheduler", ["<unknown>"])[0]
 
         args = self.decode_request_arguments(req)
+        args['user_id'] = user_id
 
         if scheduler_name == "<unknown>":
             scheduler = master.scheduler_manager.findSchedulerByBuilderName(

@@ -161,15 +161,23 @@ class TestBuildGetSourcestamps(unittest.TestCase):
 
 
 class TestBuildStatusUtils(unittest.TestCase):
+    BUILD_NUMBER = 33
+
+    def setUp(self):
+        self.builder_status = FakeBuilderStatus()
+        self.master = fakemaster.make_master()
+        self.build_status = build.BuildStatus(self.builder_status, self.master,
+                                              self.BUILD_NUMBER)
+
     @mock.patch('buildbot.status.web.base.path_to_build_by_params')
     def test_get_url_and_name_build_in_chain_with_selected_build_in_chain(self, path_mock):
         path_mock.return_value = "http://example.com/example/url"
 
         chained_builds = [
-            {'id': 1, 'buildername': 'Test Builder', 'number': 13},
-            {'id': 2, 'buildername': 'Test Builder', 'number': 14},
-            {'id': 3, 'buildername': 'Another Builder', 'number': 15},
-            {'id': 4, 'buildername': 'Another Builder', 'number': 16},
+            {'id': 1, 'buildername': 'Test Builder', 'friendly_name': 'Friendly Builder', 'number': 13},
+            {'id': 2, 'buildername': 'Test Builder', 'friendly_name': 'Friendly Builder', 'number': 14},
+            {'id': 3, 'buildername': 'Another Builder', 'friendly_name': 'Happy Builder', 'number': 15},
+            {'id': 4, 'buildername': 'Another Builder', 'friendly_name': 'Happy Builder', 'number': 16},
         ]
         build_id = 3
 
@@ -181,7 +189,7 @@ class TestBuildStatusUtils(unittest.TestCase):
         )
 
         self.assertEqual(build_url, "http://example.com/example/url")
-        self.assertEqual(build_name, "Another Builder #15")
+        self.assertEqual(build_name, "Happy Builder #15")
 
     def test_get_url_and_name_build_in_chain_with_selected_build_not_in_chain(self):
         chained_builds = [
@@ -201,6 +209,50 @@ class TestBuildStatusUtils(unittest.TestCase):
 
         self.assertEqual(build_url, None)
         self.assertEqual(build_name, None)
+
+    def test_setUserID(self):
+        self.build_status.setUserID(5)
+
+        self.assertEqual(self.build_status.user_id, 5)
+
+    @mock.patch("klog.err_json")
+    def test_setUserID_from_owners(self, err_json):
+        self.build_status.owners = ['pyflakes <pyflakes@unity3d.com>']
+        self.build_status.master.db = mock.Mock()
+        self.build_status.master.db.users.getUidByLdapUsername = mock.Mock(return_value=6)
+        self.build_status.builder.project = "Test Project"
+        self.build_status.builder.name = "Test Builder"
+
+        self.build_status.setUserID(None)
+
+        self.assertEqual(self.build_status.user_id, 6)
+        self.assertEqual(err_json.called, True)
+
+    @mock.patch("klog.err_json")
+    def test_setUserID_unknown_owner(self, err_json):
+        self.build_status.owners = ['pyflakes <pyflakes@unity3d.com>']
+        self.build_status.master.db = mock.Mock()
+        self.build_status.master.db.users.getUidByLdapUsername = mock.Mock(return_value=None)
+        self.build_status.builder.project = "Test Project"
+        self.build_status.builder.name = "Test Builder"
+
+        self.build_status.setUserID(None)
+
+        self.assertEqual(self.build_status.user_id, None)
+        self.assertEqual(err_json.called, True)
+
+    @mock.patch("klog.err_json")
+    def test_setUserID_empty_owners(self, err_json):
+        self.build_status.owners = []
+        self.build_status.master.db = mock.Mock()
+        self.build_status.master.db.users.getUidByLdapUsername = mock.Mock(return_value=7)
+        self.build_status.builder.project = "Test Project"
+        self.build_status.builder.name = "Test Builder"
+
+        self.build_status.setUserID(None)
+
+        self.assertEqual(self.build_status.user_id, None)
+        self.assertEqual(err_json.called, True)
 
 
 class BuildStepStub:

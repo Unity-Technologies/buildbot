@@ -1,13 +1,16 @@
+import klog
+import mock
+
 from twisted.trial import unittest
 from twisted.internet import defer
 from twisted.python import log
+
 from buildbot.test.fake import fakedb
 from buildbot.process import buildrequestdistributor
 from buildbot.process.buildrequestdistributor import Slavepool
 from buildbot.process import builder, factory
 from buildbot import config
-import mock
-from buildbot.db.buildrequests import Queue
+from buildbot.db.buildrequests import Queue, AlreadyClaimedError
 from buildbot.status.results import RESUME, BEGINNING
 from buildbot.test.util.katanabuildrequestdistributor import KatanaBuildRequestDistributorTestSetup
 from buildbot.test.util import compat
@@ -364,8 +367,10 @@ class TestKatanaBuildRequestDistributorMaybeStartBuildsOn(KatanaBuildRequestDist
         self.quiet_deferred.addCallback(check)
         return self.quiet_deferred
 
-    @compat.usesFlushLoggedErrors
     def test_maybeStartBuildsOnHandleExceptionsDuringClaim(self):
+        mock_err_json = mock.Mock()
+        self.patch(klog, "err_json", mock_err_json)
+
         self.setupBuilderInMaster(name='bldr1', slavenames={'slave-01': True},
                                   startSlavenames={'slave-02': True})
 
@@ -381,14 +386,14 @@ class TestKatanaBuildRequestDistributorMaybeStartBuildsOn(KatanaBuildRequestDist
         def claimBuildRequests(breqs):
             yield funct(breqs)
             if breqs[0].id == 4:
-                yield funct(breqs) # generate AlreadyClaimedError
+                yield funct(breqs)  # klog catches generated AlreadyClaimedError
 
         self.brd.katanaBuildChooser.claimBuildRequests = claimBuildRequests
 
         def check(_):
             self.checkBRDCleanedUp()
             self.assertEquals(self.processedBuilds, [('slave-02', [3])])
-            self.assertEqual(len(self.flushLoggedErrors(AlreadyClaimedError)), 1)
+            self.assertTrue(mock_err_json.called)
 
         self.quiet_deferred.addCallback(check)
         return self.quiet_deferred
@@ -1015,6 +1020,17 @@ class TestKatanaMaybeStartBuildsOnBuilder(KatanaBuildRequestDistributorTestSetup
                 self.assertBuildingRequets(exp_brids)
         if exp_builds:
             self.assertBuildsStarted(exp_builds)
+
+    @defer.inlineCallbacks
+    def test_maybeStartBuildsOnBuilder_with_AlreadyClaimedError(self):
+        self.brd.katanaBuildChooser = mock.Mock()
+        self.brd.katanaBuildChooser.chooseNextBuild = mock.Mock(return_value=(1,1))
+        self.brd.katanaBuildChooser.claimBuildRequests = mock.Mock(side_effect=AlreadyClaimedError)
+
+        value = yield self.brd._maybeStartBuildsOnBuilder()
+
+        self.assertEqual(self.brd.katanaBuildChooser.claimBuildRequests.called, True)
+        self.assertEqual(value, False)
 
     @defer.inlineCallbacks
     def test_maybeStartBuildByPriority(self):

@@ -16,11 +16,13 @@
 import re
 import textwrap
 from twisted.trial import unittest
+from buildbot.process.properties import Interpolate
 from buildbot.steps import shell
 from buildbot.status.results import SKIPPED, SUCCESS, WARNINGS, FAILURE
 from buildbot.status.results import EXCEPTION
 from buildbot.test.util import steps, compat
 from buildbot.test.util import config as configmixin
+from buildbot.test.fake.fakebuild import FakeBuild
 from buildbot.test.fake.remotecommand import ExpectShell, Expect
 from buildbot.test.fake.remotecommand import ExpectRemoteRef
 from buildbot import config
@@ -70,6 +72,19 @@ class TestShellCommandExecution(steps.BuildStepMixin, unittest.TestCase, configm
                     "Invalid argument(s) passed to RemoteShellCommand: ",
                     lambda: shell.ShellCommand('build', "echo Hello World",
                             wrongArg1=1, wrongArg2='two'))
+
+    def test_describe_with_command_Interpolate(self):
+        bash_command = "sleep %d"
+        bash_command_arg = 60
+        expected_output = ["'sleep", "60'"]
+        build = FakeBuild()
+
+        command = Interpolate(bash_command, bash_command_arg)
+        step = shell.ShellCommand(command=command)
+        step.build = build
+        output = step.describe()
+
+        self.assertEqual(expected_output, output)
 
     def test_describe_no_command(self):
         step = shell.ShellCommand(workdir='build')

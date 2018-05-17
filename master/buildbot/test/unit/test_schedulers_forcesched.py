@@ -135,7 +135,8 @@ class TestForceScheduler(scheduler.SchedulerMixin, ConfigErrorsMixin, unittest.T
                         property1_name='p1',property1_value='e',
                         property2_name='p2',property2_value='f',
                         property3_name='p3',property3_value='g',
-                        property4_name='p4',property4_value='h'
+                        property4_name='p4',property4_value='h',
+                        user_id=42,
                         )
         bsid,brids = res
 
@@ -155,6 +156,7 @@ class TestForceScheduler(scheduler.SchedulerMixin, ConfigErrorsMixin, unittest.T
                                ('p4', ('h', 'Force Build Form')),
                                ('reason', ('because', 'Force Build Form')),
                                ('scheduler', ('testsched', 'Scheduler')),
+                               ('user_id', (42, 'Force Build Form')),
                                ],
                   sourcestampsetid=100),
              {'':
@@ -167,7 +169,7 @@ class TestForceScheduler(scheduler.SchedulerMixin, ConfigErrorsMixin, unittest.T
         sched = self.makeScheduler()
 
         res = yield sched.force('user', branch='a', reason='because',revision='c',
-                        repository='d', project='p',
+                        repository='d', project='p', user_id=42,
                         )
         bsid,brids = res
 
@@ -183,6 +185,7 @@ class TestForceScheduler(scheduler.SchedulerMixin, ConfigErrorsMixin, unittest.T
                                ('owner', ('user', 'Force Build Form')),
                                ('reason', ('because', 'Force Build Form')),
                                ('scheduler', ('testsched', 'Scheduler')),
+                               ('user_id', (42, 'Force Build Form')),
                                ],
                   sourcestampsetid=100),
              {'':
@@ -196,7 +199,7 @@ class TestForceScheduler(scheduler.SchedulerMixin, ConfigErrorsMixin, unittest.T
 
         res = yield sched.force('user', builderNames=['a','b'],
                         branch='a', reason='because',revision='c',
-                        repository='d', project='p',
+                        repository='d', project='p', user_id=42,
                         )
         bsid,brids = res
 
@@ -212,6 +215,7 @@ class TestForceScheduler(scheduler.SchedulerMixin, ConfigErrorsMixin, unittest.T
                                ('owner', ('user', 'Force Build Form')),
                                ('reason', ('because', 'Force Build Form')),
                                ('scheduler', ('testsched', 'Scheduler')),
+                               ('user_id', (42, 'Force Build Form')),
                                ],
                   sourcestampsetid=100),
              {'':
@@ -257,7 +261,8 @@ class TestForceScheduler(scheduler.SchedulerMixin, ConfigErrorsMixin, unittest.T
                         property1_name='p1',property1_value='e',
                         property2_name='p2',property2_value='f',
                         property3_name='p3',property3_value='g',
-                        property4_name='p4',property4_value='h'
+                        property4_name='p4',property4_value='h',
+                        user_id=42,
                         )
 
         bsid,brids = res
@@ -274,6 +279,7 @@ class TestForceScheduler(scheduler.SchedulerMixin, ConfigErrorsMixin, unittest.T
                                ('p4', ('h', 'Force Build Form')),
                                ('reason', ('because', 'Force Build Form')),
                                ('scheduler', ('testsched', 'Scheduler')),
+                               ('user_id', (42, 'Force Build Form')),
                                ],
                   sourcestampsetid=100),
              {'foo': dict(codebase='foo', sourcestampsetid=100,
@@ -309,7 +315,7 @@ class TestForceScheduler(scheduler.SchedulerMixin, ConfigErrorsMixin, unittest.T
         sched = self.makeScheduler(properties=[prop])
 
         if not req:
-            req = {name:value, 'reason':'because'}
+            req = {name:value, 'reason':'because', 'user_id': 42}
         try:
             bsid, brids = yield sched.force(owner, builderNames=['a'], **req)
         except Exception,e:
@@ -326,6 +332,7 @@ class TestForceScheduler(scheduler.SchedulerMixin, ConfigErrorsMixin, unittest.T
             ('owner', ('user', 'Force Build Form')),
             ('reason', ('because', 'Force Build Form')),
             ('scheduler', ('testsched', 'Scheduler')),
+            ('user_id', (42, 'Force Build Form')),
         ]
 
         if expectKind is None:
@@ -362,22 +369,22 @@ class TestForceScheduler(scheduler.SchedulerMixin, ConfigErrorsMixin, unittest.T
 
 
     def test_BooleanParameter_True(self):
-        req = dict(p1=True,reason='because')
+        req = dict(p1=True,reason='because', user_id=42)
         self.do_ParameterTest(expect=True, klass=BooleanParameter, req=req)
 
 
     def test_WhenBooleanParameterIsStringTrue_ThenPropertyIsSetToTrue(self):
-        req = dict(p1='True',reason='because')
+        req = dict(p1='True',reason='because', user_id=42)
         self.do_ParameterTest(expect=True, klass=BooleanParameter, req=req)
 
 
     def test_WhenBooleanParameterIsRandomString_ThenPropertyIsSetToFalse(self):
-        req = dict(p1='Foobar',reason='because')
+        req = dict(p1='Foobar',reason='because', user_id=42)
         self.do_ParameterTest(expect=False, klass=BooleanParameter, req=req)
 
 
     def test_BooleanParameter_False(self):
-        req = dict(p2=True,reason='because')
+        req = dict(p2=True,reason='because', user_id=42)
         self.do_ParameterTest(expect=False, klass=BooleanParameter, req=req)
 
 
@@ -428,7 +435,7 @@ class TestForceScheduler(scheduler.SchedulerMixin, ConfigErrorsMixin, unittest.T
                 multiple=True, debug=False)
 
     def test_WhenRequestDoesNotContainValueAndItIsReadonly_ThenPropertyIsNotAssigned(self):
-        self.do_ParameterTest(req=dict(reason='because'),
+        self.do_ParameterTest(req=dict(reason='because', user_id=42),
                 expect={},
                 expectKind=dict,
                 klass=IntParameter,
@@ -444,7 +451,7 @@ class TestForceScheduler(scheduler.SchedulerMixin, ConfigErrorsMixin, unittest.T
         fields = [
             IntParameter(name="foo")
         ]
-        self.do_ParameterTest(req=dict(p1_foo='123', reason="because"),
+        self.do_ParameterTest(req=dict(p1_foo='123', reason="because", user_id=42),
                               expect=dict(foo=123),
                               klass=NestedParameter, fields=fields)
 
@@ -460,7 +467,8 @@ class TestForceScheduler(scheduler.SchedulerMixin, ConfigErrorsMixin, unittest.T
                                        p1_inner_str="bar",
                                        p1_inner_any_name="hello",
                                        p1_inner_any_value="world",
-                                       reason="because"),
+                                       reason="because",
+                                       user_id=42),
                               expect=dict(foo=123, inner=dict(str="bar", hello="world")),
                               klass=NestedParameter, fields=fields)
 
@@ -485,7 +493,8 @@ class TestForceScheduler(scheduler.SchedulerMixin, ConfigErrorsMixin, unittest.T
                                        bar_a_name="a",
                                        bar_a_value="7",
                                        bar_b_name="b",
-                                       bar_b_value="8"),
+                                       bar_b_value="8",
+                                       user_id=42),
                               expect=dict(foo=123,
                                           inner=dict(str="bar", hello="world"),
                                           bar={'a':'7', 'b':'8'}),
@@ -496,7 +505,7 @@ class TestForceScheduler(scheduler.SchedulerMixin, ConfigErrorsMixin, unittest.T
     def test_specifySlave(self):
         sched = self.makeScheduler()
         res = yield sched.force('user', 'a', branch='a', repository='http://repo', reason='because',
-                                selected_slave='slave1')
+                                selected_slave='slave1', user_id=42)
         bsid, brids = res
         self.db.buildsets.assertBuildset(bsid, dict(
             reason="A build was forced by 'user': because",
@@ -506,7 +515,8 @@ class TestForceScheduler(scheduler.SchedulerMixin, ConfigErrorsMixin, unittest.T
                               ('owner', ('user', 'Force Build Form')),
                               ('reason', ('because', 'Force Build Form')),
                               ('scheduler', ('testsched', 'Scheduler')),
-                              ('selected_slave', ('slave1', 'Force Build Form'))],
+                              ('selected_slave', ('slave1', 'Force Build Form')),
+                              ('user_id', (42, 'Force Build Form'))],
             sourcestampsetid=100),
             {'': {'branch': 'a', 'codebase': '', 'project': '', 'repository': 'http://repo', 'revision': '',
                   'sourcestampsetid': 100}})
@@ -535,7 +545,7 @@ class TestForceScheduler(scheduler.SchedulerMixin, ConfigErrorsMixin, unittest.T
             makeFakeSlave('slave-03', paused=True)]
 
         res = yield sched.force('user', 'a', branch='a', repository='http://repo', reason='because',
-                                selected_slave='allCompatible')
+                                selected_slave='allCompatible', user_id=42)
 
         self.assertTrue(len(res) == 3)
 
@@ -549,7 +559,8 @@ class TestForceScheduler(scheduler.SchedulerMixin, ConfigErrorsMixin, unittest.T
                                   ('owner', ('user', 'Force Build Form')),
                                   ('reason', ('because', 'Force Build Form')),
                                   ('scheduler', ('testsched', 'Scheduler')),
-                                  ('selected_slave', (slavename, 'Scheduler'))],
+                                  ('selected_slave', (slavename, 'Scheduler')),
+                                  ('user_id', (42, 'Force Build Form'))],
                 sourcestampsetid=ssid),
                 {'': {'branch': 'a', 'codebase': '', 'project': '', 'repository': 'http://repo', 'revision': '',
                       'sourcestampsetid': ssid}})

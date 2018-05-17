@@ -15,9 +15,14 @@
 
 import re
 import mock
+from pydoc import locate
 from twisted.trial import unittest
 from twisted.internet import defer
 from twisted.python import log
+from twisted.python.failure import Failure
+from twisted.spread.jelly import unjelly, jelly
+from twisted.spread import pb
+
 import klog
 from buildbot.process import buildstep
 from buildbot.process.buildstep import regex_log_evaluator
@@ -25,7 +30,7 @@ from buildbot.status.results import FAILURE, SUCCESS, WARNINGS, EXCEPTION, SKIPP
 from buildbot.test.fake import fakebuild, remotecommand
 from buildbot.test.util import config, steps, compat
 from buildbot.util.eventual import eventually
-from twisted.spread import pb
+
 
 class FakeLogFile:
     def __init__(self, text):
@@ -333,6 +338,33 @@ class TestBuildStep(steps.BuildStepMixin, config.ConfigErrorsMixin, unittest.Tes
         d = self.runStep()
         d.addCallback(lambda _ : self.assertTrue(called[0] and called[1]))
         return d
+
+    @mock.patch('buildbot.process.buildstep.locate', side_effect=locate)
+    @mock.patch('klog.err_json')
+    def test_failed_for_why_type_which_is_string(self, err_json, mocked_locate):
+        failure = Failure(Exception("foo"))
+        copyable_failure = pb.CopyableFailure(failure)
+        copyable_failure.type = copyable_failure.getStateToCopy()['type']
+        copied_failure = unjelly(jelly(copyable_failure))
+        ugly_failure = Failure(copied_failure)
+
+        step_status = mock.Mock()
+        step_status.setText = lambda x: None
+        step_status.setText2 = lambda x: None
+        step_status.addLog = lambda x: None
+        step_status.stepFinished = lambda x: None
+
+        bs = buildstep.BuildStep()
+        bs.deferred = defer.Deferred()
+        bs.step_status = step_status
+        bs.addCompleteLog = lambda x, y: None
+        bs.addHTMLLog = lambda x, y: None
+
+        bs.failed(ugly_failure)
+
+        self.assertEqual(mocked_locate.called, True)
+        self.assertEqual(ugly_failure.type, Exception)
+
 
 class TestLoggingBuildStep(unittest.TestCase):
 

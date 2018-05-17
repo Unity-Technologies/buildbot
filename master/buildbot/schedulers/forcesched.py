@@ -654,11 +654,13 @@ class ForceScheduler(base.BaseScheduler):
         reason = self.reason.getFromKwargs(kwargs)
         if owner is None:
             owner = self.username.getFromKwargs(kwargs)
+        user_id = kwargs.get('user_id')[0] if kwargs.get('user_id') else None
 
         properties, changeids, sourcestamps = yield self.gatherPropertiesAndChanges(**kwargs)
 
         properties.setProperty("reason", reason, "Force Build Form")
         properties.setProperty("owner", owner, "Force Build Form")
+        properties.setProperty("user_id", user_id, "Force Build Form")
 
         if 'selected_slave' in kwargs and kwargs['selected_slave'][0] != 'default':
             properties.setProperty("selected_slave", kwargs['selected_slave'][0], "Force Build Form")

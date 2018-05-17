@@ -1337,7 +1337,12 @@ class KatanaBuildRequestDistributor(service.Service):
             return
 
         # claim brid's
-        yield self.katanaBuildChooser.claimBuildRequests(breqs)
+        try:
+            yield self.katanaBuildChooser.claimBuildRequests(breqs)
+        except AlreadyClaimedError:
+            klog.err_json("_maybeStartBuildsOnBuilder: breqs were already claimed. Don't proceed them")
+            defer.returnValue(False)
+            return
 
         buildDefered = self.katanaBuildChooser.bldr.maybeStartBuild(slave, breqs)
         buildDefered.addErrback(self._requeue, breqs, self.katanaBuildChooser.bldr.name)

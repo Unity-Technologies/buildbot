@@ -836,10 +836,11 @@ class BuildRequestsConnectorComponent(base.DBConnectorComponent):
 
         return self.db.pool.do(thd)
 
-    def getBuildChain(self, brid):
+    def getBuildChain(self, brid, status):
         """ This method return promise with chained build
         :param brid: identification of build request
         :type brid: int
+        :param status: instance of master.Status
 
         :return: promise with list of dictionaries with id of build request, builder name and build number
         """
@@ -865,14 +866,16 @@ class BuildRequestsConnectorComponent(base.DBConnectorComponent):
             buildrequests = []
             for row in rows:
                 merged = " ( merged )" if row.mergebrid else ""
+                buildername = str(row.buildername)
                 buildrequest = dict(
                     id=row.id,
-                    buildername=str(row.buildername),
+                    buildername=buildername,
                     number=row.number,
                     is_merged=bool(row.mergebrid),
                     startbrid=row.startbrid,
                     triggeredbybrid=row.triggeredbybrid,
                     full_name="{buildername} #{number}{merged}".format(merged=merged, **row),
+                    friendly_name=status.getFriendlyName(buildername) or buildername,
                 )
                 buildrequests.append(buildrequest)
             res.close()

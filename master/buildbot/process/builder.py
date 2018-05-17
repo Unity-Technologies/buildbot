@@ -773,6 +773,10 @@ class BuilderControl:
 
     @defer.inlineCallbacks
     def rebuildBuild(self, bs, reason="<rebuild, no reason given>", extraProperties=None, absolute=True, newOwner=''):
+        """
+        TODO: This method is not used probably. Consider to remove it.
+        """
+        klog.err_json("rebuildBuild_still_works. Don't remove me")
         if not bs.isFinished():
             return
 
