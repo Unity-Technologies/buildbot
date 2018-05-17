@@ -42,6 +42,11 @@ module.exports = function (grunt) {
                     ]
                 }
             },
+            jsx: {
+                src: [
+                    "components/**/*.js"
+                ]
+            },
             html: {
                 src: [
                     "templates/**/*.html"
@@ -137,6 +142,10 @@ module.exports = function (grunt) {
             fonts: {
                 files: ["<%= files.fonts.src %>"],
                 tasks: ["fontelloUpdate", "sass", "cssmin"]
+            },
+            jsx: {
+                files: ["<%= files.jsx.src %>"],
+                tasks: ["build-jsx"]
             }
         },
         karma: {
@@ -207,6 +216,28 @@ module.exports = function (grunt) {
                     done();
                 }
             }
+        },
+        babel: {
+            options: {
+                sourceMap: false,
+                presets: ["env", "react"],
+            },
+            dist: {
+                files: [{
+                    expand: true,
+                    cwd: './components',
+                    src: ['*.js'],
+                    dest: './generated/components',
+                    ext: '.js'
+                }]
+            }
+        },
+        browserify: {
+            dist: {
+                files: {
+                    'prod/script/components.js': ['generated/components/**/*.js']
+                }
+            }
         }
     });
 
@@ -220,18 +251,21 @@ module.exports = function (grunt) {
     grunt.loadNpmTasks('grunt-sass');
     grunt.loadNpmTasks('grunt-fontello-update');
     grunt.loadNpmTasks('grunt-file-creator');
+    grunt.loadNpmTasks('grunt-babel');
+    grunt.loadNpmTasks('grunt-browserify');
+
 
     // Define your tasks here
-    grunt.registerTask("prod", ["test", "build:prod"]);
+    grunt.registerTask("prod", ["test", "build:prod", "build-jsx"]);
     grunt.registerTask("build", "Builds all of our resources", function (overrideTarget) {
         if (overrideTarget !== undefined) {
             target = overrideTarget;
         }
-        grunt.task.run(["sass", "cssmin", "handlebars:compile", "requirejs:" + target, "file-creator:version"]);
+        grunt.task.run(["sass", "cssmin", "handlebars:compile", "requirejs:" + target, "file-creator:version", "build-jsx"]);
     });
     grunt.registerTask("styles", ["sass", "cssmin"]);
     grunt.registerTask("test", ["handlebars:compile", "karma:unit"]);
     grunt.registerTask("coverage", ["karma:coverage", "open:coverage"]);
-    grunt.registerTask("default", ["build", "watch"]);
-
+    grunt.registerTask("build-jsx", ["babel", "browserify"]);
+    grunt.registerTask("default", ["build", "build-jsx", "watch"]);
 };
