@@ -204,11 +204,15 @@
         <h3 class="page-build-txt">
           Page built: <b>{{ time }}</b> ({{ tz }})
         </h3>
+        React test
+        <div id="root"></div>
+        <div id="footer"></div>
       </div>
     </footer>
     {% endblock -%}
 
-    
+
     <script src="/prod/script/main.js?cachebust={{version}}"></script>
+    <script src="/prod/script/components.js?cachebust={{version}}"></script>
   </body>
 </html>
