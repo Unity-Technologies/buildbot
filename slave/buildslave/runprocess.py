@@ -20,6 +20,7 @@ Support for running 'shell commands'
 import sys
 import os
 import signal
+import time
 import types
 import re
 import subprocess
@@ -821,82 +822,105 @@ class RunProcess:
         if self.buftimer:
             self.buftimer.cancel()
             self.buftimer = None
-        msg += ", attempting to kill"
-        log.msg(msg)
-        self.sendStatus({'header': "\n" + msg + "\n"})
 
-        # let the PP know that we are killing it, so that it can ensure that
-        # the exit status comes out right
-        self.pp.killed = True
+        def logAndSend(s):
+            log.msg(s)
+            self.sendStatus({'header': "\n" + s + "\n"})
 
-        # keep track of whether we believe we've successfully killed something
-        hit = 0
+        msg += ", attempting to kill process with pid {} / group id {}".format(
+            getattr(self.process, 'pid', '<UNAVAILABLE>'),
+            getattr(self.process, 'gpid', '<UNAVAILABLE>')
+        )
+        logAndSend(msg)
 
-        # try signalling the process group
-        if not hit and self.useProcGroup and runtime.platformType == "posix":
-            sig = getattr(signal, "SIG"+ self.interruptSignal, None)
+        try:
+            # let the PP know that we are killing it, so that it can ensure that
+            # the exit status comes out right
+            self.pp.killed = True
 
-            if sig is None:
-                log.msg("signal module is missing SIG%s" % self.interruptSignal)
-            elif not hasattr(os, "kill"):
-                log.msg("os module is missing the 'kill' function")
-            elif self.process.pgid is None:
-                log.msg("self.process has no pgid")
-            else:
-                log.msg("trying to kill process group %d" %
-                                                (self.process.pgid,))
+            # keep track of whether we believe we've successfully killed something
+            hit = 0
+
+            # try signalling the process group
+            if not hit and self.useProcGroup and runtime.platformType == "posix":
+                sig = getattr(signal, "SIG"+ self.interruptSignal, None)
+
+                if sig is None:
+                    log.msg("signal module is missing SIG%s" % self.interruptSignal)
+                elif not hasattr(os, "kill"):
+                    log.msg("os module is missing the 'kill' function")
+                elif self.process.pgid is None:
+                    log.msg("self.process has no pgid")
+                else:
+                    logAndSend("trying to kill process group %d" %
+                                                    (self.process.pgid,))
+                    try:
+                        os.kill(-self.process.pgid, sig)
+                        logAndSend(" signal %s sent successfully" % sig)
+                        self.process.pgid = None
+                        hit = 1
+                    except OSError:
+                        logAndSend('failed to kill process group (ignored): %s' %
+                                (sys.exc_info()[1],))
+                        # probably no-such-process, maybe because there is no process
+                        # group
+                        pass
+
+            elif runtime.platformType == "win32":
+                if self.interruptSignal == None:
+                    log.msg("self.interruptSignal==None, only pretending to kill child")
+                elif self.process.pid is not None:
+                    logAndSend("using TASKKILL /F PID /T to kill pid %s" % self.process.pid)
+                    for i in range(5):
+                        try:
+                            subprocess.check_call("TASKKILL /F /PID %s /T" % self.process.pid)
+                            logAndSend("taskkill'd pid %s" % self.process.pid)
+                            hit = 1
+                            break
+                        except subprocess.CalledProcessError, e:
+                            if e.returncode == 128:
+                                # Process not found, we killed it
+                                logAndSend("Process no longer exists, success!")
+                                break
+
+                            # Otherwise, sleep 5 seconds and try again
+                            logAndSend(str(e) + "\nRetrying in 5 seconds...")
+                            time.sleep(5)
+                    else:
+                        logAndSend("Failed to TASKKILL after 5 attemps, giving up.")
+
+            # try signalling the process itself (works on Windows too, sorta)
+            if not hit:
                 try:
-                    os.kill(-self.process.pgid, sig)
-                    log.msg(" signal %s sent successfully" % sig)
-                    self.process.pgid = None
+                    logAndSend("trying process.signalProcess('%s')" % (self.interruptSignal,))
+                    self.process.signalProcess(self.interruptSignal)
+                    logAndSend("signal %s sent successfully" % (self.interruptSignal,))
                     hit = 1
                 except OSError:
-                    log.msg('failed to kill process group (ignored): %s' %
-                            (sys.exc_info()[1],))
-                    # probably no-such-process, maybe because there is no process
-                    # group
+                    logAndSend("got OSError, see agent logs for more information.")
+                    klog.err_json("from process.signalProcess:")
+                    # could be no-such-process, because they finished very recently
+                    pass
+                except error.ProcessExitedAlready:
+                    logAndSend("Process exited already - can't kill")
+                    # the process has already exited, and likely finished() has
+                    # been called already or will be called shortly
                     pass
 
-        elif runtime.platformType == "win32":
-            if self.interruptSignal == None:
-                log.msg("self.interruptSignal==None, only pretending to kill child")
-            elif self.process.pid is not None:
-                log.msg("using TASKKILL /F PID /T to kill pid %s" % self.process.pid)
-                subprocess.check_call("TASKKILL /F /PID %s /T" % self.process.pid)
-                log.msg("taskkill'd pid %s" % self.process.pid)
-                hit = 1
+            if not hit:
+                logAndSend("signalProcess/os.kill failed both times")
 
-        # try signalling the process itself (works on Windows too, sorta)
-        if not hit:
-            try:
-                log.msg("trying process.signalProcess('%s')" % (self.interruptSignal,))
-                self.process.signalProcess(self.interruptSignal)
-                log.msg(" signal %s sent successfully" % (self.interruptSignal,))
-                hit = 1
-            except OSError:
-                klog.err_json("from process.signalProcess:")
-                # could be no-such-process, because they finished very recently
-                pass
-            except error.ProcessExitedAlready:
-                log.msg("Process exited already - can't kill")
-                # the process has already exited, and likely finished() has
-                # been called already or will be called shortly
-                pass
-
-        if not hit:
-            log.msg("signalProcess/os.kill failed both times")
-
-        if runtime.platformType == "posix":
-            # we only do this under posix because the win32eventreactor
-            # blocks here until the process has terminated, while closing
-            # stderr. This is weird.
-            self.pp.transport.loseConnection()
-
-        if self.deferred:
-            # finished ought to be called momentarily. Just in case it doesn't,
-            # set a timer which will abandon the command.
-            self.timer = self._reactor.callLater(self.BACKUP_TIMEOUT,
-                                       self.doBackupTimeout)
+            if runtime.platformType == "posix":
+                # we only do this under posix because the win32eventreactor
+                # blocks here until the process has terminated, while closing
+                # stderr. This is weird.
+                self.pp.transport.loseConnection()
+        finally:
+            if self.deferred:
+                # finished ought to be called momentarily. Just in case it doesn't,
+                # set a timer which will abandon the command.
+                self.timer = self._reactor.callLater(self.BACKUP_TIMEOUT,
+                                           self.doBackupTimeout)
 
     def doBackupTimeout(self):
         log.msg("we tried to kill the process, and it wouldn't die.."
