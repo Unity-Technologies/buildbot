@@ -39,30 +39,32 @@
                 </div>
             {{/if}}                            
 
-            {{#if s.hasURLs}}
-                <div class="logs-txt">
-                  {{#if s.hasDependency}}
+            <div class="logs-txt">
+                {{#if s.hasDependency}}
                     Dependencies
-                    {{else}}
+                {{/if}}
+                {{#if s.hasArtifacts}}
                     Artifacts
-                  {{/if}}
-                </div>
-                <ul class="log-list log-list-js dependency-list">
-                  {{#eachByStatus s.urls 'results'}}
-                      {{#if this.results includeZero=true}}
-                          <li class="log-list-{{buildCSSClass this.results }} urls-mod clearfix">
+                {{/if}}
+            </div>
+            <ul class="log-list log-list-js dependency-list">
+                {{#if s.hasDependency}}
+                    {{#eachByStatus s.urls 'results'}}
+                        <li class="log-list-{{buildCSSClass this.results }} urls-mod clearfix">
                             <a title="{{ @index }}" href="{{ this.url }}">
                                 <span class="{{buildCSSClass this.results }}"></span>{{ @index }}
                             </a>
-                          </li>
-                      {{else}}
-                            <li class="artifact-js">
-                                <a target="_blank" href="{{ this }}">{{ @index }}</a>
-                            </li>
-                      {{/if}}
-                  {{/eachByStatus}}
-                </ul>
-          {{/if}}
+                        </li>
+                    {{/eachByStatus}}
+                {{/if}}
+                {{#if s.hasArtifacts}}
+                    {{#eachByStatus s.urls 'results'}}
+                        <li class="artifact-js">
+                            <a target="_blank" href="{{ this }}">{{ @index }}</a>
+                        </li>
+                    {{/eachByStatus}}
+                {{/if}}
+            </ul>
         </li>
     {{/stepStarted}}
 

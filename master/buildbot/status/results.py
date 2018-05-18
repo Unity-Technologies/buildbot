@@ -13,9 +13,20 @@
 #
 # Copyright Buildbot Team Members
 
-BEGINNING, SUCCESS, WARNINGS, FAILURE, SKIPPED, EXCEPTION, \
-RETRY, CANCELED, NOT_REBUILT, DEPENDENCY_FAILURE, RESUME, \
-MERGED, INTERRUPTED = range(-1, 12)
+BEGINNING = -1
+SUCCESS = 0
+WARNINGS = 1
+FAILURE = 2
+SKIPPED = 3
+EXCEPTION = 4
+RETRY = 5
+CANCELED = 6
+NOT_REBUILT = 7
+DEPENDENCY_FAILURE = 8
+RESUME = 9
+MERGED = 10
+INTERRUPTED = 11
+
 
 Results = ["success", "warnings", "failure", "skipped", "exception", "retry", "canceled", "not-rebuilt",
            "dependency-failure", "resume", "merged", "interrupted"]

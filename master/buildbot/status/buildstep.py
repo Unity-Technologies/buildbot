@@ -21,6 +21,7 @@ from twisted.python import log
 from twisted.internet import reactor, defer
 from buildbot import interfaces, util
 from buildbot.status.logfile import LogFile, HTMLLogFile
+from buildbot.status.results import SKIPPED
 
 class BuildStepStatus(styles.Versioned):
     """
@@ -428,6 +429,7 @@ class BuildStepStatus(styles.Versioned):
         result['eta'] = self.getETA()
         result['step_number'] = self.step_number
         result['hidden'] = self.hidden
+        result['is_skipped'] = result['results'][0] == SKIPPED
 
         args = getCodebasesArg(request)
         result['logs'] = [[l.getName(),
