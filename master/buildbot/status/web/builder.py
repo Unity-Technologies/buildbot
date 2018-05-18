@@ -43,12 +43,18 @@ class ForceAction(ActionResource):
         master = self.getBuildmaster(req)
         authz = self.getAuthz(req)
         owner = authz.getUsernameFull(req)
-        username = authz.getUsername(req)
-        user_id = authz.getUserInfo(username).get('uid')
         scheduler_name = req.args.get("forcescheduler", ["<unknown>"])[0]
 
         args = self.decode_request_arguments(req)
-        args['user_id'] = user_id
+
+        # Try to add user_id to args, but it is ok if we can't
+        # Sometimes external requests do not have sessions data from which
+        # to extract user information.
+        username = authz.getUsername(req)
+        if username:
+            user_info = authz.getUserInfo(username)
+            if user_info:
+                args['user_id'] = user_info.get('uid')
 
         if scheduler_name == "<unknown>":
             scheduler = master.scheduler_manager.findSchedulerByBuilderName(
