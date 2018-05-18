@@ -1074,3 +1074,85 @@ class MyBuildsJsonResource(unittest.TestCase):
         builds = yield self.my_builds_json_resource.asDict(self.request)
 
         self.assertEqual(builds, {'error': 'User "wolf" is unknown'})
+
+
+class TestProjectsListJsonResource(unittest.TestCase):
+    def setUp(self):
+        self.request = mock.Mock()
+
+    def test_project_lists_return_one_project(self):
+        expected_projects = [
+            {'name': 'Katana'},
+        ]
+
+        project = ProjectConfig(name="Katana", codebases=[])
+
+        master = fakemaster.make_master(wantDb=True, testcase=self)
+        master.getProjects = lambda: {'Katana': project}
+        master_status = setUpFakeMasterStatus(master)
+
+        project_list_json_resource = status_json.ProjectsListJsonResource(master_status)
+
+        projects = project_list_json_resource.asDict(self.request)
+
+        self.assertEqual(projects, expected_projects)
+
+    def test_project_lists_return_multiple_project(self):
+        expected_projects = [
+            {'name': 'ProjectA'},
+            {'name': 'ProjectB'},
+            {'name': 'ProjectC'},
+        ]
+
+        project_a = ProjectConfig(name="ProjectA", codebases=[])
+        project_b = ProjectConfig(name="ProjectB", codebases=[])
+        project_c = ProjectConfig(name="ProjectC", codebases=[])
+
+        master = fakemaster.make_master(wantDb=True, testcase=self)
+        master.getProjects = lambda: {
+            'ProjectA': project_a,
+            'ProjectB': project_b,
+            'ProjectC': project_c,
+        }
+        master_status = setUpFakeMasterStatus(master)
+        project_list_json_resource = status_json.ProjectsListJsonResource(master_status)
+
+        projects = project_list_json_resource.asDict(self.request)
+
+        self.assertEqual(projects, expected_projects)
+
+    def test_project_lists_return_multiple_project_with_priority(self):
+        expected_projects = [
+            {'name': 'ProjectB'},
+            {'name': 'ProjectC'},
+            {'name': 'ProjectA'},
+        ]
+
+        project_a = ProjectConfig(name="ProjectA", codebases=[], priority=10)
+        project_b = ProjectConfig(name="ProjectB", codebases=[], priority=1)
+        project_c = ProjectConfig(name="ProjectC", codebases=[], priority=5)
+
+        master = fakemaster.make_master(wantDb=True, testcase=self)
+        master.getProjects = lambda: {
+            'ProjectA': project_a,
+            'ProjectB': project_b,
+            'ProjectC': project_c,
+        }
+        master_status = setUpFakeMasterStatus(master)
+        project_list_json_resource = status_json.ProjectsListJsonResource(master_status)
+
+        projects = project_list_json_resource.asDict(self.request)
+
+        self.assertEqual(projects, expected_projects)
+
+    def test_project_lists_return_empty_list_when_no_project_available(self):
+        expected_projects = []
+
+        master = fakemaster.make_master(wantDb=True, testcase=self)
+        master.getProjects = lambda: {}
+        master_status = setUpFakeMasterStatus(master)
+        project_list_json_resource = status_json.ProjectsListJsonResource(master_status)
+
+        projects = project_list_json_resource.asDict(self.request)
+
+        self.assertEqual(projects, expected_projects)

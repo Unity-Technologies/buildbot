@@ -1,7 +1,9 @@
 /*global define, jQuery*/
-define(['jquery', 'screensize'], function ($, screenSize) {
-
+define(function (require) {
     "use strict";
+    var $ = require('jquery'),
+        screenSize = require('screensize'),
+        hb = require('project/handlebars-extend');
 
     // Extend our jquery object with dropdown widget
     (function ($) {
@@ -159,12 +161,15 @@ define(['jquery', 'screensize'], function ($, screenSize) {
 
     return {
         init: function () {
-
-            var mobileHTML,
-                desktopHTML;
+            var allProjects;
+            var visibleProjects;
+            var page = 0;
+            var maxPage = 0;
+            var maxShowedItems = 10;
 
             $("#projectDropdown").dropdown({
-                url: "/projects",
+                url: "/json/projects/list",
+                title: "<h3>Project list</h3>",
                 beforeCreate: function ($elem) {
                     $("#preloader").preloader("showPreloader");
                 },
@@ -175,45 +180,88 @@ define(['jquery', 'screensize'], function ($, screenSize) {
                     });
                 },
                 onResponse: function ($elem, $dropdown, response) {
-                    if (desktopHTML === undefined || mobileHTML === undefined) {
-                        //Cache desktop HTML
-                        desktopHTML = $(response).find('.tablesorter-js');
+                    var self = this;
+                    allProjects = response.map(function(item) {
+                        return item.name;
+                    });
+                    maxPage = allProjects.length / maxShowedItems;
+                    var html = hb.projectListDropdown();
+                    var projectList = hb.projectList({projects: allProjects});
+                    $dropdown.append(html);
+                    $dropdown.append(projectList);
 
-
-                        var fw = $(response).find('.scLink');
-                        mobileHTML = $('<ul/>').addClass('submenu list-unstyled');
-                        $(fw).each(function () {
-                            var scLink = $(this).attr('data-sc');
-                            $(this).attr('href', scLink);
-                            var $li = $('<li/>').append($(this));
-                            mobileHTML.append($li);
-                        });
-
-                        $(desktopHTML, mobileHTML).find("a").each(function () {
-                            var scLink = $(this).attr('data-sc');
-                            $(this).attr('href', scLink);
-                        });
-                    }
-
+                    var $body = $('body');
+                    $body.on('keyup', '#project-list', function() {
+                        page = 0;
+                        self.updateProject($(this).val());
+                    });
+                    $body.on('click', '#prev-projects', function(e) {
+                        e.preventDefault();
+                        page--;
+                        self.updateProject($('#project-list').val());
+                    });
+                    $body.on('click', '#next-projects', function(e) {
+                        e.preventDefault();
+                        page++;
+                        self.updateProject($('#project-list').val());
+                    });
                     return true;
-                },
-                beforeShow: function ($elem, $dropdown) {
-                    if (screenSize.isMediumScreen()) {
-                        $dropdown.append(desktopHTML);
-                    } else {
-                        $elem.append(mobileHTML);
-                    }
                 },
                 onShow: function ($elem, $dropdown) {
                     if (!screenSize.isMediumScreen()) {
                         $dropdown.hide();
                     }
+                    this.updatePagination();
                 },
-                onHide: function ($elem, $dropdown) {
-                    $elem.find("ul").remove();
+                onHide: function($elem, $dropdown) {
+                    $('#project-list').val('');
+                    page = 0;
+                    visibleProjects = allProjects;
+                },
+                beforeShow: function() {
+                    this.updateProject("");
                 },
                 animate: function () {
                     return screenSize.isMediumScreen();
+                },
+                updatePagination: function() {
+                    if (page === 0) {
+                        $('#prev-projects').hide();
+                    } else {
+                        $('#prev-projects').show();
+                    }
+                    if (visibleProjects.length < maxShowedItems) {
+                        $('#next-projects').hide();
+                    } else {
+                        $('#next-projects').show();
+                    }
+                },
+                updateProject: function(text) {
+                    text = text.toLowerCase();
+                    visibleProjects = allProjects
+                        .map(function(project) {return project.toLowerCase();} )
+                        .filter(function(project) { return project.includes(text);} );
+
+                    if (visibleProjects.length > maxShowedItems) {
+                        visibleProjects = visibleProjects.slice(
+                            page * maxShowedItems, (page + 1) * maxShowedItems
+                        )
+
+                    } else {
+                        // there is only one page, no needed pagination
+                        $('#prev-projects').hide();
+                        $('#next-projects').hide();
+                    }
+                    this.updatePagination();
+
+                    $('#dropdown-project-list .item').each(function() {
+                        var name = $(this).data('name').toLowerCase();
+                        if(visibleProjects.includes(name)) {
+                            $(this).show();
+                        } else {
+                            $(this).hide();
+                        }
+                    });
                 }
             });
 

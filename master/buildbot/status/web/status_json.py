@@ -22,6 +22,7 @@ import re
 import time
 
 import jsonschema
+from operator import attrgetter
 from twisted.python import log
 from twisted.internet import defer
 from twisted.web import html, resource, server
@@ -950,8 +951,25 @@ class ProjectsJsonResource(JsonResource):
 
     def __init__(self, status):
         JsonResource.__init__(self, status)
+        self.putChild('list', ProjectsListJsonResource(status))
         for project_name, project_status in status.getProjects().iteritems():
             self.putChild(project_name, SingleProjectJsonResource(status, project_status))
+
+
+class ProjectsListJsonResource(JsonResource):
+    help = """List the registered projects with sorting by priority and name"""
+    pageTitle = 'Projects'
+
+    def __init__(self, status):
+        JsonResource.__init__(self, status)
+        self.status = status
+
+    def asDict(self, request):
+        projects = sorted(
+            self.status.getProjects().values(),
+            key=attrgetter('priority', 'name'),
+        )
+        return map(lambda project: project.asDict(), projects)
 
 
 class LatestRevisionResource(JsonResource):
