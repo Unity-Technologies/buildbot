@@ -1,2 +1,0 @@
-names==0.3.0
-progress-bar==8
